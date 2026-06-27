@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Brand themes ──────────────────────────────────────────────────────
+   Each theme sets the brand colour scale (--r-50 .. --r-900) as "R G B"
+   triplets. Switching the data-theme attribute on <html> re-colours the
+   entire site (admin + client) instantly. Purple is the default. */
+:root,
+[data-theme="purple"] {
+  color-scheme: light;
+  --r-50: 247 238 254;
+  --r-100: 238 218 253;
+  --r-200: 220 180 251;
+  --r-300: 197 133 246;
+  --r-400: 169 69 236;
+  --r-500: 138 24 219;
+  --r-600: 106 13 173;
+  --r-700: 86 10 141;
+  --r-800: 67 8 112;
+  --r-900: 44 4 80;
+}
+[data-theme="pink"] {
+  --r-50: 253 242 248;
+  --r-100: 252 231 243;
+  --r-200: 251 207 232;
+  --r-300: 249 168 212;
+  --r-400: 244 114 182;
+  --r-500: 236 72 153;
+  --r-600: 219 39 119;
+  --r-700: 190 24 93;
+  --r-800: 157 23 77;
+  --r-900: 131 24 67;
+}
+[data-theme="blue"] {
+  --r-50: 239 246 255;
+  --r-100: 219 234 254;
+  --r-200: 191 219 254;
+  --r-300: 147 197 253;
+  --r-400: 96 165 250;
+  --r-500: 59 130 246;
+  --r-600: 37 99 235;
+  --r-700: 29 78 216;
+  --r-800: 30 64 175;
+  --r-900: 30 58 138;
+}
+[data-theme="orange"] {
+  --r-50: 255 247 237;
+  --r-100: 255 237 213;
+  --r-200: 254 215 170;
+  --r-300: 253 186 116;
+  --r-400: 251 146 60;
+  --r-500: 249 115 22;
+  --r-600: 234 88 12;
+  --r-700: 194 65 12;
+  --r-800: 154 52 18;
+  --r-900: 124 45 18;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-charcoal antialiased;
+  font-feature-settings: "kern";
+}
+
+/* Reusable component classes */
+@layer components {
+  .container-px {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-royal-gradient text-white shadow-soft hover:shadow-glow hover:brightness-110;
+  }
+  .btn-gold {
+    @apply btn bg-gold-sheen font-bold text-royal-900 shadow-card hover:brightness-105;
+  }
+  .btn-outline {
+    @apply btn border border-royal-200 bg-white text-royal-700 hover:border-royal-400 hover:bg-royal-50;
+  }
+  .btn-ghost {
+    @apply btn text-royal-700 hover:bg-royal-50;
+  }
+
+  .card {
+    @apply rounded-2xl border border-black/5 bg-white shadow-card;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-charcoal-soft;
+  }
+  .input {
+    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-charcoal placeholder:text-charcoal-muted/60 focus:border-royal-400 focus:outline-none focus:ring-2 focus:ring-royal-100;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.25em] text-royal-500;
+  }
+}
+
+/* Subtle entrance animation */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out both;
+}

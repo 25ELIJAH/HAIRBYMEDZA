@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+.DS_Store
+*.pem
+npm-debug.log*
+.env*.local
+.env
+next-env.d.ts
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/dev.db
+/public/uploads/*
+!/public/uploads/.gitkeep

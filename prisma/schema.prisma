@@ -1,0 +1,123 @@
+// Magdalene Medza – Smart Salon Booking System
+// SQLite for local/self-contained dev. Swap `provider` to "postgresql" to
+// move to Supabase/Postgres later — the models below are portable.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled connection (used at runtime)
+  directUrl = env("DIRECT_URL") // direct connection (used for migrations)
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  description  String
+  category     String        @default("General")
+  priceKes     Int // In-call price (KES)
+  outCallPriceKes Int        @default(0) // Out-call price (KES) = in-call + travel
+  durationMin  Int
+  bufferMin    Int           @default(0)
+  imageUrl     String?
+  includes     String? // newline-separated list of what's included
+  active       Boolean       @default(true)
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+}
+
+// One row per day of week (0 = Sunday ... 6 = Saturday).
+model WorkingHours {
+  id            String  @id @default(cuid())
+  dayOfWeek     Int     @unique
+  isOpen        Boolean @default(true)
+  startMin      Int     @default(480) // 08:00
+  endMin        Int     @default(1080) // 18:00
+  lunchStartMin Int? // null = no lunch break
+  lunchEndMin   Int?
+}
+
+// Holidays / vacations / one-off blocked days.
+model BlockedDate {
+  id     String @id @default(cuid())
+  date   String @unique // YYYY-MM-DD
+  reason String
+  type   String @default("BLOCKED") // HOLIDAY | VACATION | BLOCKED
+}
+
+model Customer {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String        @unique
+  email        String?
+  notes        String? // allergies, preferences, etc.
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+}
+
+model Appointment {
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  serviceId     String
+  service       Service  @relation(fields: [serviceId], references: [id])
+  date          String // YYYY-MM-DD
+  startMin      Int // service start, minutes from midnight
+  endMin        Int // service end (excludes buffer)
+  bufferMin     Int      @default(0)
+  serviceType   String   @default("INCALL") // INCALL | OUTCALL
+  status        String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
+  paymentStatus String   @default("UNPAID") // UNPAID | PAID | PARTIAL | REFUND
+  priceKes      Int
+
+  // Out-call location details
+  estate      String?
+  houseNumber String?
+  mapsPin     String?
+  landmark    String?
+  travelNotes String?
+
+  notes       String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime? // set when marked COMPLETED; revenue is recognised here
+
+  @@index([date])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("OWNER")
+  createdAt    DateTime @default(now())
+}
+
+// Stub notification log — every email/WhatsApp message is recorded here.
+// Wire a real provider (Resend / Meta WhatsApp) in src/lib/notifications.ts later.
+model NotificationLog {
+  id        String   @id @default(cuid())
+  channel   String // EMAIL | WHATSAPP
+  recipient String
+  subject   String?
+  body      String
+  status    String   @default("LOGGED")
+  createdAt DateTime @default(now())
+}
+
+// Singleton settings row (id is always 1).
+model Settings {
+  id              Int    @id @default(1)
+  slotIntervalMin Int    @default(30)
+  maxPerDay       Int    @default(0) // 0 = unlimited
+  salonName       String @default("Magdalene Medza")
+  phone           String @default("+254 700 123 456")
+  email           String @default("hello@magdalenemedz.co.ke")
+  location        String @default("Kilimani, Nairobi")
+  outcallFeeKes   Int    @default(500)
+  theme           String @default("purple") // purple | pink | blue | orange
+}
