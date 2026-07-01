@@ -77,7 +77,7 @@ export default function WorkingHoursForm({ days }: { days: DayHours[] }) {
       </div>
       <div className="mt-5 flex items-center gap-3">
         <SaveButton />
-        {state?.ok && <span className="text-sm font-medium text-emerald-600">Saved ✓</span>}
+        {state?.ok && <span className="text-sm font-medium text-emerald-600">Saved</span>}
         {state?.error && <span className="text-sm font-medium text-red-600">{state.error}</span>}
       </div>
     </form>

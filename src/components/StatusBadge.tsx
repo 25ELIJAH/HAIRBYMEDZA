@@ -36,7 +36,7 @@ export function PaymentBadge({ status }: { status: string }) {
 export function TypeBadge({ type }: { type: string }) {
   return (
     <span className={`badge ${TYPE[type] || "bg-gray-100"}`}>
-      {type === "OUTCALL" ? "Out-Call" : "In-Call"}
+      {type === "OUTCALL" ? "Home" : "Studio"}
     </span>
   );
 }

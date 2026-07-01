@@ -35,32 +35,39 @@ const config: Config = {
           400: "rgb(var(--r-400) / <alpha-value>)",
         },
         gold: {
-          DEFAULT: "#d4af37",
-          light: "#e6cd72",
-          dark: "#b8932a",
+          DEFAULT: "#c8a24a",
+          light: "#e7cd86",
+          dark: "#a07d2c",
         },
         charcoal: {
-          DEFAULT: "#1f1f1f",
-          soft: "#39343a",
-          muted: "#6b6470",
+          DEFAULT: "#191016",
+          soft: "#3a2f38",
+          muted: "#7a6f78",
+        },
+        cream: {
+          DEFAULT: "#f8f4ee",
+          soft: "#f2ebe1",
         },
       },
       fontFamily: {
-        display: ["Georgia", "Cambria", "Times New Roman", "serif"],
-        sans: ["system-ui", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-body)", "system-ui", "Segoe UI", "sans-serif"],
+      },
+      letterSpacing: {
+        luxe: "0.28em",
       },
       boxShadow: {
-        soft: "0 18px 50px -20px rgb(var(--r-500) / 0.45)",
-        card: "0 6px 28px -10px rgba(31, 31, 31, 0.14)",
-        glow: "0 0 0 1px rgb(var(--r-500) / 0.12), 0 16px 44px -16px rgb(var(--r-500) / 0.55)",
+        soft: "0 24px 60px -24px rgba(25, 16, 22, 0.35)",
+        card: "0 10px 40px -18px rgba(25, 16, 22, 0.22)",
+        glow: "0 0 0 1px rgb(var(--r-500) / 0.10), 0 20px 50px -18px rgb(var(--r-700) / 0.5)",
       },
       backgroundImage: {
         "royal-gradient":
-          "linear-gradient(135deg, rgb(var(--r-400)) 0%, rgb(var(--r-600)) 48%, rgb(var(--r-800)) 100%)",
+          "linear-gradient(135deg, rgb(var(--r-600)) 0%, rgb(var(--r-800)) 55%, rgb(var(--r-900)) 100%)",
         "royal-hero":
-          "linear-gradient(112deg, rgb(var(--r-900) / 0.94) 0%, rgb(var(--r-600) / 0.72) 48%, rgb(var(--r-400) / 0.32) 100%)",
+          "linear-gradient(120deg, rgb(var(--r-900) / 0.92) 0%, rgb(var(--r-900) / 0.70) 42%, rgb(var(--r-700) / 0.34) 100%)",
         "gold-sheen":
-          "linear-gradient(135deg, #e6cd72 0%, #d4af37 50%, #b8932a 100%)",
+          "linear-gradient(135deg, #e7cd86 0%, #c8a24a 50%, #a07d2c 100%)",
       },
     },
   },

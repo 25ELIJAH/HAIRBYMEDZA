@@ -158,7 +158,7 @@ export default function BookingWizard({
   async function emailOwnerOfBooking() {
     const key = process.env.NEXT_PUBLIC_WEB3FORMS_KEY;
     if (!key || !service || startMin == null) return;
-    const typeLabel = serviceType === "OUTCALL" ? "Out-call (you travel to the client)" : "In-call (at the studio)";
+    const typeLabel = serviceType === "OUTCALL" ? "I travel to the client" : "At the studio";
     const lines = [
       "You have a new booking from your website. Please open your admin portal to review and confirm it.",
       "",
@@ -173,12 +173,12 @@ export default function BookingWizard({
       customer.notes ? `Notes: ${customer.notes}` : "",
       Number(mpesa.amount) > 0
         ? `\nDeposit paid: ${formatKes(Number(mpesa.amount))} (M-Pesa ${mpesa.number})\nM-Pesa message: ${mpesa.message}`
-        : "\nNo deposit paid yet — please call the client to confirm.",
+        : "\nNo deposit paid yet. Please call the client to confirm.",
     ];
     if (serviceType === "OUTCALL") {
       lines.push(
         "",
-        "Out-call location:",
+        "Where to reach the client:",
         `  Area: ${loc.estate}`,
         `  House/Apartment: ${loc.houseNumber}`,
         `  Landmark: ${loc.landmark}`,
@@ -306,8 +306,8 @@ export default function BookingWizard({
         {/* ── Step 1: Type ────────────────────────────────── */}
         {step === 1 && service && (
           <Section
-            title="In-call or out-call?"
-            subtitle="Out-call costs a little more because I travel to you. Pick what suits you."
+            title="Where would you like your braids?"
+            subtitle="Studio prices are a little lower. When I travel to you the price is slightly higher. Pick what suits you."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <TypeCard
@@ -428,11 +428,10 @@ export default function BookingWizard({
 
               {!loadingAvail && avail && !avail.open && (
                 <div className="card border-dashed p-6 text-center text-charcoal-muted">
-                  <div className="text-2xl">🌙</div>
-                  <p className="mt-2 font-medium text-charcoal">
+                  <p className="font-medium text-charcoal">
                     {avail.reason || "Not available"}
                   </p>
-                  <p className="text-sm">Please choose another date.</p>
+                  <p className="mt-1 text-sm">Please choose another date.</p>
                 </div>
               )}
 
@@ -619,7 +618,7 @@ export default function BookingWizard({
                   <p className="font-display text-xl font-bold">{service.name}</p>
                 </div>
                 <dl className="divide-y divide-black/5 px-5">
-                  <ReviewRow k="Visit type" v={serviceType === "OUTCALL" ? "Out-call (I come to you)" : "In-call (at my studio)"} />
+                  <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
                   <ReviewRow k="Date" v={prettyDate(date)} />
                   <ReviewRow k="Time" v={`${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`} />
                   <ReviewRow k="Duration" v={durationLabel(service.durationMin)} />
@@ -670,7 +669,7 @@ export default function BookingWizard({
                   <p className="text-sm text-charcoal-soft">
                     To hold your appointment, send the deposit to{" "}
                     <strong className="text-royal-700">M-Pesa {mpesaNumber || salonPhone}</strong>{" "}
-                    then paste your confirmation below. This is recommended but optional —
+                    then paste your confirmation below. This is recommended but optional.
                     Magdalene will still call or message you to confirm.
                   </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -729,8 +728,8 @@ export default function BookingWizard({
               <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/15 text-gold-light ring-2 ring-gold/50">
                 <Icon name="checkCircle" size={36} />
               </div>
-              <h2 className="mt-5 font-display text-2xl font-bold">
-                Thank you, {customer.name.split(" ")[0]} 💜
+              <h2 className="mt-5 font-display text-3xl font-semibold">
+                Thank you, {customer.name.split(" ")[0]}
               </h2>
               <p className="mt-2 text-sm text-lavender-100">
                 Your booking request has been received.
@@ -747,7 +746,7 @@ export default function BookingWizard({
               <div className="mt-6 rounded-2xl bg-lavender-50 p-5 text-left text-sm">
                 <Row k="Service" v={service.name} />
                 <Row k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
-                <Row k="Type" v={serviceType === "OUTCALL" ? "Out-call" : "In-call"} />
+                <Row k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
                 <Row k="Price" v={formatKes(priceFor(service, serviceType))} />
                 {Number(mpesa.amount) > 0 && (
                   <Row k="Deposit paid" v={formatKes(Number(mpesa.amount))} />
@@ -810,7 +809,7 @@ function Stepper({ step }: { step: number }) {
                       : "bg-white text-charcoal-muted ring-1 ring-black/10"
                 }`}
               >
-                {done ? "✓" : i + 1}
+                {done ? <Icon name="check" size={14} /> : i + 1}
               </span>
               <span
                 className={`hidden text-xs font-medium sm:block ${
@@ -952,7 +951,7 @@ function Summary({
       <div className="mt-4 space-y-2 text-sm">
         <Row k="Service" v={service.name} />
         <Row k="Duration" v={durationLabel(service.durationMin)} />
-        <Row k="Type" v={serviceType === "OUTCALL" ? "Out-call" : "In-call"} />
+        <Row k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
         <Row k="Date" v={prettyDate(date)} />
         <Row k="Time" v={`${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`} />
       </div>

@@ -65,7 +65,7 @@ export async function notifyBookingConfirmed(b: BookingForMessage) {
   if (b.serviceType === "OUTCALL" && b.location) {
     lines.push(
       ``,
-      `Location for the out-call:`,
+      `Where to reach the client:`,
       `  Area: ${b.location.estate || "not given"}`,
       b.location.houseNumber ? `  House: ${b.location.houseNumber}` : "",
       b.location.landmark ? `  Landmark: ${b.location.landmark}` : "",

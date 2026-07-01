@@ -1,5 +1,20 @@
 import type { Metadata } from "next";
+import { Playfair_Display, Jost } from "next/font/google";
 import "./globals.css";
+
+// Luxury pairing: a high fashion serif for display, a clean geometric sans for text.
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-display",
+  display: "swap",
+});
+const jost = Jost({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
@@ -8,7 +23,7 @@ export const metadata: Metadata = {
     apple: "/icon.svg",
   },
   description:
-    "Magdalene Medza, premium hair braiding in Nairobi. Knotless, lemonade, cornrows, makeba, brazilian and more. In-call and out-call. Book your appointment online.",
+    "Magdalene Medza, premium hair braiding in Nairobi. Knotless, lemonade, cornrows, makeba, brazilian and more. Studio visits or I come to you. Book your appointment online.",
   keywords: [
     "braiding Nairobi",
     "knotless braids",
@@ -18,7 +33,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
-    description: "Book premium hair braiding in Nairobi, in-call or out-call.",
+    description: "Book premium hair braiding in Nairobi. Studio visits or I come to you.",
     type: "website",
   },
 };
@@ -29,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${playfair.variable} ${jost.variable}`}>
       <body>{children}</body>
     </html>
   );

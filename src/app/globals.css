@@ -2,21 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Brand palette (fixed) ─────────────────────────────────────────────
-   One royal purple + gold identity that reads as luxury. Colours are exposed
-   as "R G B" triplets so Tailwind's royal/lavender scales resolve from them. */
+/* ── Brand palette (fixed, luxury) ─────────────────────────────────────
+   Deep royal purple + champagne gold on warm ivory. Colours are exposed as
+   "R G B" triplets so Tailwind's royal/lavender scales resolve from them. */
 :root {
   color-scheme: light;
-  --r-50: 247 238 254;
-  --r-100: 238 218 253;
-  --r-200: 220 180 251;
-  --r-300: 197 133 246;
-  --r-400: 158 60 224;
-  --r-500: 124 24 200;
-  --r-600: 91 12 158;
-  --r-700: 71 9 128;
-  --r-800: 52 7 98;
-  --r-900: 33 4 66;
+  --r-50: 246 239 249;
+  --r-100: 236 221 242;
+  --r-200: 213 184 226;
+  --r-300: 181 135 199;
+  --r-400: 139 78 160;
+  --r-500: 106 44 130;
+  --r-600: 79 26 100;
+  --r-700: 58 18 74;
+  --r-800: 40 12 52;
+  --r-900: 26 8 35;
 }
 
 html {
@@ -24,8 +24,13 @@ html {
 }
 
 body {
-  @apply bg-white text-charcoal antialiased;
-  font-feature-settings: "kern";
+  @apply bg-cream text-charcoal antialiased;
+  font-feature-settings: "kern", "liga";
+}
+
+::selection {
+  background: rgb(var(--r-600));
+  color: #fff;
 }
 
 /* Reusable component classes */
@@ -35,30 +40,30 @@ body {
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium tracking-wide transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-royal-gradient text-white shadow-soft hover:shadow-glow hover:brightness-110;
+    @apply btn bg-royal-gradient text-cream shadow-soft hover:shadow-glow hover:-translate-y-0.5;
   }
   .btn-gold {
-    @apply btn bg-gold-sheen font-bold text-royal-900 shadow-card hover:brightness-105;
+    @apply btn bg-gold-sheen font-semibold text-royal-900 shadow-card hover:-translate-y-0.5 hover:brightness-[1.03];
   }
   .btn-outline {
-    @apply btn border border-royal-200 bg-white text-royal-700 hover:border-royal-400 hover:bg-royal-50;
+    @apply btn border border-royal-300 bg-transparent text-royal-700 hover:border-royal-600 hover:bg-royal-50;
   }
   .btn-ghost {
     @apply btn text-royal-700 hover:bg-royal-50;
   }
 
   .card {
-    @apply rounded-2xl border border-black/5 bg-white shadow-card;
+    @apply rounded-2xl border border-charcoal/5 bg-white shadow-card;
   }
 
   .label {
-    @apply mb-1.5 block text-sm font-medium text-charcoal-soft;
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-charcoal-muted;
   }
   .input {
-    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-charcoal placeholder:text-charcoal-muted/60 focus:border-royal-400 focus:outline-none focus:ring-2 focus:ring-royal-100;
+    @apply w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal transition placeholder:text-charcoal-muted/60 focus:border-royal-500 focus:outline-none focus:ring-2 focus:ring-royal-100;
   }
 
   .badge {
@@ -66,21 +71,51 @@ body {
   }
 
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.25em] text-royal-500;
+    @apply text-xs font-semibold uppercase tracking-luxe text-gold-dark;
+  }
+
+  /* Thin gold divider used between luxury sections */
+  .gold-rule {
+    @apply mx-auto h-px w-16 bg-gold/60;
   }
 }
 
-/* Subtle entrance animation */
+/* ── Animations ───────────────────────────────────────────────────────── */
 @keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-up {
-  animation: fade-up 0.5s ease-out both;
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+.animate-kenburns {
+  animation: kenburns 12s ease-out both;
+}
+
+@keyframes shimmer {
+  0% { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+
+/* Scroll reveal: elements start hidden, .is-visible fades them up in view. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .animate-fade-up, .animate-kenburns { animation: none; }
 }

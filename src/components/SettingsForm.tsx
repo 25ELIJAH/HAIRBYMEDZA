@@ -52,7 +52,7 @@ export default function SettingsForm({ settings }: { settings: SettingsValues })
         <input name="email" defaultValue={settings.email} className="input" />
       </label>
       <label className="block">
-        <span className="label">Out-call travel fee (KES)</span>
+        <span className="label">Home visit fee (KES)</span>
         <input name="outcallFeeKes" type="number" min={0} defaultValue={settings.outcallFeeKes} className="input" />
       </label>
       <label className="block">
@@ -71,7 +71,7 @@ export default function SettingsForm({ settings }: { settings: SettingsValues })
       <div className="flex items-center gap-3 sm:col-span-2">
         <SaveButton />
         {state?.ok && (
-          <span className="text-sm font-medium text-emerald-600">Saved ✓</span>
+          <span className="text-sm font-medium text-emerald-600">Saved</span>
         )}
         {state?.error && (
           <span className="text-sm font-medium text-red-600">{state.error}</span>

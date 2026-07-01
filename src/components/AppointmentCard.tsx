@@ -82,7 +82,7 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
       <div className="mt-3 flex flex-wrap gap-2">
         {appt.status === "PENDING" && (
           <button className="btn-primary !px-3 !py-1.5 text-xs" onClick={() => act(() => updateAppointmentStatus(appt.id, "CONFIRMED"))}>
-            ✓ Confirm
+            Confirm
           </button>
         )}
         {(appt.status === "CONFIRMED" || appt.status === "PENDING") && (
@@ -123,7 +123,7 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
           {appt.serviceType === "OUTCALL" && (
             <div className="rounded-xl bg-lavender-50 p-3">
               <p className="mb-1 inline-flex items-center gap-1.5 font-semibold text-royal-700">
-                <Icon name="pin" size={16} /> Out-call location
+                <Icon name="pin" size={16} /> Home visit location
               </p>
               <p className="text-charcoal-soft">
                 {[appt.estate, appt.houseNumber].filter(Boolean).join(", ") || "Not given"}

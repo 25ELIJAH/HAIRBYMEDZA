@@ -29,12 +29,12 @@ export default async function BookPage({
   const blockedDates = blocked.map((b) => b.date);
 
   return (
-    <div className="min-h-screen bg-lavender-50">
-      <header className="border-b border-black/5 bg-white">
+    <div className="min-h-screen bg-cream">
+      <header className="sticky top-0 z-30 border-b border-charcoal/5 bg-cream/85 backdrop-blur">
         <div className="container-px flex h-16 items-center justify-between">
           <Logo />
-          <Link href="/" className="text-sm font-medium text-charcoal-muted hover:text-royal-600">
-            ← Back to site
+          <Link href="/" className="text-sm font-medium text-charcoal-muted transition hover:text-royal-700">
+            Back to site
           </Link>
         </div>
       </header>

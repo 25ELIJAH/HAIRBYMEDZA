@@ -4,8 +4,8 @@ export interface ServiceCardData {
   id: string;
   name: string;
   description: string;
-  priceKes: number; // in-call
-  outCallPriceKes: number; // out-call
+  priceKes: number; // studio
+  outCallPriceKes: number; // home
   durationMin: number;
   imageUrl: string | null;
   includes: string | null;
@@ -27,52 +27,52 @@ export default function ServiceCard({
 
   return (
     <article
-      className={`group flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-200 ${
+      className={`group flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-500 ${
         selected
-          ? "border-royal-500 shadow-glow ring-2 ring-royal-200"
-          : "border-black/5 shadow-card hover:-translate-y-1 hover:shadow-soft"
+          ? "border-gold shadow-glow ring-1 ring-gold/50"
+          : "border-charcoal/5 shadow-card hover:-translate-y-1.5 hover:shadow-soft"
       }`}
     >
-      <div className="relative h-44 w-full overflow-hidden bg-lavender-100">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-royal-900">
         {service.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={service.imageUrl}
             alt={service.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover object-top transition-transform duration-[1200ms] ease-out group-hover:scale-105"
             loading="lazy"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center text-royal-300">
-            <span className="font-display text-4xl">M</span>
+          <div className="grid h-full w-full place-items-center text-gold/60">
+            <span className="font-display text-5xl">M</span>
           </div>
         )}
-        <span className="absolute left-3 top-3 badge bg-white/95 text-royal-700 shadow-sm">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/55 via-transparent to-transparent" />
+        <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold tracking-wide text-royal-800 backdrop-blur">
           {durationLabel(service.durationMin)}
         </span>
+        <h3 className="absolute inset-x-4 bottom-3 font-display text-2xl font-semibold text-cream drop-shadow">
+          {service.name}
+        </h3>
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-display text-xl font-semibold text-charcoal">
-          {service.name}
-        </h3>
-        <p className="mt-1.5 text-sm text-charcoal-muted">{service.description}</p>
+        <p className="text-sm leading-relaxed text-charcoal-muted">{service.description}</p>
 
-        {/* Two prices: In-call and Out-call */}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-lavender-50 px-3 py-2 ring-1 ring-lavender-200">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-royal-500">
-              In-call
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          <div className="rounded-xl border border-royal-100 bg-royal-50/60 px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-royal-500">
+              Studio
             </p>
-            <p className="font-display text-base font-bold text-royal-600">
+            <p className="font-display text-lg font-bold text-royal-800">
               {formatKes(service.priceKes)}
             </p>
           </div>
-          <div className="rounded-xl bg-gold/10 px-3 py-2 ring-1 ring-gold/30">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gold-dark">
-              Out-call
+          <div className="rounded-xl border border-gold/40 bg-gold/10 px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gold-dark">
+              I come to you
             </p>
-            <p className="font-display text-base font-bold text-gold-dark">
+            <p className="font-display text-lg font-bold text-gold-dark">
               {formatKes(service.outCallPriceKes)}
             </p>
           </div>
@@ -83,7 +83,7 @@ export default function ServiceCard({
             {includes.map((item) => (
               <li
                 key={item}
-                className="badge bg-lavender-50 text-royal-700 ring-1 ring-lavender-200"
+                className="rounded-full bg-cream-soft px-2.5 py-0.5 text-[11px] font-medium text-charcoal-soft ring-1 ring-charcoal/5"
               >
                 {item}
               </li>

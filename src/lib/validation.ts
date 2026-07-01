@@ -85,7 +85,7 @@ export const bookingSchema = z
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["location", f],
-            message: "Required for out-call",
+            message: "Required when I come to you",
           });
         }
       });

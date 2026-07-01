@@ -20,11 +20,11 @@ function ServiceForm({ service }: { service?: ServiceRow }) {
         <textarea name="description" defaultValue={service?.description} className="input min-h-[60px]" />
       </label>
       <label className="block">
-        <span className="label">In-call price (KES)</span>
+        <span className="label">Studio price (KES)</span>
         <input name="priceKes" type="number" min={0} defaultValue={service?.priceKes ?? 1500} className="input" />
       </label>
       <label className="block">
-        <span className="label">Out-call price (KES)</span>
+        <span className="label">Home visit price (KES)</span>
         <input name="outCallPriceKes" type="number" min={0} defaultValue={service?.outCallPriceKes ?? 3000} className="input" />
       </label>
       <label className="block">
