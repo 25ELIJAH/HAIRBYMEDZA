@@ -205,8 +205,16 @@ export async function deleteService(id: string) {
 }
 
 // ── Availability ────────────────────────────────────────────────
-export async function saveWorkingHours(formData: FormData) {
-  await requireAdmin();
+export async function saveWorkingHours(
+  _prev: unknown,
+  formData: FormData
+): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+  } catch {
+    return { error: "Your session expired. Please sign in again." };
+  }
+  try {
   for (let dow = 0; dow < 7; dow++) {
     const isOpen = formData.get(`open_${dow}`) === "on";
     const start = String(formData.get(`start_${dow}`) || "08:00");
@@ -238,6 +246,11 @@ export async function saveWorkingHours(formData: FormData) {
   }
   revalidatePath("/admin/availability");
   revalidatePath("/");
+  return { ok: true };
+  } catch (e) {
+    console.error("saveWorkingHours failed", e);
+    return { error: "Could not save working hours. Please try again." };
+  }
 }
 
 export async function addBlockedDate(formData: FormData) {

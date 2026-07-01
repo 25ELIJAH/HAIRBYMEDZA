@@ -1,13 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import {
-  addBlockedDate,
-  removeBlockedDate,
-  saveWorkingHours,
-} from "@/lib/admin-actions";
+import { addBlockedDate, removeBlockedDate } from "@/lib/admin-actions";
 import { getSettings } from "@/lib/booking";
 import SettingsForm from "@/components/SettingsForm";
 import ThemePicker from "@/components/ThemePicker";
-import { DAY_NAMES, minutesToHHMM, prettyDate } from "@/lib/time";
+import WorkingHoursForm from "@/components/WorkingHoursForm";
+import { prettyDate } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +15,14 @@ export default async function AvailabilityPage() {
     getSettings(),
   ]);
 
-  // Ensure all 7 days exist for the form.
-  const byDay = new Map(hoursRows.map((h) => [h.dayOfWeek, h]));
+  const days = hoursRows.map((h) => ({
+    dayOfWeek: h.dayOfWeek,
+    isOpen: h.isOpen,
+    startMin: h.startMin,
+    endMin: h.endMin,
+    lunchStartMin: h.lunchStartMin,
+    lunchEndMin: h.lunchEndMin,
+  }));
 
   return (
     <div className="space-y-8">
@@ -33,59 +36,7 @@ export default async function AvailabilityPage() {
       {/* Working hours */}
       <section className="card p-5">
         <h2 className="mb-4 font-display text-lg font-semibold">Working hours</h2>
-        <form action={saveWorkingHours}>
-          <div className="space-y-2">
-            <div className="hidden grid-cols-[110px_60px_1fr_1fr_1fr_1fr] gap-3 px-1 text-xs font-semibold uppercase tracking-wide text-charcoal-muted sm:grid">
-              <span>Day</span>
-              <span>Open</span>
-              <span>Start</span>
-              <span>End</span>
-              <span>Lunch from</span>
-              <span>Lunch to</span>
-            </div>
-            {Array.from({ length: 7 }, (_, dow) => {
-              const h = byDay.get(dow);
-              return (
-                <div
-                  key={dow}
-                  className="rounded-xl bg-lavender-50/60 p-3 sm:grid sm:grid-cols-[110px_60px_1fr_1fr_1fr_1fr] sm:items-center sm:gap-3 sm:p-2"
-                >
-                  <div className="flex items-center justify-between sm:contents">
-                    <span className="font-medium text-charcoal">{DAY_NAMES[dow]}</span>
-                    <label className="flex items-center gap-2 sm:block">
-                      <span className="text-xs text-charcoal-muted sm:hidden">Open</span>
-                      <input
-                        type="checkbox"
-                        name={`open_${dow}`}
-                        defaultChecked={h?.isOpen ?? false}
-                        className="h-4 w-4 accent-royal-600"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 sm:contents sm:mt-0">
-                    <label className="block">
-                      <span className="mb-1 block text-xs text-charcoal-muted sm:hidden">Start</span>
-                      <input type="time" name={`start_${dow}`} defaultValue={minutesToHHMM(h?.startMin ?? 480)} className="input !py-1.5" />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1 block text-xs text-charcoal-muted sm:hidden">End</span>
-                      <input type="time" name={`end_${dow}`} defaultValue={minutesToHHMM(h?.endMin ?? 1080)} className="input !py-1.5" />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1 block text-xs text-charcoal-muted sm:hidden">Lunch from</span>
-                      <input type="time" name={`lunchStart_${dow}`} defaultValue={h?.lunchStartMin != null ? minutesToHHMM(h.lunchStartMin) : ""} className="input !py-1.5" />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1 block text-xs text-charcoal-muted sm:hidden">Lunch to</span>
-                      <input type="time" name={`lunchEnd_${dow}`} defaultValue={h?.lunchEndMin != null ? minutesToHHMM(h.lunchEndMin) : ""} className="input !py-1.5" />
-                    </label>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <button className="btn-primary mt-5">Save working hours</button>
-        </form>
+        <WorkingHoursForm days={days} />
       </section>
 
       {/* Blocked dates */}

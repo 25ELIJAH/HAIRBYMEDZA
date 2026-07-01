@@ -6,7 +6,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import Icon from "@/components/Icon";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/booking";
-import { DAY_NAMES, minutesToLabel } from "@/lib/time";
+import { DAY_NAMES, formatKes, minutesToLabel } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,21 @@ export default async function HomePage() {
   const mapsQuery = encodeURIComponent(settings.location);
   const studio = settings.location.split(",")[0];
 
+  // Price teasers for the hero (computed from live data).
+  const catMin = (cat: string) => {
+    const prices = services.filter((s) => s.category === cat).map((s) => s.priceKes);
+    return prices.length ? Math.min(...prices) : null;
+  };
+  const priceRail = [
+    { label: "Kids braids", value: catMin("Kids"), prefix: "from" },
+    { label: "Teen braids", value: catMin("Teen"), prefix: "from" },
+    {
+      label: "Full package",
+      value: services.find((s) => s.category === "Package")?.priceKes ?? null,
+      prefix: "",
+    },
+  ].filter((p) => p.value != null) as { label: string; value: number; prefix: string }[];
+
   return (
     <>
       <SiteHeader />
@@ -50,19 +65,42 @@ export default async function HomePage() {
           <div className="absolute inset-0 bg-royal-hero" />
         </div>
 
-        <div className="container-px flex min-h-[90vh] flex-col justify-center py-24 text-white">
-          <p className="eyebrow animate-fade-up text-gold-light">
-            Luxury Hair Braiding in Nairobi
-          </p>
-          <h1 className="mt-4 max-w-2xl animate-fade-up font-display text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-            Beautiful braids, booked in{" "}
-            <span className="text-gold-light">minutes</span>.
+        <div className="container-px flex min-h-[92vh] flex-col justify-center py-24 text-white">
+          {/* Luxury eyebrow with gold hairlines */}
+          <div className="flex animate-fade-up items-center gap-3">
+            <span className="h-px w-10 bg-gold/70" />
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold-light">
+              Luxury Hair Braiding · Nairobi
+            </p>
+          </div>
+
+          <h1 className="mt-5 max-w-2xl animate-fade-up font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
+            Timeless braids,
+            <br />
+            <span className="text-gold-light">crafted for you</span>.
           </h1>
           <p className="mt-5 max-w-xl animate-fade-up text-lg text-lavender-100">
-            I do knotless, lemonade, cornrows, makeba, brazilian and more. Come to my
-            studio or let me come to you. Check my live availability and pick a time
-            that works for you.
+            Beautiful kids and teen braiding, done at my studio or in the comfort of
+            your home. Clean work, gentle hands, and honest prices.
           </p>
+
+          {/* Price rail — luxury, and it speaks the prices up front */}
+          <div className="mt-8 flex animate-fade-up flex-wrap gap-3">
+            {priceRail.map((p) => (
+              <div
+                key={p.label}
+                className="rounded-2xl border border-gold/40 bg-white/10 px-5 py-3 backdrop-blur-md"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-lavender-100">
+                  {p.label}
+                </p>
+                <p className="font-display text-xl font-bold text-gold-light">
+                  {p.prefix ? `${p.prefix} ` : ""}
+                  {formatKes(p.value)}
+                </p>
+              </div>
+            ))}
+          </div>
 
           <div className="mt-8 flex animate-fade-up flex-wrap items-center gap-3">
             <Link href="/book" className="btn-gold !px-8 !py-4 text-base">
@@ -73,11 +111,11 @@ export default async function HomePage() {
               href="/#services"
               className="btn !border !border-white/40 !bg-white/10 !px-7 !py-4 text-base text-white backdrop-blur hover:!bg-white/20"
             >
-              See my services
+              See full price list
             </Link>
           </div>
 
-          <div className="mt-12 grid max-w-2xl animate-fade-up gap-4 sm:grid-cols-2">
+          <div className="mt-10 grid max-w-2xl animate-fade-up gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-md">
               <span className="inline-flex rounded-xl bg-white/15 p-2 text-gold-light">
                 <Icon name="home" />
@@ -93,8 +131,8 @@ export default async function HomePage() {
               </span>
               <h2 className="mt-3 font-display text-lg font-semibold">I come to you</h2>
               <p className="mt-1 text-sm text-lavender-100">
-                I can travel to your home. I will share the transport fare once I
-                confirm your booking.
+                I travel to your home. I will share the transport fare once I confirm
+                your booking.
               </p>
             </div>
           </div>

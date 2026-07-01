@@ -21,15 +21,21 @@ const dateStr = z
   .refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date");
 const id = z.string().trim().min(8).max(40).regex(/^[a-z0-9]+$/i, "Invalid id");
 
-// Only allow http(s) links or local /uploads paths. Blocks javascript:, data:
-// and other dangerous URL schemes that could be rendered into an href.
+// Service photos: an https link, a local /uploads path, or a compressed
+// data:image produced by the in-browser uploader. All are safe as an <img src>.
+// Dangerous schemes (javascript:, non-image data:) are rejected. Generous max
+// to fit a compressed photo data URL (~a few hundred KB).
 const imageRef = z
   .string()
   .trim()
-  .max(2048)
+  .max(6_000_000)
   .refine(
-    (v) => v === "" || /^https:\/\//i.test(v) || /^\/uploads\//.test(v),
-    "Image must be an https link or an uploaded file"
+    (v) =>
+      v === "" ||
+      /^https:\/\//i.test(v) ||
+      /^\/uploads\//.test(v) ||
+      /^data:image\/(jpeg|png|webp);base64,/i.test(v),
+    "Image must be a photo, an https link, or an uploaded file"
   );
 const externalUrl = z
   .string()
