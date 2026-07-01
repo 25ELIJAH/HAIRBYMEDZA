@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/admin-actions";
 import Icon, { IconName } from "./Icon";
+import LogoMark from "./LogoMark";
 
 const LINKS: { href: string; label: string; icon: IconName }[] = [
   { href: "/admin", label: "Dashboard", icon: "chart" },
@@ -23,9 +24,7 @@ export default function AdminSidebar({ name }: { name: string }) {
       {/* Top bar */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 md:py-4">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15 text-sm font-bold ring-2 ring-gold/50">
-            M
-          </span>
+          <LogoMark size={38} badge className="shrink-0" />
           <div className="leading-tight">
             <p className="font-display text-base font-semibold">Magdalene Medza</p>
             <p className="text-[11px] text-lavender-200">Owner · {name}</p>
