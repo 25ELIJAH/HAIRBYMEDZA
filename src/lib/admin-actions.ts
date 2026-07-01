@@ -20,7 +20,6 @@ import {
   loginSchema,
   serviceSchema,
   settingsSchema,
-  themeSchema,
 } from "./validation";
 
 // Every admin action funnels through here: a valid session AND an allowed role.
@@ -294,6 +293,8 @@ export async function saveSettings(
     email: formData.get("email") ?? "",
     location: formData.get("location"),
     outcallFeeKes: formData.get("outcallFeeKes"),
+    mpesaNumber: formData.get("mpesaNumber") ?? "",
+    depositPercent: formData.get("depositPercent") ?? 50,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Please check your inputs." };
@@ -313,15 +314,3 @@ export async function saveSettings(
   }
 }
 
-export async function saveTheme(theme: string) {
-  await requireAdmin();
-  const parsed = themeSchema.safeParse(theme);
-  if (!parsed.success) return;
-  await prisma.settings.upsert({
-    where: { id: 1 },
-    update: { theme: parsed.data },
-    create: { id: 1, theme: parsed.data },
-  });
-  // Re-colour every page (admin + client).
-  revalidatePath("/", "layout");
-}

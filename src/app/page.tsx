@@ -17,6 +17,16 @@ const CATEGORY_LABEL: Record<string, string> = {
   Package: "Packages",
 };
 
+// Curated real braid photos for the gallery.
+const GALLERY = [
+  "1572954889228-2b12a55144d1",
+  "1658497730270-b5f4fef00ae1",
+  "1757866332825-42368c1105e8",
+  "1648010035195-6b0a56e14667",
+  "1614173968962-0e61c5ed196f",
+  "1572955304332-bf714bd49add",
+];
+
 const STEPS = [
   ["Pick a style", "Choose the braids you want from my list of services."],
   ["In-call or out-call", "Come to my studio, or I can come to your home."],
@@ -220,6 +230,54 @@ export default async function HomePage() {
           <div className="mt-10 text-center">
             <Link href="/book" className="btn-primary !px-8 !py-4 text-base">
               Start booking
+              <Icon name="arrowRight" size={18} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Signature looks — image-forward gallery */}
+      <section id="gallery" className="bg-charcoal py-20">
+        <div className="container-px">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="flex items-center justify-center gap-3">
+              <span className="h-px w-10 bg-gold/60" />
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold-light">
+                The Gallery
+              </p>
+              <span className="h-px w-10 bg-gold/60" />
+            </div>
+            <h2 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">
+              Signature looks
+            </h2>
+            <p className="mt-3 text-lavender-100">
+              A glimpse of the braids, twists and styles crafted for my clients.
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+            {GALLERY.map((id, i) => (
+              <div
+                key={id}
+                className={`group relative overflow-hidden rounded-2xl ${
+                  i === 0 ? "col-span-2 row-span-2 md:col-span-1 md:row-span-2" : ""
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=700&q=70`}
+                  alt="Braided hairstyle"
+                  loading="lazy"
+                  className="h-full min-h-[180px] w-full object-cover transition duration-500 group-hover:scale-105"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/60 to-transparent opacity-0 transition group-hover:opacity-100" />
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link href="/book" className="btn-gold !px-8 !py-4 text-base">
+              Book your look
               <Icon name="arrowRight" size={18} />
             </Link>
           </div>

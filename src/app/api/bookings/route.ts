@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
     },
     location: body.location,
     notes: body.notes || undefined,
+    deposit: body.deposit,
   });
 
   if (!result.ok) {

@@ -65,6 +65,14 @@ export const bookingSchema = z
       })
       .optional(),
     notes: z.string().trim().max(600).optional(),
+    // Optional M-Pesa deposit to secure the booking.
+    deposit: z
+      .object({
+        mpesaNumber: z.string().trim().max(20).optional(),
+        mpesaMessage: z.string().trim().max(400).optional(),
+        amountPaid: z.coerce.number().int().min(0).max(1_000_000).optional(),
+      })
+      .optional(),
     // Honeypot: real users never fill this. We let it pass validation and the
     // route silently drops any submission that filled it (stealthier than a 400).
     company: z.string().max(200).optional(),
@@ -122,6 +130,8 @@ export const settingsSchema = z.object({
   email: z.union([email, z.literal("")]),
   location: z.string().trim().max(200),
   outcallFeeKes: z.coerce.number().int().min(0).max(1_000_000),
+  mpesaNumber: z.string().trim().max(40),
+  depositPercent: z.coerce.number().int().min(0).max(100),
 });
 
 // ── Admin: blocked date ────────────────────────────────────────────

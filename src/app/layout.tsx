@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { getSettings } from "@/lib/booking";
-
-export const dynamic = "force-dynamic";
-
-const THEMES = ["purple", "pink", "blue", "orange"];
 
 export const metadata: Metadata = {
   title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
@@ -28,15 +23,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const settings = await getSettings();
-  const theme = THEMES.includes(settings.theme) ? settings.theme : "purple";
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

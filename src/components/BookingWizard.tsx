@@ -56,6 +56,8 @@ export default function BookingWizard({
   location,
   openDays,
   blockedDates,
+  mpesaNumber,
+  depositPercent,
 }: {
   services: Service[];
   initialServiceId?: string;
@@ -64,6 +66,8 @@ export default function BookingWizard({
   location: string;
   openDays: number[];
   blockedDates: string[];
+  mpesaNumber: string;
+  depositPercent: number;
 }) {
   const [step, setStep] = useState(0);
   const [serviceId, setServiceId] = useState<string | undefined>(initialServiceId);
@@ -89,6 +93,10 @@ export default function BookingWizard({
     travelNotes: "",
   });
   const [customer, setCustomer] = useState({ name: "", phone: "", email: "", notes: "" });
+  // Optional M-Pesa deposit details the client can paste to secure the booking.
+  const [mpesa, setMpesa] = useState({ number: "", message: "", amount: "" });
+  // Message shown when a client taps a time Magdalene is already booked for.
+  const [slotNotice, setSlotNotice] = useState<string | null>(null);
   // Honeypot: hidden from real users; bots tend to auto-fill it.
   const [company, setCompany] = useState("");
 
@@ -116,6 +124,7 @@ export default function BookingWizard({
     setLoadingAvail(true);
     setAvail(null);
     setStartMin(null);
+    setSlotNotice(null);
     fetch(`/api/availability?serviceId=${serviceId}&date=${date}`)
       .then((r) => r.json())
       .then((data) => {
@@ -162,6 +171,9 @@ export default function BookingWizard({
       `Phone: ${customer.phone}`,
       customer.email ? `Email: ${customer.email}` : "",
       customer.notes ? `Notes: ${customer.notes}` : "",
+      Number(mpesa.amount) > 0
+        ? `\nDeposit paid: ${formatKes(Number(mpesa.amount))} (M-Pesa ${mpesa.number})\nM-Pesa message: ${mpesa.message}`
+        : "\nNo deposit paid yet — please call the client to confirm.",
     ];
     if (serviceType === "OUTCALL") {
       lines.push(
@@ -213,6 +225,11 @@ export default function BookingWizard({
           },
           location: serviceType === "OUTCALL" ? loc : undefined,
           notes: customer.notes,
+          deposit: {
+            mpesaNumber: mpesa.number,
+            mpesaMessage: mpesa.message,
+            amountPaid: Number(mpesa.amount) || 0,
+          },
           company, // honeypot
         }),
       });
@@ -428,26 +445,36 @@ export default function BookingWizard({
               {!loadingAvail && avail && avail.open && !avail.dayFull && (
                 <>
                   {avail.bookableStarts.length === 0 ? (
-                    <p className="text-sm text-charcoal-muted">
-                      No remaining slots long enough for {service.name} on this day. Try
-                      another date.
-                    </p>
+                    <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 ring-1 ring-amber-200">
+                      Magdalene is fully booked on {prettyDate(date)}. Please choose
+                      another day on the calendar.
+                    </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                       {avail.grid.map((slot) => {
                         const canBook = bookable.has(slot.startMin);
+                        const taken = !canBook && (slot.status === "OCCUPIED" || slot.status === "PENDING");
                         const status = canBook ? "AVAILABLE" : slot.status;
                         const selected = startMin === slot.startMin;
                         return (
                           <button
                             key={slot.startMin}
-                            disabled={!canBook}
-                            onClick={() => setStartMin(slot.startMin)}
+                            disabled={!canBook && !taken}
+                            onClick={() => {
+                              if (canBook) {
+                                setStartMin(slot.startMin);
+                                setSlotNotice(null);
+                              } else if (taken) {
+                                setSlotNotice(
+                                  `Magdalene is already booked at ${slot.label} on ${prettyDate(date)}. Please pick a free (green) time below, or choose another day.`
+                                );
+                              }
+                            }}
                             className={`rounded-xl px-2 py-2.5 text-xs font-semibold ring-1 transition ${
                               selected
                                 ? "bg-royal-600 text-white ring-royal-600 shadow-soft"
                                 : STATUS_STYLE[status] || STATUS_STYLE.CLOSED
-                            } ${canBook ? "cursor-pointer hover:ring-2 hover:ring-royal-400" : "cursor-not-allowed"}`}
+                            } ${canBook ? "cursor-pointer hover:ring-2 hover:ring-royal-400" : taken ? "cursor-pointer" : "cursor-not-allowed"}`}
                           >
                             {slot.label}
                           </button>
@@ -455,6 +482,30 @@ export default function BookingWizard({
                       })}
                     </div>
                   )}
+
+                  {slotNotice && (
+                    <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+                      {slotNotice}
+                      {avail.bookableStarts.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span className="text-red-700/80">Free times:</span>
+                          {avail.bookableStarts.slice(0, 6).map((m) => (
+                            <button
+                              key={m}
+                              onClick={() => {
+                                setStartMin(m);
+                                setSlotNotice(null);
+                              }}
+                              className="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-200"
+                            >
+                              {minutesToLabel(m)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {startMin != null && (
                     <p className="mt-4 rounded-xl bg-royal-50 px-4 py-3 text-sm text-royal-700">
                       Selected: <strong>{minutesToLabel(startMin)}</strong> to{" "}
@@ -601,6 +652,60 @@ export default function BookingWizard({
                 </p>
               )}
 
+              {/* Deposit / M-Pesa — recommended, optional */}
+              <div className="mt-4 overflow-hidden rounded-2xl border border-gold/40 bg-white shadow-card">
+                <div className="flex items-center justify-between gap-3 bg-gold-sheen px-5 py-3">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-royal-900/80">
+                      Secure your slot
+                    </p>
+                    <p className="font-display text-lg font-bold text-royal-900">
+                      Pay {depositPercent}% deposit ·{" "}
+                      {formatKes(Math.round((priceFor(service, serviceType) * depositPercent) / 100))}
+                    </p>
+                  </div>
+                  <Icon name="sparkle" size={26} className="text-royal-900/70" />
+                </div>
+                <div className="p-5">
+                  <p className="text-sm text-charcoal-soft">
+                    To hold your appointment, send the deposit to{" "}
+                    <strong className="text-royal-700">M-Pesa {mpesaNumber || salonPhone}</strong>{" "}
+                    then paste your confirmation below. This is recommended but optional —
+                    Magdalene will still call or message you to confirm.
+                  </p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <Field label="Your M-Pesa number">
+                      <input
+                        className="input"
+                        value={mpesa.number}
+                        onChange={(e) => setMpesa({ ...mpesa, number: e.target.value })}
+                        placeholder="07XX XXX XXX"
+                      />
+                    </Field>
+                    <Field label="Amount paid (KES)">
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        value={mpesa.amount}
+                        onChange={(e) => setMpesa({ ...mpesa, amount: e.target.value })}
+                        placeholder="e.g. 500"
+                      />
+                    </Field>
+                    <div className="sm:col-span-2">
+                      <Field label="Paste the M-Pesa confirmation message">
+                        <textarea
+                          className="input min-h-[70px]"
+                          value={mpesa.message}
+                          onChange={(e) => setMpesa({ ...mpesa, message: e.target.value })}
+                          placeholder="e.g. TAB1234XYZ Confirmed. Ksh500.00 sent to..."
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {error && (
                 <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
                   {error}
@@ -619,43 +724,64 @@ export default function BookingWizard({
 
         {/* ── Step 5: Done ────────────────────────────────── */}
         {step === 5 && service && startMin != null && (
-          <div className="card mx-auto max-w-lg p-8 text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-600">
-              <Icon name="checkCircle" size={36} />
-            </div>
-            <h2 className="mt-5 font-display text-2xl font-bold text-charcoal">
-              Your booking is in
-            </h2>
-            <p className="mt-2 text-charcoal-muted">
-              Thank you {customer.name.split(" ")[0]}. I have reserved your slot and I
-              will confirm with you on WhatsApp shortly.
-            </p>
-
-            <div className="mt-6 rounded-xl bg-lavender-50 p-5 text-left text-sm">
-              <Row k="Service" v={service.name} />
-              <Row k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
-              <Row k="Type" v={serviceType === "OUTCALL" ? "Out-call" : "In-call"} />
-              <Row k="Price" v={formatKes(priceFor(service, serviceType))} />
+          <div className="mx-auto max-w-lg overflow-hidden rounded-3xl border border-gold/30 bg-white shadow-soft">
+            <div className="bg-royal-gradient px-8 py-10 text-center text-white">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/15 text-gold-light ring-2 ring-gold/50">
+                <Icon name="checkCircle" size={36} />
+              </div>
+              <h2 className="mt-5 font-display text-2xl font-bold">
+                Thank you, {customer.name.split(" ")[0]} 💜
+              </h2>
+              <p className="mt-2 text-sm text-lavender-100">
+                Your booking request has been received.
+              </p>
             </div>
 
-            <p className="mt-5 text-xs text-charcoal-muted">
-              Need to change something? Message me on {salonPhone}.
-            </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <Link href="/" className="btn-outline">
-                Back to home
-              </Link>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setStep(0);
-                  setServiceId(undefined);
-                  setStartMin(null);
-                  setCustomer({ name: "", phone: "", email: "", notes: "" });
-                }}
+            <div className="p-8 text-center">
+              <p className="text-charcoal-soft">
+                {Number(mpesa.amount) > 0
+                  ? "Magdalene will personally call or message you on WhatsApp to confirm your appointment and your deposit."
+                  : "Magdalene will personally call or message you on WhatsApp to confirm your appointment and talk you through the deposit."}
+              </p>
+
+              <div className="mt-6 rounded-2xl bg-lavender-50 p-5 text-left text-sm">
+                <Row k="Service" v={service.name} />
+                <Row k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
+                <Row k="Type" v={serviceType === "OUTCALL" ? "Out-call" : "In-call"} />
+                <Row k="Price" v={formatKes(priceFor(service, serviceType))} />
+                {Number(mpesa.amount) > 0 && (
+                  <Row k="Deposit paid" v={formatKes(Number(mpesa.amount))} />
+                )}
+              </div>
+
+              <a
+                href={`https://wa.me/${salonPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                  `Hi Magdalene, I just booked ${service.name} for ${prettyDate(date)} at ${minutesToLabel(startMin)}.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-primary mt-6 w-full"
               >
-                Book another
-              </button>
+                <Icon name="whatsapp" size={18} /> Message Magdalene now
+              </a>
+
+              <div className="mt-3 flex justify-center gap-3">
+                <Link href="/" className="btn-ghost">
+                  Back to home
+                </Link>
+                <button
+                  className="btn-outline"
+                  onClick={() => {
+                    setStep(0);
+                    setServiceId(undefined);
+                    setStartMin(null);
+                    setCustomer({ name: "", phone: "", email: "", notes: "" });
+                    setMpesa({ number: "", message: "", amount: "" });
+                  }}
+                >
+                  Book another
+                </button>
+              </div>
             </div>
           </div>
         )}

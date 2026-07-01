@@ -11,6 +11,8 @@ interface SettingsValues {
   email: string;
   location: string;
   outcallFeeKes: number;
+  mpesaNumber: string;
+  depositPercent: number;
 }
 
 function SaveButton() {
@@ -52,6 +54,14 @@ export default function SettingsForm({ settings }: { settings: SettingsValues })
       <label className="block">
         <span className="label">Out-call travel fee (KES)</span>
         <input name="outcallFeeKes" type="number" min={0} defaultValue={settings.outcallFeeKes} className="input" />
+      </label>
+      <label className="block">
+        <span className="label">M-Pesa number (for deposits)</span>
+        <input name="mpesaNumber" defaultValue={settings.mpesaNumber} className="input" placeholder="07XX XXX XXX" />
+      </label>
+      <label className="block">
+        <span className="label">Deposit percent (%)</span>
+        <input name="depositPercent" type="number" min={0} max={100} defaultValue={settings.depositPercent} className="input" />
       </label>
       <label className="block sm:col-span-2">
         <span className="label">Location / address</span>

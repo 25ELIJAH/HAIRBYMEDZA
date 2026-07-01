@@ -24,6 +24,8 @@ export async function getSettings() {
       location: process.env.SALON_LOCATION || "",
       outcallFeeKes: 0,
       theme: "purple",
+      mpesaNumber: (process.env.WHATSAPP_NUMBER || "").replace(/^\+?254/, "0"),
+      depositPercent: 50,
     }
   );
 }
@@ -108,6 +110,11 @@ export interface CreateBookingInput {
     travelNotes?: string;
   };
   notes?: string;
+  deposit?: {
+    mpesaNumber?: string;
+    mpesaMessage?: string;
+    amountPaid?: number;
+  };
 }
 
 export type CreateBookingResult =
@@ -182,13 +189,16 @@ export async function createBooking(
           bufferMin: service.bufferMin,
           serviceType: input.serviceType,
           status: "PENDING",
-          paymentStatus: "UNPAID",
+          paymentStatus: (input.deposit?.amountPaid || 0) > 0 ? "PARTIAL" : "UNPAID",
           // Out-call costs more than in-call. Price is decided here on the
           // server so the client can never set it.
           priceKes:
             input.serviceType === "OUTCALL"
               ? service.outCallPriceKes
               : service.priceKes,
+          amountPaid: input.deposit?.amountPaid || 0,
+          mpesaNumber: input.deposit?.mpesaNumber || null,
+          mpesaMessage: input.deposit?.mpesaMessage || null,
           estate: input.location?.estate,
           houseNumber: input.location?.houseNumber,
           mapsPin: input.location?.mapsPin,

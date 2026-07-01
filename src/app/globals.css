@@ -2,59 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Brand themes ──────────────────────────────────────────────────────
-   Each theme sets the brand colour scale (--r-50 .. --r-900) as "R G B"
-   triplets. Switching the data-theme attribute on <html> re-colours the
-   entire site (admin + client) instantly. Purple is the default. */
-:root,
-[data-theme="purple"] {
+/* ── Brand palette (fixed) ─────────────────────────────────────────────
+   One royal purple + gold identity that reads as luxury. Colours are exposed
+   as "R G B" triplets so Tailwind's royal/lavender scales resolve from them. */
+:root {
   color-scheme: light;
   --r-50: 247 238 254;
   --r-100: 238 218 253;
   --r-200: 220 180 251;
   --r-300: 197 133 246;
-  --r-400: 169 69 236;
-  --r-500: 138 24 219;
-  --r-600: 106 13 173;
-  --r-700: 86 10 141;
-  --r-800: 67 8 112;
-  --r-900: 44 4 80;
-}
-[data-theme="pink"] {
-  --r-50: 253 242 248;
-  --r-100: 252 231 243;
-  --r-200: 251 207 232;
-  --r-300: 249 168 212;
-  --r-400: 244 114 182;
-  --r-500: 236 72 153;
-  --r-600: 219 39 119;
-  --r-700: 190 24 93;
-  --r-800: 157 23 77;
-  --r-900: 131 24 67;
-}
-[data-theme="blue"] {
-  --r-50: 239 246 255;
-  --r-100: 219 234 254;
-  --r-200: 191 219 254;
-  --r-300: 147 197 253;
-  --r-400: 96 165 250;
-  --r-500: 59 130 246;
-  --r-600: 37 99 235;
-  --r-700: 29 78 216;
-  --r-800: 30 64 175;
-  --r-900: 30 58 138;
-}
-[data-theme="orange"] {
-  --r-50: 255 247 237;
-  --r-100: 255 237 213;
-  --r-200: 254 215 170;
-  --r-300: 253 186 116;
-  --r-400: 251 146 60;
-  --r-500: 249 115 22;
-  --r-600: 234 88 12;
-  --r-700: 194 65 12;
-  --r-800: 154 52 18;
-  --r-900: 124 45 18;
+  --r-400: 158 60 224;
+  --r-500: 124 24 200;
+  --r-600: 91 12 158;
+  --r-700: 71 9 128;
+  --r-800: 52 7 98;
+  --r-900: 33 4 66;
 }
 
 html {

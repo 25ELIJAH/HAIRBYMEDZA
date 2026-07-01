@@ -9,6 +9,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "owner@example.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "change-me";
 const SALON_NAME = process.env.SALON_NAME || "Magdalene Medza";
 const SALON_PHONE = process.env.WHATSAPP_NUMBER || "";
+const MPESA_NUMBER = process.env.MPESA_NUMBER || (process.env.WHATSAPP_NUMBER || "").replace(/^\+?254/, "0").replace(/\s/g, "");
 const SALON_EMAIL = process.env.OWNER_EMAIL || "";
 const SALON_LOCATION = process.env.SALON_LOCATION || "";
 
@@ -145,6 +146,7 @@ async function main() {
       phone: SALON_PHONE,
       email: SALON_EMAIL,
       location: SALON_LOCATION,
+      mpesaNumber: MPESA_NUMBER,
     },
     create: {
       id: 1,
@@ -155,6 +157,8 @@ async function main() {
       email: SALON_EMAIL,
       location: SALON_LOCATION,
       outcallFeeKes: 0,
+      mpesaNumber: MPESA_NUMBER,
+      depositPercent: 50,
     },
   });
 

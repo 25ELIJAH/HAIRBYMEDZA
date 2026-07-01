@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { addBlockedDate, removeBlockedDate } from "@/lib/admin-actions";
 import { getSettings } from "@/lib/booking";
 import SettingsForm from "@/components/SettingsForm";
-import ThemePicker from "@/components/ThemePicker";
 import WorkingHoursForm from "@/components/WorkingHoursForm";
 import { prettyDate } from "@/lib/time";
 
@@ -80,15 +79,6 @@ export default async function AvailabilityPage() {
         )}
       </section>
 
-      {/* Theme colour */}
-      <section className="card p-5">
-        <h2 className="mb-1 font-display text-lg font-semibold">Theme colour</h2>
-        <p className="mb-4 text-sm text-charcoal-muted">
-          Pick the colour for your whole booking system.
-        </p>
-        <ThemePicker current={settings.theme} />
-      </section>
-
       {/* Booking rules & contact */}
       <section className="card p-5">
         <h2 className="mb-4 font-display text-lg font-semibold">Booking rules & business info</h2>
@@ -101,6 +91,8 @@ export default async function AvailabilityPage() {
             email: settings.email,
             location: settings.location,
             outcallFeeKes: settings.outcallFeeKes,
+            mpesaNumber: settings.mpesaNumber,
+            depositPercent: settings.depositPercent,
           }}
         />
       </section>

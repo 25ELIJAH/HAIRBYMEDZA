@@ -19,6 +19,9 @@ export interface ApptData {
   paymentStatus: string;
   serviceType: string;
   priceKes: number;
+  amountPaid: number;
+  mpesaNumber: string | null;
+  mpesaMessage: string | null;
   notes: string | null;
   estate: string | null;
   houseNumber: string | null;
@@ -103,6 +106,20 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
 
       {open && (
         <div className="mt-4 space-y-4 border-t border-black/5 pt-4 text-sm">
+          {/* Deposit / M-Pesa */}
+          {(appt.amountPaid > 0 || appt.mpesaNumber || appt.mpesaMessage) && (
+            <div className="rounded-xl bg-gold/10 p-3 ring-1 ring-gold/30">
+              <p className="mb-1 font-semibold text-royal-700">Deposit / M-Pesa</p>
+              <p className="text-charcoal-soft">
+                Paid: <strong>{formatKes(appt.amountPaid)}</strong> of {formatKes(appt.priceKes)}
+                {appt.mpesaNumber ? ` · from ${appt.mpesaNumber}` : ""}
+              </p>
+              {appt.mpesaMessage && (
+                <p className="mt-1 break-words text-charcoal-muted">“{appt.mpesaMessage}”</p>
+              )}
+            </div>
+          )}
+
           {appt.serviceType === "OUTCALL" && (
             <div className="rounded-xl bg-lavender-50 p-3">
               <p className="mb-1 inline-flex items-center gap-1.5 font-semibold text-royal-700">

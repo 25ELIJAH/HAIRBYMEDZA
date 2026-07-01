@@ -74,6 +74,11 @@ model Appointment {
   paymentStatus String   @default("UNPAID") // UNPAID | PAID | PARTIAL | REFUND
   priceKes      Int
 
+  // Deposit / M-Pesa (client pays ~half to secure the booking)
+  amountPaid   Int     @default(0)
+  mpesaNumber  String? // the number the client paid from
+  mpesaMessage String? // the M-Pesa confirmation text they pasted
+
   // Out-call location details
   estate      String?
   houseNumber String?
@@ -119,5 +124,7 @@ model Settings {
   email           String @default("hello@magdalenemedz.co.ke")
   location        String @default("Kilimani, Nairobi")
   outcallFeeKes   Int    @default(500)
-  theme           String @default("purple") // purple | pink | blue | orange
+  theme           String @default("purple") // fixed royal theme (kept for compatibility)
+  mpesaNumber     String @default("") // owner's M-Pesa number/till to receive deposits
+  depositPercent  Int    @default(50) // % of price advised as deposit
 }
