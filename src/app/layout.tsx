@@ -19,8 +19,8 @@ const jost = Jost({
 export const metadata: Metadata = {
   title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/logo.jpg",
+    apple: "/logo.jpg",
   },
   description:
     "Magdalene Medza, premium hair braiding in Nairobi. Knotless, lemonade, cornrows, makeba, brazilian and more. Studio visits or I come to you. Book your appointment online.",
