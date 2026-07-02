@@ -3,8 +3,9 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { put } from "@vercel/blob";
-import { getSession, ADMIN_ROLES } from "@/lib/auth";
+import { getVerifiedAdmin } from "@/lib/auth";
 import { guard } from "@/lib/rate-limit";
+import { requireSameOrigin } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,14 @@ const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 //    which persists across deploys and serverless invocations.
 //  • Locally it falls back to public/uploads so dev still works without a token.
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const blocked = guard(req, "upload", 30, 5 * 60 * 1000);
   if (blocked) return blocked;
 
-  const session = await getSession();
-  if (!session || !ADMIN_ROLES.includes(session.role)) {
+  const session = await getVerifiedAdmin();
+  if (!session) {
     return NextResponse.json({ error: "Not authorised" }, { status: 401 });
   }
 

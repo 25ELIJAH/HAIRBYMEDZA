@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logoutAction } from "@/lib/admin-actions";
+import { logoutAction, revokeAllSessions } from "@/lib/admin-actions";
 import Icon, { IconName } from "./Icon";
 import LogoMark from "./LogoMark";
 
@@ -72,6 +72,11 @@ export default function AdminSidebar({ name }: { name: string }) {
         <form action={logoutAction}>
           <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-lavender-100 hover:bg-white/10">
             <Icon name="logout" size={16} /> Sign out
+          </button>
+        </form>
+        <form action={revokeAllSessions}>
+          <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-lavender-200/80 hover:bg-white/10">
+            <Icon name="shield" size={14} /> Sign out of all devices
           </button>
         </form>
       </div>

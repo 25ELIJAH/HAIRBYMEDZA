@@ -65,7 +65,9 @@ export async function middleware(req: NextRequest) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/login";
       url.searchParams.set("from", pathname);
-      return NextResponse.redirect(url);
+      const redirect = NextResponse.redirect(url);
+      redirect.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+      return redirect;
     }
   }
 
@@ -76,6 +78,10 @@ export async function middleware(req: NextRequest) {
 
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("Content-Security-Policy", csp);
+  // Keep the admin area and APIs out of search indexes.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api")) {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  }
   return res;
 }
 

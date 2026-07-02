@@ -94,12 +94,17 @@ model Appointment {
 }
 
 model AdminUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   name         String
   passwordHash String
-  role         String   @default("OWNER")
-  createdAt    DateTime @default(now())
+  role         String    @default("OWNER")
+  createdAt    DateTime  @default(now())
+  // Security: brute-force lockout + session revocation
+  tokenVersion Int       @default(0) // bump to invalidate all existing sessions
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  lastLoginAt  DateTime?
 }
 
 // Stub notification log — every email/WhatsApp message is recorded here.

@@ -3,11 +3,16 @@ import { createBooking, getSettings } from "@/lib/booking";
 import { prisma } from "@/lib/prisma";
 import { notifyBookingConfirmed } from "@/lib/notifications";
 import { guard } from "@/lib/rate-limit";
+import { requireSameOrigin } from "@/lib/security";
 import { bookingSchema, firstError } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  // Reject cross-site posts (CSRF / scripted abuse from other origins).
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   // Throttle: max 8 booking attempts per IP per 5 minutes.
   const blocked = guard(req, "book", 8, 5 * 60 * 1000);
   if (blocked) return blocked;

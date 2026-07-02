@@ -4,8 +4,24 @@ This document summarises the security controls in the Magdalene Medza booking
 system and the recommended steps before going to production.
 
 > Note on stack: this app uses a **custom bcrypt + JWT (jose) session in an
-> httpOnly cookie** for the single admin account, and **Prisma + SQLite**. It
-> does **not** use NextAuth. Bookings are anonymous (no customer accounts).
+> httpOnly cookie** for the single admin account, and **Prisma + Postgres (Neon)**.
+> It does **not** use NextAuth. Bookings are anonymous (no customer accounts).
+
+## Recent hardening
+- **Framework patched** to Next.js 14.2.35 (closes the flagged advisory).
+- **Persistent account lockout**: 5 failed logins locks the account for 15
+  minutes, tracked in the database (survives serverless cold starts).
+- **Session revocation**: each admin has a `tokenVersion` embedded in the JWT.
+  "Sign out of all devices" bumps it, instantly invalidating every session.
+- **DB-verified admin**: admin pages, actions and the upload API re-check the
+  account against the database (exists, admin role, not locked, not revoked).
+- **CSRF**: JSON APIs (`/api/bookings`, `/api/admin/upload`) reject requests that
+  are not same-origin. Server Actions already have built-in CSRF protection.
+- **Hardened headers**: `X-Frame-Options: DENY`, `Cross-Origin-Opener-Policy`,
+  `Cross-Origin-Resource-Policy: same-site`, `X-Permitted-Cross-Domain-Policies:
+  none`, an expanded `Permissions-Policy`, plus the existing nonce CSP + HSTS.
+- **Shorter session lifetime** (2 days) and `robots.txt` + `X-Robots-Tag` keeping
+  the admin area out of search indexes. `/.well-known/security.txt` added.
 
 ## What is implemented
 

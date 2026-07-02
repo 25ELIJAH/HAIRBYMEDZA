@@ -7,11 +7,10 @@ import { prisma } from "./prisma";
 import {
   clearSessionCookie,
   createSessionToken,
-  getSession,
+  getVerifiedAdmin,
   setSessionCookie,
 } from "./auth";
 import { headers } from "next/headers";
-import { ADMIN_ROLES } from "./auth";
 import { getSettings } from "./booking";
 import { notifyStatusChange } from "./notifications";
 import { rateLimit } from "./rate-limit";
@@ -22,12 +21,14 @@ import {
   settingsSchema,
 } from "./validation";
 
-// Every admin action funnels through here: a valid session AND an allowed role.
+const MAX_FAILED = 5; // failed attempts before lockout
+const LOCK_MINUTES = 15;
+
+// Every admin action funnels through here: verified against the database
+// (exists, admin role, not locked, session not revoked).
 async function requireAdmin() {
-  const session = await getSession();
-  if (!session || !ADMIN_ROLES.includes(session.role)) {
-    throw new Error("Not authorised");
-  }
+  const session = await getVerifiedAdmin();
+  if (!session) throw new Error("Not authorised");
   return session;
 }
 
@@ -48,27 +49,63 @@ export async function loginAction(_prev: unknown, formData: FormData) {
   }
   const { email, password } = parsed.data;
 
-  // Throttle brute-force by both account AND source IP.
-  const byEmail = rateLimit(`login:${email}`, 6, 10 * 60 * 1000);
-  const byIp = rateLimit(`login-ip:${requestIp()}`, 20, 10 * 60 * 1000);
+  // Fast in-memory throttle (best effort) + persistent DB lockout below.
+  const byEmail = rateLimit(`login:${email}`, 8, 10 * 60 * 1000);
+  const byIp = rateLimit(`login-ip:${requestIp()}`, 25, 10 * 60 * 1000);
   if (!byEmail.ok || !byIp.ok) {
     return { error: "Too many attempts. Please wait a few minutes and try again." };
   }
 
   const user = await prisma.adminUser.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    // Identical message + path for both cases avoids user enumeration.
+
+  // Persistent account lockout (survives serverless cold starts).
+  if (user?.lockedUntil && user.lockedUntil > new Date()) {
+    return { error: "Too many failed attempts. This account is locked. Try again later." };
+  }
+
+  const ok = user ? await bcrypt.compare(password, user.passwordHash) : false;
+  if (!user || !ok) {
+    if (user) {
+      const failed = user.failedLogins + 1;
+      await prisma.adminUser.update({
+        where: { id: user.id },
+        data: {
+          failedLogins: failed,
+          lockedUntil:
+            failed >= MAX_FAILED ? new Date(Date.now() + LOCK_MINUTES * 60_000) : null,
+        },
+      });
+    }
+    // Identical message for both cases avoids user enumeration.
     return { error: "Invalid email or password." };
   }
+
+  // Success: clear counters, stamp login time.
+  await prisma.adminUser.update({
+    where: { id: user.id },
+    data: { failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() },
+  });
 
   const token = await createSessionToken({
     sub: user.id,
     name: user.name,
     email: user.email,
     role: user.role,
+    tv: user.tokenVersion,
   });
   await setSessionCookie(token);
   redirect("/admin");
+}
+
+// Signs out of every device by bumping the token version (revokes all sessions).
+export async function revokeAllSessions() {
+  const session = await requireAdmin();
+  await prisma.adminUser.update({
+    where: { id: session.sub },
+    data: { tokenVersion: { increment: 1 } },
+  });
+  clearSessionCookie();
+  redirect("/admin/login");
 }
 
 export async function logoutAction() {

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import AdminSidebar from "@/components/AdminSidebar";
-import { getSession } from "@/lib/auth";
+import { getVerifiedAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  // Verified against the database: exists, admin role, not locked, not revoked.
+  const session = await getVerifiedAdmin();
   if (!session) redirect("/admin/login");
 
   return (
