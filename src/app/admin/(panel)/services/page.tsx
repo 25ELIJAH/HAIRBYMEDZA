@@ -28,8 +28,15 @@ function ServiceForm({ service }: { service?: ServiceRow }) {
         <input name="outCallPriceKes" type="number" min={0} defaultValue={service?.outCallPriceKes ?? 3000} className="input" />
       </label>
       <label className="block">
-        <span className="label">Category</span>
-        <input name="category" defaultValue={service?.category ?? "Kids"} className="input" />
+        <span className="label">Category (group on the site)</span>
+        <select name="category" defaultValue={service?.category ?? "Kids"} className="input">
+          <option value="Kids">Kids</option>
+          <option value="Teen">Teen</option>
+          <option value="Package">Package</option>
+          {service && !["Kids", "Teen", "Package"].includes(service.category) && (
+            <option value={service.category}>{service.category}</option>
+          )}
+        </select>
       </label>
       <label className="block">
         <span className="label">Duration (minutes)</span>

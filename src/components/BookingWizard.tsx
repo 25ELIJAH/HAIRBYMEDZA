@@ -256,6 +256,14 @@ export default function BookingWizard({
     }
   }
 
+  // Known groups first, then any other categories, so every service shows.
+  const categories = [
+    ...CATEGORY_ORDER.filter((c) => services.some((s) => s.category === c)),
+    ...Array.from(new Set(services.map((s) => s.category)))
+      .filter((c) => !CATEGORY_ORDER.includes(c))
+      .sort(),
+  ];
+
   return (
     <div className="mx-auto max-w-4xl">
       {/* Progress */}
@@ -266,7 +274,7 @@ export default function BookingWizard({
         {step === 0 && (
           <Section title="Choose your style" subtitle="Pick the service you'd like to book.">
             <div className="space-y-10">
-              {CATEGORY_ORDER.filter((cat) => services.some((s) => s.category === cat)).map(
+              {categories.map(
                 (cat) => (
                   <div key={cat}>
                     <h3 className="mb-4 font-display text-lg font-semibold text-charcoal">

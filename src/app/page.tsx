@@ -44,6 +44,16 @@ export default async function HomePage() {
   const mapsQuery = encodeURIComponent(settings.location);
   const studio = settings.location.split(",")[0];
 
+  // Show the known groups first, then any other categories the admin created,
+  // so a newly added service always appears no matter its category name.
+  const categories = [
+    ...CATEGORY_ORDER.filter((c) => services.some((s) => s.category === c)),
+    ...Array.from(new Set(services.map((s) => s.category)))
+      .filter((c) => !CATEGORY_ORDER.includes(c))
+      .sort(),
+  ];
+  const labelFor = (cat: string) => CATEGORY_LABEL[cat] || cat;
+
   const catMin = (cat: string) => {
     const prices = services.filter((s) => s.category === cat).map((s) => s.priceKes);
     return prices.length ? Math.min(...prices) : null;
@@ -175,11 +185,11 @@ export default async function HomePage() {
           </p>
         </Reveal>
 
-        {CATEGORY_ORDER.filter((cat) => services.some((s) => s.category === cat)).map((cat) => (
+        {categories.map((cat) => (
           <div key={cat} className="mt-16">
             <Reveal className="mb-7 flex items-center gap-4">
               <h3 className="font-display text-2xl font-semibold text-royal-800">
-                {CATEGORY_LABEL[cat]}
+                {labelFor(cat)}
               </h3>
               <span className="h-px flex-1 bg-charcoal/10" />
             </Reveal>
