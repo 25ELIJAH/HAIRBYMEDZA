@@ -103,6 +103,15 @@ h1, h2, h3, h4 {
   animation: fade-up 0.35s ease-out both;
 }
 
+/* Slow, small bob for the hero price card. */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 @keyframes shimmer {
   0% { background-position: 150% 0; }
   100% { background-position: -50% 0; }
@@ -122,5 +131,5 @@ h1, h2, h3, h4 {
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
-  .animate-fade-up, .skeleton { animation: none; }
+  .animate-fade-up, .animate-float, .skeleton, .animate-ping { animation: none; }
 }

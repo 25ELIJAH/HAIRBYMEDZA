@@ -27,21 +27,24 @@ export default function ServiceCard({
 
   return (
     <article
-      className={`flex flex-col overflow-hidden rounded-xl border bg-white transition-colors ${
-        selected ? "border-royal-600 ring-1 ring-royal-600" : "border-gray-200 hover:border-gray-300"
+      className={`flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
+        selected
+          ? "border-royal-600 ring-1 ring-royal-600"
+          : "border-gray-200 hover:-translate-y-1 hover:border-royal-200 hover:shadow-soft"
       }`}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+      {/* The whole photo is shown at its natural shape, never cropped. */}
+      <div className="bg-gray-50">
         {service.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={service.imageUrl}
             alt={service.name}
-            className="h-full w-full object-cover object-top"
+            className="block h-auto w-full"
             loading="lazy"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center font-display text-4xl text-gray-300">
+          <div className="grid aspect-[4/3] w-full place-items-center font-display text-4xl text-gray-300">
             M
           </div>
         )}

@@ -4,11 +4,9 @@ import Icon from "./Icon";
 
 export default function SiteFooter({
   phone,
-  location,
   devWhatsapp,
 }: {
   phone: string;
-  location: string;
   devWhatsapp: string;
 }) {
   const waNumber = phone.replace(/[^0-9]/g, "");
@@ -42,10 +40,6 @@ export default function SiteFooter({
                 <Icon name="whatsapp" size={18} />
                 {phone}
               </a>
-            </li>
-            <li className="inline-flex items-start gap-2">
-              <Icon name="pin" size={18} />
-              <span>{location}</span>
             </li>
           </ul>
         </div>

@@ -13,12 +13,6 @@ export default function SiteHeader() {
           <Link href="/#how" className="hover:text-royal-700">
             How it works
           </Link>
-          <Link href="/#gallery" className="hover:text-royal-700">
-            Gallery
-          </Link>
-          <Link href="/#location" className="hover:text-royal-700">
-            Location
-          </Link>
         </nav>
         <Link href="/book" className="btn-primary !px-4 !py-2.5">
           Book now
