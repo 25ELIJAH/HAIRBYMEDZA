@@ -14,21 +14,23 @@ export default function Loading() {
           <Skeleton className="h-10 w-28 !rounded-lg" />
         </div>
       </div>
-      <div className="container-px grid items-center gap-10 py-14 lg:grid-cols-2 lg:py-20">
-        <div className="space-y-4">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-10 w-full max-w-md" />
-          <Skeleton className="h-10 w-3/4 max-w-sm" />
-          <Skeleton className="h-4 w-full max-w-lg" />
-          <Skeleton className="h-4 w-5/6 max-w-md" />
-          <div className="flex gap-3 pt-4">
-            <Skeleton className="h-12 w-44 !rounded-lg" />
-            <Skeleton className="h-12 w-36 !rounded-lg" />
+      <div className="relative">
+        <Skeleton className="absolute inset-0 !rounded-none" />
+        <div className="container-px relative flex min-h-[80vh] items-center py-16">
+          <div className="w-full max-w-xl space-y-4">
+            <Skeleton className="h-6 w-40 !rounded-full !bg-white/70" />
+            <Skeleton className="h-12 w-full !bg-white/70" />
+            <Skeleton className="h-12 w-3/4 !bg-white/70" />
+            <Skeleton className="h-4 w-full !bg-white/70" />
+            <Skeleton className="h-4 w-5/6 !bg-white/70" />
+            <div className="flex gap-3 pt-4">
+              <Skeleton className="h-12 w-44 !rounded-lg !bg-white/70" />
+              <Skeleton className="h-12 w-32 !rounded-lg !bg-white/70" />
+            </div>
           </div>
         </div>
-        <Skeleton className="aspect-[4/3] w-full !rounded-2xl" />
       </div>
-      <div className="container-px grid gap-6 pb-16 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="container-px mt-10 grid gap-6 pb-16 sm:grid-cols-2 lg:grid-cols-3">
         <ServiceCardSkeleton />
         <ServiceCardSkeleton />
         <ServiceCardSkeleton />

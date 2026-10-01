@@ -3,7 +3,7 @@ import type { Config } from "tailwindcss";
 // Hair by Medza palette: one calm blue on white, with neutral greys for text.
 //   Primary  Blue   #2152B2 (royal-600)
 //   Surface  White  #FFFFFF, soft grey #F6F8FB
-//   Text     Ink    #111827, muted #6B7280
+//   Text     Black  #0B0B0F (all body text stays black)
 // The legacy names (royal / lavender / gold / cream / charcoal) are kept so
 // existing markup keeps working; they all resolve to the blue + grey system.
 const config: Config = {
@@ -39,10 +39,11 @@ const config: Config = {
           light: "rgb(var(--r-100) / <alpha-value>)",
           dark: "rgb(var(--r-700) / <alpha-value>)",
         },
+        // Text stays black; "soft" and "muted" are only a shade lighter.
         charcoal: {
-          DEFAULT: "#111827",
-          soft: "#374151",
-          muted: "#6b7280",
+          DEFAULT: "#0b0b0f",
+          soft: "#16161d",
+          muted: "#2a2a33",
         },
         cream: {
           DEFAULT: "#ffffff",
