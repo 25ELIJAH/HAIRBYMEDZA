@@ -40,8 +40,9 @@ system and the recommended steps before going to production.
 - Admin passwords are hashed with **bcrypt**; plaintext is never stored.
 - Session is a signed **JWT (HS256)** stored in an **httpOnly, SameSite=Lax,
   Secure-in-production** cookie. JavaScript cannot read it (mitigates XSS token theft).
-- `AUTH_SECRET` is validated at boot: the app **refuses to start in production**
-  with a missing/short secret.
+- `AUTH_SECRET` is validated at runtime: in production, admin code **refuses to
+  load** with a missing/short secret (checked outside the build phase so
+  preview builds without secrets still complete).
 - **Middleware** (`src/middleware.ts`) protects `/admin/*` and `/api/admin/*`,
   verifying the JWT signature **and** that the role is in `OWNER`/`ADMIN`.
 - Every admin Server Action also calls `requireAdmin()` (defence in depth — a

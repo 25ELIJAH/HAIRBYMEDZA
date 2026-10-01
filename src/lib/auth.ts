@@ -11,7 +11,11 @@ const COOKIE_NAME = "medz_admin";
 // Resolve and validate the signing secret. A weak/missing secret means anyone
 // could forge an admin session, so we refuse to run with one in production.
 const rawSecret = process.env.AUTH_SECRET || "";
-if (process.env.NODE_ENV === "production" && rawSecret.length < 32) {
+// Enforced when the app runs, not while `next build` collects page data, so a
+// build (e.g. a Vercel preview without secrets) can finish. A running server
+// with a weak secret still refuses to load any admin code.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+if (process.env.NODE_ENV === "production" && !isBuildPhase && rawSecret.length < 32) {
   throw new Error(
     "AUTH_SECRET is missing or too short. Set a random 32+ character secret " +
       "before running in production (e.g. `openssl rand -base64 48`)."

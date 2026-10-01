@@ -74,8 +74,11 @@ Push to `main` (or click **Redeploy** in Vercel). The build runs
 ---
 
 ### Notes
-- The app **refuses to build** if `AUTH_SECRET` is missing/short in production —
-  that's intentional. Set it (step 4) and the build succeeds.
+- The admin area **refuses to run** if `AUTH_SECRET` is missing/short in
+  production — that's intentional. Set it (step 4). Builds themselves no
+  longer need it, so preview deployments without secrets still build.
+- Schema sync (`prisma db push`) only runs on **production** deployments.
+  Previews never touch the database schema.
 - Uploaded photos go to Vercel Blob and persist. Locally they fall back to
   `./public/uploads`.
 - For higher traffic, back the rate limiter with Upstash Redis (see SECURITY.md).
