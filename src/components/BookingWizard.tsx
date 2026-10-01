@@ -67,7 +67,6 @@ export default function BookingWizard({
   openDays,
   blockedDates,
   mpesaNumber,
-  depositPercent,
   stkEnabled = false,
 }: {
   services: Service[];
@@ -78,7 +77,6 @@ export default function BookingWizard({
   openDays: number[];
   blockedDates: string[];
   mpesaNumber: string;
-  depositPercent: number;
   stkEnabled?: boolean;
 }) {
   const [step, setStep] = useState(0);
@@ -105,16 +103,16 @@ export default function BookingWizard({
     travelNotes: "",
   });
   const [customer, setCustomer] = useState({ name: "", phone: "", email: "", notes: "" });
-  // Optional M-Pesa deposit details the client can paste to secure the booking.
+  // Optional M-Pesa payment details the client can paste after sending money.
   const [mpesa, setMpesa] = useState({ number: "", message: "", amount: "" });
   // Message shown when a client taps a time Magdalene is already booked for.
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   // Honeypot: hidden from real users; bots tend to auto-fill it.
   const [company, setCompany] = useState("");
-  // Online deposit via Paystack (M-Pesa prompt or card) right after booking.
+  // Online payment via Paystack (M-Pesa prompt or card) right after booking.
   const [payNow, setPayNow] = useState(true);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
-  const [depositPaid, setDepositPaid] = useState(false);
+  const [paid, setPaid] = useState(false);
 
   const [avail, setAvail] = useState<AvailabilityResponse | null>(null);
   // When the chosen day has no free time, the next day that does.
@@ -198,9 +196,8 @@ export default function BookingWizard({
     d < todayStr() || !openDays.includes(dayOfWeek(d)) || blockedDates.includes(d);
 
   const bookable = new Set(avail?.bookableStarts ?? []);
-  const depositDue = service
-    ? Math.round((priceFor(service, serviceType) * depositPercent) / 100)
-    : 0;
+  // Clients pay the full price (no deposit).
+  const amountDue = service ? priceFor(service, serviceType) : 0;
   // Where clients send money manually (the salon's M-Pesa number).
   const payNumber = mpesaNumber || "0701508259";
 
@@ -231,11 +228,11 @@ export default function BookingWizard({
       customer.notes ? `Notes: ${customer.notes}` : "",
       stkEnabled
         ? payNow
-          ? "\nThe client is paying the deposit by M-Pesa prompt. The receipt shows on the booking in your dashboard."
+          ? "\nThe client is paying online (Paystack). The receipt shows on the booking in your dashboard."
           : "\nThe client chose to pay later. You can send them an M-Pesa prompt from the dashboard."
         : Number(mpesa.amount) > 0
-          ? `\nDeposit paid: ${formatKes(Number(mpesa.amount))} (M-Pesa ${mpesa.number})\nM-Pesa message: ${mpesa.message}`
-          : "\nNo deposit paid yet. Please call the client to confirm.",
+          ? `\nPaid: ${formatKes(Number(mpesa.amount))} (M-Pesa ${mpesa.number})\nM-Pesa message: ${mpesa.message}`
+          : "\nNot paid yet. Please call the client to confirm.",
     ];
     if (serviceType === "OUTCALL") {
       lines.push(
@@ -287,7 +284,7 @@ export default function BookingWizard({
           },
           location: serviceType === "OUTCALL" ? loc : undefined,
           notes: customer.notes,
-          // With online payments the deposit is confirmed by Paystack, never self-reported.
+          // With online payments the payment is confirmed by Paystack, never self-reported.
           deposit: stkEnabled
             ? undefined
             : {
@@ -698,23 +695,9 @@ export default function BookingWizard({
                 <h4 className="font-display text-base font-bold text-charcoal">Payment</h4>
                 <dl className="mt-3 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-charcoal-muted">Price</dt>
-                    <dd className="font-medium text-charcoal">{formatKes(priceFor(service, serviceType))}</dd>
+                    <dt className="text-charcoal-muted">Total to pay</dt>
+                    <dd className="font-display text-lg font-bold text-charcoal">{formatKes(amountDue)}</dd>
                   </div>
-                  {depositPercent > 0 && (
-                    <>
-                      <div className="flex justify-between">
-                        <dt className="text-charcoal-muted">Deposit ({depositPercent}%)</dt>
-                        <dd className="font-semibold text-charcoal">{formatKes(depositDue)}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-charcoal-muted">Balance on the day</dt>
-                        <dd className="text-charcoal">
-                          {formatKes(priceFor(service, serviceType) - depositDue)}
-                        </dd>
-                      </div>
-                    </>
-                  )}
                 </dl>
                 {serviceType === "OUTCALL" && (
                   <p className="mt-3 text-xs text-charcoal-muted">
@@ -728,7 +711,7 @@ export default function BookingWizard({
                       <PayOption
                         active={payNow}
                         onClick={() => setPayNow(true)}
-                        title={`Pay ${formatKes(depositDue)} now`}
+                        title={`Pay ${formatKes(amountDue)} now`}
                         text="M-Pesa or card"
                       />
                       <PayOption
@@ -742,7 +725,7 @@ export default function BookingWizard({
                   ) : (
                     <div className="text-sm">
                       <p className="text-charcoal">
-                        Send {depositPercent > 0 ? formatKes(depositDue) : "payment"} by M-Pesa to:
+                        Send {formatKes(amountDue)} by M-Pesa to:
                       </p>
                       <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-cream-soft px-4 py-3">
                         <div>
@@ -799,8 +782,8 @@ export default function BookingWizard({
                 <button onClick={submit} disabled={submitting} className="btn-primary mt-5 w-full !py-3.5 text-base">
                   {submitting
                     ? "Booking…"
-                    : stkEnabled && payNow && depositPercent > 0
-                      ? `Confirm & pay ${formatKes(depositDue)}`
+                    : stkEnabled && payNow
+                      ? `Confirm & pay ${formatKes(amountDue)}`
                       : "Confirm booking"}
                 </button>
                 <button onClick={() => setStep(3)} className="btn-ghost mt-2 w-full">
@@ -819,7 +802,7 @@ export default function BookingWizard({
                 Thank you, {customer.name.split(" ")[0]}
               </h2>
               <p className="mt-2 text-charcoal-muted">
-                {stkEnabled && payNow && !depositPaid
+                {stkEnabled && payNow && !paid
                   ? "Booking received. Complete the payment below."
                   : "Booking received. You'll get a WhatsApp confirmation."}
               </p>
@@ -829,18 +812,18 @@ export default function BookingWizard({
                   <MpesaPayPanel
                     appointmentId={appointmentId}
                     defaultPhone={customer.phone}
-                    amount={Math.round((priceFor(service, serviceType) * depositPercent) / 100)}
+                    amount={amountDue}
                     autoStart={payNow}
                     manualNumber={payNumber}
-                    onPaid={() => setDepositPaid(true)}
+                    onPaid={() => setPaid(true)}
                   />
                 </div>
               )}
 
-              {!stkEnabled && depositPercent > 0 && !(Number(mpesa.amount) > 0) && (
+              {!stkEnabled && !(Number(mpesa.amount) > 0) && (
                 <div className="mt-6 rounded-xl bg-cream-soft px-4 py-3 text-sm">
                   <p className="text-charcoal">
-                    Send the <strong>{formatKes(depositDue)}</strong> deposit by M-Pesa to
+                    Send <strong>{formatKes(amountDue)}</strong> by M-Pesa to
                   </p>
                   <p className="mt-1 font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
                   <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
@@ -852,9 +835,8 @@ export default function BookingWizard({
                 <ReviewRow k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
                 <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "Home visit" : "Studio"} />
                 <ReviewRow k="Price" v={formatKes(priceFor(service, serviceType))} />
-                {depositPercent > 0 && <ReviewRow k="Deposit" v={formatKes(depositDue)} />}
                 {Number(mpesa.amount) > 0 && (
-                  <ReviewRow k="Deposit paid" v={formatKes(Number(mpesa.amount))} />
+                  <ReviewRow k="Paid" v={formatKes(Number(mpesa.amount))} />
                 )}
               </dl>
 
@@ -882,7 +864,7 @@ export default function BookingWizard({
                     setCustomer({ name: "", phone: "", email: "", notes: "" });
                     setMpesa({ number: "", message: "", amount: "" });
                     setAppointmentId(null);
-                    setDepositPaid(false);
+                    setPaid(false);
                   }}
                 >
                   Book another
@@ -900,7 +882,6 @@ export default function BookingWizard({
           serviceType={serviceType}
           date={step >= 2 ? date : null}
           startMin={startMin}
-          depositPercent={depositPercent}
         />
       )}
       </div>
@@ -1100,13 +1081,11 @@ function BookingSummary({
   serviceType,
   date,
   startMin,
-  depositPercent,
 }: {
   service?: Service;
   serviceType: "INCALL" | "OUTCALL";
   date: string | null;
   startMin: number | null;
-  depositPercent: number;
 }) {
   const price = service ? priceFor(service, serviceType) : null;
   return (
@@ -1141,11 +1120,6 @@ function BookingSummary({
             {price != null ? formatKes(price) : "—"}
           </span>
         </div>
-        {price != null && depositPercent > 0 && (
-          <p className="mt-1 text-right text-xs text-charcoal-muted">
-            Deposit {formatKes(Math.round((price * depositPercent) / 100))} to secure
-          </p>
-        )}
       </div>
     </aside>
   );

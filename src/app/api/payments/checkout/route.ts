@@ -11,7 +11,7 @@ const schema = z.object({
   appointmentId: z.string().trim().min(8).max(40).regex(/^[a-z0-9]+$/i),
 });
 
-// Client chooses to pay the deposit by card (Paystack hosted checkout).
+// Client chooses to pay by card (Paystack hosted checkout).
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   const res = await startCheckout({
     appointmentId: parsed.data.appointmentId,
-    purpose: "DEPOSIT",
+    purpose: "BALANCE",
     initiatedBy: "CLIENT",
   });
   if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });

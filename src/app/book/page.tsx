@@ -52,8 +52,7 @@ export default async function BookPage({
           openDays={openDays}
           blockedDates={blockedDates}
           mpesaNumber={settings.mpesaNumber}
-          depositPercent={settings.depositPercent}
-          stkEnabled={paymentsEnabled() && settings.depositPercent > 0}
+          stkEnabled={paymentsEnabled()}
         />
       </main>
     </div>

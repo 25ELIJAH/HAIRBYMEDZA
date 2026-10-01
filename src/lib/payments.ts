@@ -2,7 +2,6 @@
 // here on the server from the booking's price, never sent by the browser.
 
 import { prisma } from "./prisma";
-import { getSettings } from "./booking";
 import {
   chargeMpesa,
   initializeCheckout,
@@ -26,38 +25,20 @@ export function paymentsEnabled(): boolean {
   return paystackEnabled();
 }
 
-export function depositAmount(priceKes: number, depositPercent: number): number {
-  return Math.max(1, Math.round((priceKes * depositPercent) / 100));
+// Clients pay the full price (no deposit): whatever is still owed.
+export function amountDue(appt: { priceKes: number; amountPaid: number }): number {
+  return Math.max(0, appt.priceKes - appt.amountPaid);
 }
 
-export async function amountDue(
-  appt: { priceKes: number; amountPaid: number },
-  purpose: PaymentPurpose
-): Promise<number> {
-  const balance = Math.max(0, appt.priceKes - appt.amountPaid);
-  if (purpose === "BALANCE") return balance;
-  // Deposit still owed = target deposit minus anything already paid.
-  const settings = await getSettings();
-  const deposit = depositAmount(appt.priceKes, settings.depositPercent || 50);
-  return Math.min(balance, Math.max(0, deposit - appt.amountPaid));
-}
-
-async function loadPayable(appointmentId: string, purpose: PaymentPurpose) {
+async function loadPayable(appointmentId: string) {
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
     include: { customer: true, service: true },
   });
   if (!appt) return { error: "Booking not found." as string };
   if (appt.status === "CANCELLED") return { error: "This booking was cancelled." as string };
-  const amount = await amountDue(appt, purpose);
-  if (amount < 1) {
-    return {
-      error:
-        purpose === "DEPOSIT"
-          ? "The deposit for this booking is already paid."
-          : "Nothing left to pay on this booking.",
-    };
-  }
+  const amount = amountDue(appt);
+  if (amount < 1) return { error: "This booking is already paid." };
   return { appt, amount };
 }
 
@@ -77,7 +58,7 @@ export async function startMpesaPayment(opts: {
   const phone = normalizeKePhone(opts.phone);
   if (!phone) return { ok: false, error: "Enter a valid Safaricom number, e.g. 0712 345 678." };
 
-  const loaded = await loadPayable(opts.appointmentId, opts.purpose);
+  const loaded = await loadPayable(opts.appointmentId);
   if (!("appt" in loaded) || !loaded.appt) return { ok: false, error: loaded.error! };
   const { appt, amount } = loaded;
 
@@ -150,7 +131,7 @@ export async function startCheckout(opts: {
   const site = siteUrl();
   if (!site) return { ok: false, error: "Card payments are not set up yet." };
 
-  const loaded = await loadPayable(opts.appointmentId, opts.purpose);
+  const loaded = await loadPayable(opts.appointmentId);
   if (!("appt" in loaded) || !loaded.appt) return { ok: false, error: loaded.error! };
   const { appt, amount } = loaded;
 

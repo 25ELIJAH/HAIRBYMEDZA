@@ -26,7 +26,7 @@ export async function getSettings() {
       outcallFeeKes: 0,
       theme: "purple",
       mpesaNumber: process.env.MPESA_NUMBER || "0701508259",
-      depositPercent: 50,
+      depositPercent: 100,
     }
   );
 }

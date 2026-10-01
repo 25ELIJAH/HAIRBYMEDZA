@@ -6,7 +6,7 @@ import { formatKes } from "@/lib/time";
 type Phase = "idle" | "sending" | "waiting" | "SUCCESS" | "FAILED" | "CANCELLED" | "TIMEOUT" | "error";
 
 /**
- * Pays a booking's deposit through Paystack: the client gets an M-Pesa PIN
+ * Pays for a booking through Paystack: the client gets an M-Pesa PIN
  * prompt on their phone (or pays by card on Paystack's page), and this panel
  * follows the payment until it settles.
  */
@@ -131,7 +131,7 @@ export default function MpesaPayPanel({
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-5 text-left">
         <p className="flex items-center gap-2 font-semibold text-charcoal">
-          Deposit of {formatKes(amount)} received
+          Payment of {formatKes(amount)} received
         </p>
         {receipt && (
           <p className="mt-1 text-sm text-charcoal-soft">
@@ -146,7 +146,7 @@ export default function MpesaPayPanel({
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left">
       <div className="border-b border-gray-200 px-5 py-3">
-        <p className="text-sm text-charcoal-muted">Deposit</p>
+        <p className="text-sm text-charcoal-muted">Payment</p>
         <p className="font-display text-base font-bold text-charcoal">{formatKes(amount)}</p>
       </div>
       <div className="space-y-3 p-5">

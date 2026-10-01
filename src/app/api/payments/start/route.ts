@@ -12,7 +12,7 @@ const schema = z.object({
   phone: z.string().trim().min(9).max(20),
 });
 
-// Client asks for an M-Pesa PIN prompt (via Paystack) to pay their deposit.
+// Client asks for an M-Pesa PIN prompt (via Paystack) to pay for their booking.
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const res = await startMpesaPayment({
     appointmentId: parsed.data.appointmentId,
     phone: parsed.data.phone,
-    purpose: "DEPOSIT",
+    purpose: "BALANCE",
     initiatedBy: "CLIENT",
   });
   if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });

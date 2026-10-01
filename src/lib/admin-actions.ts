@@ -338,7 +338,7 @@ export async function saveSettings(
     location: formData.get("location"),
     outcallFeeKes: formData.get("outcallFeeKes"),
     mpesaNumber: formData.get("mpesaNumber") ?? "",
-    depositPercent: formData.get("depositPercent") ?? 50,
+    depositPercent: formData.get("depositPercent") ?? 100, // full payment
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Please check your inputs." };

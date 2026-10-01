@@ -1,14 +1,14 @@
 # Taking payments with Paystack
 
-The site takes deposits (and balances) through **Paystack**:
+Clients pay the **full price** for their booking through **Paystack**:
 
 - **M-Pesa prompt:** after booking, the client gets an M-Pesa PIN prompt on
   their phone. They enter the PIN and the payment shows on the booking in the
   admin automatically.
-- **Card:** the client can tap **"Pay by card instead"** to pay on Paystack's
+- **Card:** the client can tap **"Pay by card"** to pay on Paystack's
   secure page and is brought back to the site afterwards.
-- **From the admin:** any appointment card can send the client a deposit or
-  balance prompt, or record a cash payment.
+- **From the admin:** any appointment card can send the client a payment
+  prompt, or record a cash payment.
 
 Paystack collects the money and **pays it out** to the account set in the
 Paystack dashboard. The website never holds money or card details.
@@ -19,7 +19,7 @@ Paystack dashboard. The website never holds money or card details.
 > Paystack offers M-Pesa payouts on the account (see step 4).
 
 Until a Paystack key is added, the site keeps the manual option: "send the
-deposit to M-Pesa 0701508259 and paste the confirmation".
+payment to M-Pesa 0701508259 and paste the confirmation".
 
 ---
 
@@ -58,7 +58,7 @@ deposit to M-Pesa 0701508259 and paste the confirmation".
    to the same `/api/payments/paystack/webhook` address.
 4. In Vercel, replace `PAYSTACK_SECRET_KEY` with the live key and redeploy.
    The admin should now say *Switched on (live payments)*.
-5. Pay one small real deposit to yourself to confirm the money arrives.
+5. Make one small real payment yourself to confirm the money arrives.
 
 ## 4. Where the money goes (payouts)
 
@@ -78,7 +78,6 @@ Paystack charges a fee per successful payment. See the current rates at
 **Admin → Availability → Booking rules & business info**:
 
 - **M-Pesa number:** `0701508259`
-- **Deposit percent:** e.g. 50 (set to 0 to stop asking for a deposit online)
 
 ---
 
@@ -87,7 +86,7 @@ Paystack charges a fee per successful payment. See the current rates at
 | Piece | What it does |
 |---|---|
 | `src/lib/paystack.ts` | Paystack API client: M-Pesa charge, hosted checkout, transaction verify, webhook signature check |
-| `src/lib/payments.ts` | Works out the amount **on the server** (deposit % or balance), records each attempt in the `Payment` table, and applies results idempotently, so money is added to a booking only once |
+| `src/lib/payments.ts` | Works out the amount **on the server** (the full amount still owed), records each attempt in the `Payment` table, and applies results idempotently, so money is added to a booking only once |
 | `POST /api/payments/start` | Client starts an M-Pesa prompt (same-origin only, rate limited, max 5 attempts per booking per hour) |
 | `POST /api/payments/checkout` | Client starts a card payment and gets Paystack's checkout URL |
 | `GET /api/payments/status?id=` | Polled while the client enters their PIN. Asks Paystack directly if the webhook is slow, and expires unanswered prompts after 3 minutes |

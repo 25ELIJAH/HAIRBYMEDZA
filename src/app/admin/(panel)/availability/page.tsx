@@ -89,8 +89,8 @@ export default async function AvailabilityPage() {
               ● Switched on ({paystackMode() === "live" ? "live payments" : "test mode, no real money"})
             </p>
             <p className="text-charcoal-muted">
-              Clients get an M-Pesa PIN prompt for the deposit when they book, or can pay by card.
-              You can request deposits or balances from any appointment. Paystack pays the money
+              Clients pay the full price when they book, by M-Pesa prompt or card. You can also
+              request payment from any appointment. Paystack pays the money
               out to the account set in your Paystack dashboard.
             </p>
             <p className="text-xs text-charcoal-muted">
