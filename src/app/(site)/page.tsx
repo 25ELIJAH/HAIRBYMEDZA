@@ -43,14 +43,14 @@ export default async function HomePage() {
       <section className="relative isolate overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&fit=crop&w=1600&q=70"
+          src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&fit=crop&w=2000&q=75"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
+          className="absolute inset-0 -z-20 h-full w-full object-cover object-[70%_25%]"
         />
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-white/80 sm:bg-transparent sm:bg-gradient-to-r sm:from-white sm:via-white/85 sm:to-white/20"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-white via-white/80 to-white/30 sm:bg-gradient-to-r sm:from-white sm:from-25% sm:via-white/60 sm:via-45% sm:to-transparent sm:to-65%"
         />
         <div className="container-px flex min-h-[70vh] items-center py-16 sm:py-24">
           <div className="max-w-xl">
