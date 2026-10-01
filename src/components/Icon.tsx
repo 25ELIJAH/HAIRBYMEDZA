@@ -25,7 +25,11 @@ export type IconName =
   | "settings"
   | "logout"
   | "external"
-  | "menu";
+  | "menu"
+  | "sun"
+  | "sunset"
+  | "moon"
+  | "copy";
 
 const paths: Record<IconName, React.ReactNode> = {
   scissors: (
@@ -125,6 +129,25 @@ const paths: Record<IconName, React.ReactNode> = {
   logout: <path d="M14 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-3M9 12h11M17 8l4 4-4 4" />,
   external: <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </>
+  ),
+  sunset: (
+    <>
+      <path d="M17 18a5 5 0 0 0-10 0" />
+      <path d="M12 9V3M4.2 10.2l1.4 1.4M1 18h2M21 18h2M18.4 11.6l1.4-1.4M23 22H1M8 6l4-4 4 4" />
+    </>
+  ),
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
+  copy: (
+    <>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </>
+  ),
 };
 
 const FILLED: IconName[] = ["star", "sparkle"];

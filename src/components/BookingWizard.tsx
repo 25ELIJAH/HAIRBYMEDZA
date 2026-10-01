@@ -8,6 +8,7 @@ import MonthCalendar from "./MonthCalendar";
 import MpesaPayPanel from "./MpesaPayPanel";
 import { SlotGridSkeleton } from "./Skeleton";
 import {
+  addDaysStr,
   dayOfWeek,
   durationLabel,
   formatKes,
@@ -39,17 +40,24 @@ interface AvailabilityResponse {
   durationMin: number;
 }
 
-const STEPS = ["Service", "Type", "Date & Time", "Details", "Review", "Done"];
+const STEPS = ["Style", "Where", "Date & time", "Your details", "Confirm", "Done"];
 
-// Time slot looks: free slots are outlined, everything else is muted grey.
-const STATUS_STYLE: Record<string, string> = {
-  AVAILABLE: "bg-white text-charcoal ring-gray-300",
-  OCCUPIED: "bg-gray-50 text-gray-400 ring-gray-100 line-through",
-  PENDING: "bg-gray-50 text-gray-400 ring-gray-100 line-through",
-  LUNCH: "bg-gray-50 text-gray-300 ring-gray-100",
-  CLOSED: "bg-gray-50 text-gray-300 ring-gray-100",
-  BLOCKED: "bg-gray-50 text-gray-300 ring-gray-100",
-};
+// Time slots are grouped by part of the day.
+const SLOT_GROUPS: { label: string; icon: IconName; from: number; to: number }[] = [
+  { label: "Morning", icon: "sun", from: 0, to: 12 * 60 },
+  { label: "Afternoon", icon: "sunset", from: 12 * 60, to: 17 * 60 },
+  { label: "Evening", icon: "moon", from: 17 * 60, to: 24 * 60 },
+];
+
+/** "Thu 8 Oct" style label for a YYYY-MM-DD date. */
+function shortDate(d: string) {
+  const [y, m, day] = d.split("-").map((n) => parseInt(n, 10));
+  return new Date(y, m - 1, day).toLocaleDateString("en-KE", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
 
 export default function BookingWizard({
   services,
@@ -110,6 +118,10 @@ export default function BookingWizard({
   const [depositPaid, setDepositPaid] = useState(false);
 
   const [avail, setAvail] = useState<AvailabilityResponse | null>(null);
+  // When the chosen day has no free time, the next day that does.
+  const [nextFree, setNextFree] = useState<string | null>(null);
+  const [findingNext, setFindingNext] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [loadingAvail, setLoadingAvail] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,10 +162,48 @@ export default function BookingWizard({
     };
   }, [step, serviceId, date]);
 
+  // If the chosen day has nothing free, look ahead (up to 3 weeks) for the
+  // next day that does, so the client can jump straight to it.
+  useEffect(() => {
+    setNextFree(null);
+    if (step !== 2 || !serviceId || loadingAvail || !avail) return;
+    if (avail.open && !avail.dayFull && avail.bookableStarts.length > 0) return;
+    let cancelled = false;
+    (async () => {
+      setFindingNext(true);
+      let d = date;
+      for (let i = 0; i < 21 && !cancelled; i++) {
+        d = addDaysStr(d, 1);
+        if (dayDisabled(d)) continue;
+        try {
+          const r = await fetch(`/api/availability?serviceId=${serviceId}&date=${d}`);
+          const data: AvailabilityResponse = await r.json();
+          if (data.open && !data.dayFull && data.bookableStarts?.length) {
+            if (!cancelled) setNextFree(d);
+            break;
+          }
+        } catch {
+          break;
+        }
+      }
+      if (!cancelled) setFindingNext(false);
+    })();
+    return () => {
+      cancelled = true;
+      setFindingNext(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [avail, loadingAvail, step, serviceId]);
+
   const dayDisabled = (d: string) =>
     d < todayStr() || !openDays.includes(dayOfWeek(d)) || blockedDates.includes(d);
 
   const bookable = new Set(avail?.bookableStarts ?? []);
+  const depositDue = service
+    ? Math.round((priceFor(service, serviceType) * depositPercent) / 100)
+    : 0;
+  // Where clients send money manually (the salon's M-Pesa number).
+  const payNumber = mpesaNumber || "0701508259";
 
   // Out-call location is only complete when every required field is filled.
   const outcallReady =
@@ -286,7 +336,7 @@ export default function BookingWizard({
       {/* Progress */}
       <Stepper step={step} />
 
-      <div className={`mt-8 grid gap-8 ${step < 5 ? "lg:grid-cols-[minmax(0,1fr)_300px]" : ""}`}>
+      <div className={`mt-8 grid gap-8 ${step < 4 ? "lg:grid-cols-[minmax(0,1fr)_300px]" : ""}`}>
       <div className="min-w-0">
         {/* ── Step 0: Service ─────────────────────────────── */}
         {step === 0 && (
@@ -329,41 +379,41 @@ export default function BookingWizard({
           </Section>
         )}
 
-        {/* ── Step 1: Type ────────────────────────────────── */}
+        {/* ── Step 1: Where ───────────────────────────────── */}
         {step === 1 && service && (
           <Section
-            title="Where would you like your braids?"
-            subtitle="Studio prices are a little lower. When I travel to you the price is slightly higher. Pick what suits you."
+            title="Where would you like your braids done?"
+            subtitle="Visit the studio, or have me come to you. Home visits cost a little more."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <TypeCard
                 active={serviceType === "INCALL"}
                 onClick={() => setServiceType("INCALL")}
                 icon="home"
-                title="Come to my studio"
-                desc={location ? `At my studio in ${location}.` : "At my studio."}
+                title="At the studio"
+                desc={location ? `Visit me at ${location}.` : "Visit me at the studio."}
                 price={formatKes(service.priceKes)}
+                points={["Everything set up and ready for you", "A calm, private space"]}
               />
               <TypeCard
                 active={serviceType === "OUTCALL"}
                 onClick={() => setServiceType("OUTCALL")}
                 icon="car"
                 title="I come to you"
-                desc="I travel to your home or office."
+                desc="At your home or office, wherever is easiest."
                 price={formatKes(service.outCallPriceKes)}
+                points={["I bring all tools and products", "Transport fare shared when I confirm"]}
               />
             </div>
 
             {serviceType === "OUTCALL" && (
-              <div className="mt-6 card p-5">
-                <p className="mb-4 rounded-lg bg-cream-soft px-4 py-3 text-sm text-charcoal-soft">
-                  Please fill in your location clearly so I can reach you. I will share
-                  the exact transport fare once I confirm your booking.
+              <div className="mt-6 animate-fade-up rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                <h4 className="font-display text-lg font-semibold text-charcoal">Where should I come?</h4>
+                <p className="mt-1 text-sm text-charcoal-muted">
+                  Clear directions help me arrive on time. All fields marked * are needed.
                 </p>
-                <h4 className="mb-1 font-display text-lg font-semibold">Where should I come?</h4>
-                <p className="mb-4 text-xs text-charcoal-muted">All fields below are required.</p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Town / Estate / Area *">
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <Field label="Town / estate / area *">
                     <input
                       className="input"
                       value={loc.estate}
@@ -371,7 +421,7 @@ export default function BookingWizard({
                       placeholder="e.g. Kilimani, Nairobi"
                     />
                   </Field>
-                  <Field label="House / Apartment number *">
+                  <Field label="House / apartment *">
                     <input
                       className="input"
                       value={loc.houseNumber}
@@ -387,7 +437,7 @@ export default function BookingWizard({
                       placeholder="e.g. opposite Yaya Centre"
                     />
                   </Field>
-                  <Field label="Google Maps pin link (optional)">
+                  <Field label="Google Maps link" hint="Optional">
                     <input
                       className="input"
                       value={loc.mapsPin}
@@ -420,191 +470,198 @@ export default function BookingWizard({
         {/* ── Step 2: Date & Time ─────────────────────────── */}
         {step === 2 && service && (
           <Section
-            title="Pick a date & time"
-            subtitle={`${service.name} takes about ${durationLabel(service.durationMin).toLowerCase()}. Choose a day, then a free time.`}
+            title="Choose a day and time"
+            subtitle={`${service.name} takes about ${durationLabel(service.durationMin).toLowerCase()}.`}
           >
             <div className="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)]">
-              {/* Calendar */}
               <div>
                 <MonthCalendar value={date} onChange={setDate} isDisabled={dayDisabled} />
                 <p className="mt-3 text-xs text-charcoal-muted">Greyed out days are closed.</p>
               </div>
 
-              {/* Times */}
-              <div>
-                <div className="text-sm font-semibold text-charcoal-soft">{prettyDate(date)}</div>
-
-                {/* Legend */}
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-charcoal-muted">
-                  <Legend dot="bg-white ring-1 ring-gray-400" label="Free" />
-                  <Legend dot="bg-royal-600" label="Your choice" />
-                  <Legend dot="bg-gray-200" label="Taken or closed" />
-                </div>
-
-                {/* Slots */}
-                <div className="mt-4 min-h-[120px]">
-              {loadingAvail && <SlotGridSkeleton />}
-
-              {!loadingAvail && avail && !avail.open && (
-                <div className="card border-dashed p-6 text-center text-charcoal-muted">
-                  <p className="font-medium text-charcoal">
-                    {avail.reason || "Not available"}
-                  </p>
-                  <p className="mt-1 text-sm">Please choose another date.</p>
-                </div>
-              )}
-
-              {!loadingAvail && avail && avail.open && avail.dayFull && (
-                <div className="card border-dashed p-6 text-center text-charcoal-muted">
-                  Fully booked for this day. Please try another date.
-                </div>
-              )}
-
-              {!loadingAvail && avail && avail.open && !avail.dayFull && (
-                <>
-                  {avail.bookableStarts.length === 0 ? (
-                    <div className="rounded-lg bg-cream-soft px-4 py-3 text-sm text-charcoal-soft">
-                      Magdalene is fully booked on {prettyDate(date)}. Please choose
-                      another day on the calendar.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                      {avail.grid.map((slot) => {
-                        const canBook = bookable.has(slot.startMin);
-                        const taken = !canBook && (slot.status === "OCCUPIED" || slot.status === "PENDING");
-                        const status = canBook ? "AVAILABLE" : slot.status;
-                        const selected = startMin === slot.startMin;
-                        return (
-                          <button
-                            key={slot.startMin}
-                            disabled={!canBook && !taken}
-                            onClick={() => {
-                              if (canBook) {
-                                setStartMin(slot.startMin);
-                                setSlotNotice(null);
-                              } else if (taken) {
-                                setSlotNotice(
-                                  `Magdalene is already booked at ${slot.label} on ${prettyDate(date)}. Please pick a free (green) time below, or choose another day.`
-                                );
-                              }
-                            }}
-                            className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 transition-colors ${
-                              selected
-                                ? "bg-royal-600 text-white ring-royal-600"
-                                : STATUS_STYLE[status] || STATUS_STYLE.CLOSED
-                            } ${canBook ? "cursor-pointer hover:ring-royal-500 hover:text-royal-700" : taken ? "cursor-pointer" : "cursor-not-allowed"}`}
-                          >
-                            {slot.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+              <div className="rounded-2xl border border-gray-200 bg-white p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-display text-base font-semibold text-charcoal">{prettyDate(date)}</p>
+                  {!loadingAvail && avail?.open && bookable.size > 0 && (
+                    <span className="rounded-full bg-royal-50 px-2.5 py-0.5 text-xs font-medium text-royal-700">
+                      {bookable.size} {bookable.size === 1 ? "time" : "times"} free
+                    </span>
                   )}
+                </div>
 
-                  {slotNotice && (
-                    <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-charcoal-soft">
-                      {slotNotice}
-                      {avail.bookableStarts.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span className="text-charcoal-muted">Free times:</span>
-                          {avail.bookableStarts.slice(0, 6).map((m) => (
-                            <button
-                              key={m}
-                              onClick={() => {
-                                setStartMin(m);
-                                setSlotNotice(null);
-                              }}
-                              className="rounded-md border border-gray-300 px-2 py-0.5 text-xs font-medium text-charcoal hover:border-royal-500 hover:text-royal-700"
-                            >
-                              {minutesToLabel(m)}
-                            </button>
-                          ))}
-                        </div>
+                <div className="mt-4 min-h-[140px]">
+                  {loadingAvail && <SlotGridSkeleton />}
+
+                  {!loadingAvail && avail && (!avail.open || avail.dayFull || bookable.size === 0) && (
+                    <div className="grid place-items-center rounded-xl bg-cream-soft px-4 py-8 text-center">
+                      <Icon name="calendar" size={22} className="text-charcoal-muted" />
+                      <p className="mt-2 font-medium text-charcoal">
+                        {!avail.open
+                          ? avail.reason || "Closed on this day"
+                          : date === todayStr()
+                            ? "No times left today"
+                            : "Fully booked on this day"}
+                      </p>
+                      {findingNext ? (
+                        <p className="mt-1 text-sm text-charcoal-muted">Looking for the next free day…</p>
+                      ) : nextFree ? (
+                        <button
+                          onClick={() => setDate(nextFree)}
+                          className="btn-primary mt-4 !px-4 !py-2 text-sm"
+                        >
+                          Next free day: {shortDate(nextFree)}
+                          <Icon name="arrowRight" size={16} />
+                        </button>
+                      ) : (
+                        <p className="mt-1 text-sm text-charcoal-muted">Please pick another day on the calendar.</p>
                       )}
                     </div>
                   )}
 
-                  {startMin != null && (
-                    <p className="mt-4 rounded-lg bg-royal-50 px-4 py-3 text-sm text-royal-800">
-                      Selected: <strong>{minutesToLabel(startMin)}</strong> to{" "}
-                      {minutesToLabel(startMin + service.durationMin)} (
-                      {durationLabel(service.durationMin)})
-                    </p>
+                  {!loadingAvail && avail && avail.open && !avail.dayFull && bookable.size > 0 && (
+                    <div className="space-y-5">
+                      {SLOT_GROUPS.map((g) => {
+                        const slots = avail.grid.filter((s) => s.startMin >= g.from && s.startMin < g.to);
+                        if (slots.length === 0) return null;
+                        return (
+                          <div key={g.label}>
+                            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-charcoal-muted">
+                              <Icon name={g.icon} size={14} /> {g.label}
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                              {slots.map((slot) => {
+                                const canBook = bookable.has(slot.startMin);
+                                const taken = !canBook && (slot.status === "OCCUPIED" || slot.status === "PENDING");
+                                const selected = startMin === slot.startMin;
+                                return (
+                                  <button
+                                    key={slot.startMin}
+                                    disabled={!canBook && !taken}
+                                    onClick={() => {
+                                      if (canBook) {
+                                        setStartMin(slot.startMin);
+                                        setSlotNotice(null);
+                                      } else if (taken) {
+                                        setSlotNotice(`${slot.label} is already booked. Please choose a free time.`);
+                                      }
+                                    }}
+                                    className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 transition-all duration-200 ${
+                                      selected
+                                        ? "scale-[1.04] bg-royal-600 text-white shadow-soft ring-royal-600"
+                                        : canBook
+                                          ? "bg-white text-charcoal ring-gray-300 hover:-translate-y-0.5 hover:ring-royal-500 hover:text-royal-700"
+                                          : taken
+                                            ? "cursor-pointer bg-gray-50 text-gray-400 line-through ring-gray-100"
+                                            : "cursor-not-allowed bg-gray-50 text-gray-300 ring-gray-100"
+                                    }`}
+                                  >
+                                    {slot.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {slotNotice && (
+                        <p className="rounded-lg border border-gray-200 bg-cream-soft px-3 py-2 text-sm text-charcoal">
+                          {slotNotice}
+                        </p>
+                      )}
+                    </div>
                   )}
-                </>
-              )}
                 </div>
+
+                {startMin != null && (
+                  <div className="mt-5 flex animate-fade-up items-center gap-3 rounded-xl bg-royal-50 px-4 py-3 text-sm text-charcoal">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-royal-600 text-white">
+                      <Icon name="check" size={16} />
+                    </span>
+                    <span>
+                      <strong>{shortDate(date)}</strong>, {minutesToLabel(startMin)} to{" "}
+                      {minutesToLabel(startMin + service.durationMin)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <NavRow
-              onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
-              nextDisabled={startMin == null}
-            />
+            <NavRow onBack={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={startMin == null} />
           </Section>
         )}
 
         {/* ── Step 3: Details ─────────────────────────────── */}
         {step === 3 && service && startMin != null && (
-          <Section title="Your details" subtitle="So I can confirm your booking with you.">
-            <div>
-              <div className="card p-5">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Full name *">
+          <Section title="Your details" subtitle="So Magdalene can confirm your appointment with you.">
+            <div className="rounded-2xl border border-gray-200 bg-white">
+              <div className="p-5 sm:p-6">
+                <h4 className="text-sm font-semibold text-charcoal">Contact</h4>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <Field label="Full name">
                     <input
                       className="input"
+                      autoComplete="name"
                       value={customer.name}
                       onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                      placeholder="Jane Wanjiku"
+                      placeholder="e.g. Jane Wanjiku"
                     />
                   </Field>
-                  <Field label="Phone (WhatsApp) *">
+                  <Field label="Phone number" hint="Booking updates come on WhatsApp">
                     <input
                       className="input"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       value={customer.phone}
                       onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
                       placeholder="07XX XXX XXX"
                     />
                   </Field>
                   <div className="sm:col-span-2">
-                    <Field label="Email (optional)">
+                    <Field label="Email" hint="Optional, for an email copy">
                       <input
                         className="input"
                         type="email"
+                        autoComplete="email"
                         value={customer.email}
                         onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
                         placeholder="you@email.com"
                       />
                     </Field>
                   </div>
-                  <div className="sm:col-span-2">
-                    <Field label="Notes (optional)">
-                      <textarea
-                        className="input min-h-[72px]"
-                        value={customer.notes}
-                        onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
-                        placeholder="Hair length, colour preference, allergies…"
-                      />
-                    </Field>
-                  </div>
-                  {/* Honeypot: hidden from people, off-screen, not announced. */}
-                  <input
-                    type="text"
-                    name="mm_ref_code"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    data-lpignore="true"
-                    data-1p-ignore
-                    aria-hidden="true"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    className="absolute left-[-9999px] h-0 w-0 opacity-0"
-                  />
                 </div>
               </div>
-
+              <div className="border-t border-gray-200 p-5 sm:p-6">
+                <h4 className="text-sm font-semibold text-charcoal">About the hair</h4>
+                <div className="mt-4">
+                  <Field label="Notes for Magdalene" hint="Optional">
+                    <textarea
+                      className="input min-h-[88px]"
+                      value={customer.notes}
+                      onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
+                      placeholder="Hair length, preferred colour or length of braids, any allergies…"
+                    />
+                  </Field>
+                </div>
+                {/* Honeypot: hidden from people, off-screen, not announced. */}
+                <input
+                  type="text"
+                  name="mm_ref_code"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore
+                  aria-hidden="true"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="absolute left-[-9999px] h-0 w-0 opacity-0"
+                />
+              </div>
             </div>
+            <p className="mt-3 flex items-center gap-2 text-xs text-charcoal-muted">
+              <Icon name="shield" size={14} /> Your details are only used for this booking.
+            </p>
 
             <NavRow
               onBack={() => setStep(2)}
@@ -618,160 +675,162 @@ export default function BookingWizard({
           </Section>
         )}
 
-        {/* ── Step 4: Review & confirm ────────────────────── */}
+        {/* ── Step 4: Confirm ─────────────────────────────── */}
         {step === 4 && service && startMin != null && (
-          <Section
-            title="Check your booking"
-            subtitle="Make sure everything is right, then book."
-          >
-            <div className="max-w-xl">
-              <div className="card overflow-hidden">
-                <div className="border-b border-gray-200 px-5 py-4">
-                  <p className="text-sm text-charcoal-muted">Your booking</p>
-                  <p className="font-display text-lg font-bold text-charcoal">{service.name}</p>
+          <Section title="Confirm your booking" subtitle="Check the details, then confirm.">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+              {/* Appointment summary */}
+              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                <div className="flex items-center gap-4 border-b border-gray-200 p-5">
+                  <ServiceThumb service={service} />
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-bold text-charcoal">{service.name}</p>
+                    <p className="text-sm text-charcoal-muted">{durationLabel(service.durationMin)}</p>
+                  </div>
                 </div>
                 <dl className="divide-y divide-gray-100 px-5">
-                  <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
-                  <ReviewRow k="Date" v={prettyDate(date)} />
-                  <ReviewRow k="Time" v={`${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`} />
-                  <ReviewRow k="Duration" v={durationLabel(service.durationMin)} />
-                  <ReviewRow k="Name" v={customer.name} />
-                  <ReviewRow k="Phone" v={customer.phone} />
-                  {customer.email && <ReviewRow k="Email" v={customer.email} />}
-                  {customer.notes && <ReviewRow k="Notes" v={customer.notes} />}
-                  {serviceType === "OUTCALL" && (
+                  <ConfirmRow k="Date" v={prettyDate(date)} onEdit={() => setStep(2)} />
+                  <ConfirmRow
+                    k="Time"
+                    v={`${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`}
+                    onEdit={() => setStep(2)}
+                  />
+                  <ConfirmRow
+                    k="Where"
+                    v={
+                      serviceType === "OUTCALL"
+                        ? `I come to you · ${[loc.estate, loc.houseNumber].filter(Boolean).join(", ")}`
+                        : `At the studio${location ? ` · ${location}` : ""}`
+                    }
+                    onEdit={() => setStep(1)}
+                  />
+                  <ConfirmRow
+                    k="Your details"
+                    v={[customer.name, customer.phone, customer.email].filter(Boolean).join(" · ")}
+                    onEdit={() => setStep(3)}
+                  />
+                  {customer.notes && <ConfirmRow k="Notes" v={customer.notes} onEdit={() => setStep(3)} />}
+                </dl>
+              </div>
+
+              {/* Payment */}
+              <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
+                <h4 className="font-display text-base font-bold text-charcoal">Payment</h4>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-charcoal-muted">Service price</dt>
+                    <dd className="font-medium text-charcoal">{formatKes(priceFor(service, serviceType))}</dd>
+                  </div>
+                  {depositPercent > 0 && (
                     <>
-                      <ReviewRow k="Area" v={loc.estate} />
-                      <ReviewRow k="House / Apartment" v={loc.houseNumber} />
-                      <ReviewRow k="Landmark" v={loc.landmark} />
-                      <ReviewRow k="Directions" v={loc.travelNotes} />
-                      {loc.mapsPin && <ReviewRow k="Maps pin" v={loc.mapsPin} />}
+                      <div className="flex justify-between">
+                        <dt className="text-charcoal-muted">Deposit to secure ({depositPercent}%)</dt>
+                        <dd className="font-semibold text-charcoal">{formatKes(depositDue)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-charcoal-muted">Balance on the day</dt>
+                        <dd className="text-charcoal">
+                          {formatKes(priceFor(service, serviceType) - depositDue)}
+                        </dd>
+                      </div>
                     </>
                   )}
                 </dl>
-                <div className="flex items-center justify-between border-t border-gray-200 bg-cream-soft px-5 py-4">
-                  <span className="font-medium text-charcoal">Service price</span>
-                  <span className="font-display text-xl font-bold text-charcoal">
-                    {formatKes(priceFor(service, serviceType))}
-                  </span>
-                </div>
-              </div>
+                {serviceType === "OUTCALL" && (
+                  <p className="mt-3 text-xs text-charcoal-muted">
+                    Transport fare is shared when Magdalene confirms.
+                  </p>
+                )}
 
-              {serviceType === "OUTCALL" && (
-                <p className="mt-3 rounded-lg bg-cream-soft px-4 py-3 text-sm text-charcoal-soft">
-                  This is the service price. I will send you the transport fare once I
-                  confirm your booking.
-                </p>
-              )}
-
-              {/* Deposit / M-Pesa — recommended, optional */}
-              {stkEnabled ? (
-                <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-                  <div className="border-b border-gray-200 px-5 py-3">
-                    <div>
-                      <p className="text-sm text-charcoal-muted">
-                        Secure your slot
-                      </p>
-                      <p className="font-display text-base font-bold text-charcoal">
-                        {depositPercent}% deposit ·{" "}
-                        {formatKes(Math.round((priceFor(service, serviceType) * depositPercent) / 100))}
+                <div className="mt-5 border-t border-gray-200 pt-5">
+                  {stkEnabled ? (
+                    <div className="space-y-2 text-sm">
+                      <PayOption
+                        active={payNow}
+                        onClick={() => setPayNow(true)}
+                        title={`Pay ${formatKes(depositDue)} deposit now`}
+                        text="An M-Pesa prompt comes to your phone. You can also pay by card."
+                      />
+                      <PayOption
+                        active={!payNow}
+                        onClick={() => setPayNow(false)}
+                        title="Book now, pay later"
+                        text="Magdalene will message you to arrange the deposit."
+                      />
+                      <p className="flex items-start gap-2 pt-2 text-xs text-charcoal-muted">
+                        <Icon name="shield" size={14} className="mt-0.5 shrink-0" />
+                        Payments are processed securely by Paystack for Magdalene Medza.
                       </p>
                     </div>
-                    
-                  </div>
-                  <div className="space-y-2 p-5 text-sm">
-                    <label className={`flex cursor-pointer items-start gap-3 rounded-lg p-3 ring-1 transition ${payNow ? "bg-royal-50 ring-royal-500" : "ring-gray-200"}`}>
-                      <input type="radio" className="mt-1" checked={payNow} onChange={() => setPayNow(true)} />
-                      <span>
-                        <span className="block font-semibold text-charcoal">Pay deposit now with M-Pesa (recommended)</span>
-                        <span className="text-charcoal-muted">
-                          After you press book, an M-Pesa prompt pops up on your phone. Enter your PIN and you are done.
-                        </span>
-                      </span>
-                    </label>
-                    <label className={`flex cursor-pointer items-start gap-3 rounded-lg p-3 ring-1 transition ${!payNow ? "bg-royal-50 ring-royal-500" : "ring-gray-200"}`}>
-                      <input type="radio" className="mt-1" checked={!payNow} onChange={() => setPayNow(false)} />
-                      <span>
-                        <span className="block font-semibold text-charcoal">Book now, pay later</span>
-                        <span className="text-charcoal-muted">Magdalene will call or message you to confirm.</span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              ) : (
-              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <div className="border-b border-gray-200 px-5 py-3">
-                  <div>
-                    <p className="text-sm text-charcoal-muted">
-                      Secure your slot
-                    </p>
-                    <p className="font-display text-base font-bold text-charcoal">
-                      Pay {depositPercent}% deposit ·{" "}
-                      {formatKes(Math.round((priceFor(service, serviceType) * depositPercent) / 100))}
-                    </p>
-                  </div>
-                  
-                </div>
-                <div className="p-5">
-                  <p className="text-sm text-charcoal-soft">
-                    To hold your appointment, send the deposit to{" "}
-                    <strong className="text-royal-700">M-Pesa {mpesaNumber || salonPhone}</strong>{" "}
-                    then paste your confirmation below. This is recommended but optional.
-                    Magdalene will still call or message you to confirm.
-                  </p>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <Field label="Your M-Pesa number">
-                      <input
-                        className="input"
-                        value={mpesa.number}
-                        onChange={(e) => setMpesa({ ...mpesa, number: e.target.value })}
-                        placeholder="07XX XXX XXX"
-                      />
-                    </Field>
-                    <Field label="Amount paid (KES)">
-                      <input
-                        className="input"
-                        type="number"
-                        min={0}
-                        value={mpesa.amount}
-                        onChange={(e) => setMpesa({ ...mpesa, amount: e.target.value })}
-                        placeholder="e.g. 500"
-                      />
-                    </Field>
-                    <div className="sm:col-span-2">
-                      <Field label="Paste the M-Pesa confirmation message">
-                        <textarea
-                          className="input min-h-[70px]"
+                  ) : (
+                    <div className="text-sm">
+                      <p className="text-charcoal">
+                        Send the {depositPercent > 0 ? `${formatKes(depositDue)} deposit` : "payment"} by M-Pesa to:
+                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-cream-soft px-4 py-3">
+                        <div>
+                          <p className="text-xs text-charcoal-muted">M-Pesa · Send Money</p>
+                          <p className="font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
+                          <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(payNumber.replace(/\s/g, "")).catch(() => undefined);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1800);
+                          }}
+                          className="btn-outline !px-3 !py-2 text-xs"
+                        >
+                          <Icon name="copy" size={14} /> {copied ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                      <p className="mt-4 text-xs text-charcoal-muted">
+                        Paid already? Add the details so Magdalene can match it (optional).
+                      </p>
+                      <div className="mt-2 grid gap-3">
+                        <input
+                          className="input"
                           value={mpesa.message}
                           onChange={(e) => setMpesa({ ...mpesa, message: e.target.value })}
-                          placeholder="e.g. TAB1234XYZ Confirmed. Ksh500.00 sent to..."
+                          placeholder="M-Pesa code or message, e.g. TAB1234XYZ"
                         />
-                      </Field>
+                        <div className="grid grid-cols-2 gap-3">
+                          <input
+                            className="input"
+                            value={mpesa.number}
+                            onChange={(e) => setMpesa({ ...mpesa, number: e.target.value })}
+                            placeholder="Paid from 07…"
+                          />
+                          <input
+                            className="input"
+                            type="number"
+                            min={0}
+                            value={mpesa.amount}
+                            onChange={(e) => setMpesa({ ...mpesa, amount: e.target.value })}
+                            placeholder="Amount"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              </div>
 
-              )}
+                {error && (
+                  <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{error}</p>
+                )}
 
-              {error && (
-                <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-                  {error}
-                </p>
-              )}
-
-              <NavRow
-                onBack={() => setStep(3)}
-                nextLabel={
-                  submitting
+                <button onClick={submit} disabled={submitting} className="btn-primary mt-5 w-full !py-3.5 text-base">
+                  {submitting
                     ? "Booking…"
-                    : stkEnabled && payNow
-                      ? "Book & pay deposit"
-                      : "Proceed and book"
-                }
-                onNext={submit}
-                nextDisabled={submitting}
-              />
+                    : stkEnabled && payNow && depositPercent > 0
+                      ? `Confirm & pay ${formatKes(depositDue)}`
+                      : "Confirm booking"}
+                </button>
+                <button onClick={() => setStep(3)} className="btn-ghost mt-2 w-full">
+                  ← Back
+                </button>
+              </div>
             </div>
           </Section>
         )}
@@ -801,17 +860,28 @@ export default function BookingWizard({
                     defaultPhone={customer.phone}
                     amount={Math.round((priceFor(service, serviceType) * depositPercent) / 100)}
                     autoStart={payNow}
-                    manualNumber={mpesaNumber}
+                    manualNumber={payNumber}
                     onPaid={() => setDepositPaid(true)}
                   />
+                </div>
+              )}
+
+              {!stkEnabled && depositPercent > 0 && !(Number(mpesa.amount) > 0) && (
+                <div className="mt-6 rounded-xl bg-cream-soft px-4 py-3 text-sm">
+                  <p className="text-charcoal">
+                    To secure your slot, send the <strong>{formatKes(depositDue)}</strong> deposit by M-Pesa to
+                  </p>
+                  <p className="mt-1 font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
+                  <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
                 </div>
               )}
 
               <dl className="mt-6 divide-y divide-gray-100 border-y border-gray-100 text-sm">
                 <ReviewRow k="Service" v={service.name} />
                 <ReviewRow k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
-                <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
+                <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At the studio"} />
                 <ReviewRow k="Price" v={formatKes(priceFor(service, serviceType))} />
+                {depositPercent > 0 && <ReviewRow k="Deposit" v={formatKes(depositDue)} />}
                 {Number(mpesa.amount) > 0 && (
                   <ReviewRow k="Deposit paid" v={formatKes(Number(mpesa.amount))} />
                 )}
@@ -853,7 +923,7 @@ export default function BookingWizard({
       </div>
 
       {/* Summary panel: always visible on desktop while booking */}
-      {step < 5 && (
+      {step < 4 && (
         <BookingSummary
           service={service}
           serviceType={serviceType}
@@ -913,6 +983,7 @@ function TypeCard({
   title,
   desc,
   price,
+  points,
 }: {
   active: boolean;
   onClick: () => void;
@@ -920,47 +991,131 @@ function TypeCard({
   title: string;
   desc: string;
   price: string;
+  points: string[];
 }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex items-start gap-4 rounded-xl border bg-white p-5 text-left transition-colors ${
-        active ? "border-royal-600 ring-1 ring-royal-600" : "border-gray-200 hover:border-gray-300"
+      className={`group relative flex h-full flex-col rounded-2xl border bg-white p-6 text-left transition-all duration-300 ${
+        active
+          ? "border-royal-600 shadow-soft ring-1 ring-royal-600"
+          : "border-gray-200 hover:-translate-y-0.5 hover:border-royal-200 hover:shadow-soft"
       }`}
     >
-      <span className={`mt-0.5 ${active ? "text-royal-600" : "text-charcoal-muted"}`}>
-        <Icon name={icon} size={22} />
-      </span>
-      <span className="flex-1">
-        <span className="block font-semibold text-charcoal">{title}</span>
-        <span className="mt-0.5 block text-sm text-charcoal-muted">{desc}</span>
-        <span className="mt-2 inline-block font-semibold text-charcoal">{price}</span>
+      <span
+        className={`absolute right-5 top-5 grid h-6 w-6 place-items-center rounded-full border transition-colors ${
+          active ? "border-royal-600 bg-royal-600 text-white" : "border-gray-300 text-transparent"
+        }`}
+      >
+        <Icon name="check" size={14} />
       </span>
       <span
-        className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
-          active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_2px_white]" : "border-gray-300"
+        className={`grid h-12 w-12 place-items-center rounded-full transition-colors ${
+          active ? "bg-royal-600 text-white" : "bg-royal-50 text-royal-600"
         }`}
-      />
+      >
+        <Icon name={icon} size={22} />
+      </span>
+      <span className="mt-5 block font-display text-lg font-bold text-charcoal">{title}</span>
+      <span className="mt-1 block text-sm text-charcoal-muted">{desc}</span>
+      <span className="mt-4 block border-t border-gray-100 pt-4">
+        {points.map((p) => (
+          <span key={p} className="mt-1.5 flex items-start gap-2 text-sm text-charcoal first:mt-0">
+            <Icon name="check" size={15} className="mt-0.5 shrink-0 text-royal-600" />
+            {p}
+          </span>
+        ))}
+      </span>
+      <span className="mt-auto flex items-baseline justify-between pt-5">
+        <span className="text-xs uppercase tracking-wide text-charcoal-muted">Price</span>
+        <span className="font-display text-2xl font-bold text-charcoal">{price}</span>
+      </span>
     </button>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="label">{label}</span>
+      <span className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span className="text-sm font-medium text-charcoal">{label}</span>
+        {hint && <span className="text-xs text-charcoal-muted">{hint}</span>}
+      </span>
       {children}
     </label>
   );
 }
 
-function Legend({ dot, label }: { dot: string; label: string }) {
+/** Small square photo of the chosen style. */
+function ServiceThumb({ service, size = 64 }: { service: Service; size?: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={`h-3 w-3 rounded ${dot}`} />
-      {label}
+    <span
+      className="block shrink-0 overflow-hidden rounded-xl bg-gray-100"
+      style={{ width: size, height: size }}
+    >
+      {service.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <span className="grid h-full w-full place-items-center font-display text-lg text-gray-300">M</span>
+      )}
     </span>
+  );
+}
+
+function ConfirmRow({ k, v, onEdit }: { k: string; v: string; onEdit: () => void }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3.5 text-sm">
+      <div className="min-w-0">
+        <dt className="text-xs text-charcoal-muted">{k}</dt>
+        <dd className="mt-0.5 break-words font-medium text-charcoal">{v}</dd>
+      </div>
+      <button onClick={onEdit} className="shrink-0 text-xs font-semibold text-royal-700 hover:underline">
+        Change
+      </button>
+    </div>
+  );
+}
+
+function PayOption({
+  active,
+  onClick,
+  title,
+  text,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  text: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex w-full items-start gap-3 rounded-xl p-3 text-left ring-1 transition-colors ${
+        active ? "bg-royal-50 ring-royal-500" : "ring-gray-200 hover:ring-gray-300"
+      }`}
+    >
+      <span
+        className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${
+          active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_2px_white]" : "border-gray-300"
+        }`}
+      />
+      <span>
+        <span className="block font-semibold text-charcoal">{title}</span>
+        <span className="block text-xs text-charcoal-muted">{text}</span>
+      </span>
+    </button>
   );
 }
 
@@ -1009,9 +1164,18 @@ function BookingSummary({
     <aside className="hidden lg:block">
       <div className="card sticky top-24 p-5">
         <h3 className="font-display text-base font-bold text-charcoal">Your booking</h3>
+        {service && (
+          <div className="mt-3 flex items-center gap-3">
+            <ServiceThumb service={service} size={52} />
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-charcoal">{service.name}</p>
+              <p className="text-xs text-charcoal-muted">{durationLabel(service.durationMin)}</p>
+            </div>
+          </div>
+        )}
         <dl className="mt-3 divide-y divide-gray-100 text-sm">
-          <SummaryRow k="Style" v={service?.name} />
-          <SummaryRow k="Where" v={service ? (serviceType === "OUTCALL" ? "I come to you" : "At my studio") : undefined} />
+          {!service && <SummaryRow k="Style" v={undefined} />}
+          <SummaryRow k="Where" v={service ? (serviceType === "OUTCALL" ? "I come to you" : "At the studio") : undefined} />
           <SummaryRow k="Date" v={date ? prettyDate(date) : undefined} />
           <SummaryRow
             k="Time"
