@@ -30,17 +30,17 @@ export default async function BookPage({
   const blockedDates = blocked.map((b) => b.date);
 
   return (
-    <div className="min-h-screen bg-cream">
-      <header className="sticky top-0 z-30 border-b border-charcoal/5 bg-cream/85 backdrop-blur">
+    <div className="min-h-screen bg-cream-soft">
+      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
         <div className="container-px flex h-16 items-center justify-between">
           <Logo />
-          <Link href="/" className="text-sm font-medium text-charcoal-muted transition hover:text-royal-700">
+          <Link href="/" className="text-sm text-charcoal-muted transition hover:text-royal-700">
             Back to site
           </Link>
         </div>
       </header>
 
-      <main className="container-px py-8 sm:py-12">
+      <main className="container-px py-8 sm:py-10">
         <BookingWizard
           services={services.map((s) => ({
             id: s.id,

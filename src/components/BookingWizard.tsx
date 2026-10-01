@@ -6,6 +6,7 @@ import ServiceCard, { ServiceCardData } from "./ServiceCard";
 import Icon, { IconName } from "./Icon";
 import MonthCalendar from "./MonthCalendar";
 import MpesaPayPanel from "./MpesaPayPanel";
+import { SlotGridSkeleton } from "./Skeleton";
 import {
   dayOfWeek,
   durationLabel,
@@ -40,13 +41,14 @@ interface AvailabilityResponse {
 
 const STEPS = ["Service", "Type", "Date & Time", "Details", "Review", "Done"];
 
+// Time slot looks: free slots are outlined, everything else is muted grey.
 const STATUS_STYLE: Record<string, string> = {
-  AVAILABLE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  OCCUPIED: "bg-red-50 text-red-400 ring-red-100 line-through",
-  PENDING: "bg-amber-50 text-amber-500 ring-amber-100",
-  LUNCH: "bg-charcoal/5 text-charcoal-muted ring-black/5",
+  AVAILABLE: "bg-white text-charcoal ring-gray-300",
+  OCCUPIED: "bg-gray-50 text-gray-400 ring-gray-100 line-through",
+  PENDING: "bg-gray-50 text-gray-400 ring-gray-100 line-through",
+  LUNCH: "bg-gray-50 text-gray-300 ring-gray-100",
   CLOSED: "bg-gray-50 text-gray-300 ring-gray-100",
-  BLOCKED: "bg-gray-100 text-gray-400 ring-gray-200",
+  BLOCKED: "bg-gray-50 text-gray-300 ring-gray-100",
 };
 
 export default function BookingWizard({
@@ -280,11 +282,12 @@ export default function BookingWizard({
   ];
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       {/* Progress */}
       <Stepper step={step} />
 
-      <div className="mt-8">
+      <div className={`mt-8 grid gap-8 ${step < 5 ? "lg:grid-cols-[minmax(0,1fr)_300px]" : ""}`}>
+      <div className="min-w-0">
         {/* ── Step 0: Service ─────────────────────────────── */}
         {step === 0 && (
           <Section title="Choose your style" subtitle="Pick the service you'd like to book.">
@@ -295,7 +298,7 @@ export default function BookingWizard({
                     <h3 className="mb-4 font-display text-lg font-semibold text-charcoal">
                       {CATEGORY_LABEL[cat] || cat}
                     </h3>
-                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-5 sm:grid-cols-2">
                       {services
                         .filter((s) => s.category === cat)
                         .map((s) => (
@@ -313,7 +316,7 @@ export default function BookingWizard({
                                   setStep(1);
                                 }}
                               >
-                                {serviceId === s.id ? "Selected" : `Choose ${s.name}`}
+                                {serviceId === s.id ? "Selected" : "Choose this style"}
                               </button>
                             }
                           />
@@ -353,7 +356,7 @@ export default function BookingWizard({
 
             {serviceType === "OUTCALL" && (
               <div className="mt-6 card p-5">
-                <p className="mb-4 rounded-xl bg-gold/10 px-4 py-3 text-sm text-charcoal-soft ring-1 ring-gold/30">
+                <p className="mb-4 rounded-lg bg-cream-soft px-4 py-3 text-sm text-charcoal-soft">
                   Please fill in your location clearly so I can reach you. I will share
                   the exact transport fare once I confirm your booking.
                 </p>
@@ -418,18 +421,13 @@ export default function BookingWizard({
         {step === 2 && service && (
           <Section
             title="Pick a date & time"
-            subtitle={`${service.name} · ${durationLabel(service.durationMin)} · only green slots are open.`}
+            subtitle={`${service.name} takes about ${durationLabel(service.durationMin).toLowerCase()}. Choose a day, then a free time.`}
           >
-            <div className="grid gap-6 md:grid-cols-[300px_1fr]">
+            <div className="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)]">
               {/* Calendar */}
               <div>
                 <MonthCalendar value={date} onChange={setDate} isDisabled={dayDisabled} />
-                <p className="mt-3 flex items-center gap-2 text-xs text-charcoal-muted">
-                  <span className="h-2 w-2 rounded-full bg-royal-500" /> Today
-                  <span className="ml-2 text-charcoal-muted/70">
-                    Greyed dates are closed
-                  </span>
-                </p>
+                <p className="mt-3 text-xs text-charcoal-muted">Greyed out days are closed.</p>
               </div>
 
               {/* Times */}
@@ -437,17 +435,15 @@ export default function BookingWizard({
                 <div className="text-sm font-semibold text-charcoal-soft">{prettyDate(date)}</div>
 
                 {/* Legend */}
-                <div className="mt-3 flex flex-wrap gap-3 text-xs text-charcoal-muted">
-                  <Legend dot="bg-emerald-500" label="Available" />
-                  <Legend dot="bg-red-400" label="Occupied" />
-                  <Legend dot="bg-amber-400" label="Pending" />
-                  <Legend dot="bg-charcoal/40" label="Lunch" />
-                  <Legend dot="bg-gray-300" label="Closed / Past" />
+                <div className="mt-3 flex flex-wrap gap-4 text-xs text-charcoal-muted">
+                  <Legend dot="bg-white ring-1 ring-gray-400" label="Free" />
+                  <Legend dot="bg-royal-600" label="Your choice" />
+                  <Legend dot="bg-gray-200" label="Taken or closed" />
                 </div>
 
                 {/* Slots */}
                 <div className="mt-4 min-h-[120px]">
-              {loadingAvail && <p className="text-sm text-charcoal-muted">Loading availability…</p>}
+              {loadingAvail && <SlotGridSkeleton />}
 
               {!loadingAvail && avail && !avail.open && (
                 <div className="card border-dashed p-6 text-center text-charcoal-muted">
@@ -467,12 +463,12 @@ export default function BookingWizard({
               {!loadingAvail && avail && avail.open && !avail.dayFull && (
                 <>
                   {avail.bookableStarts.length === 0 ? (
-                    <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 ring-1 ring-amber-200">
+                    <div className="rounded-lg bg-cream-soft px-4 py-3 text-sm text-charcoal-soft">
                       Magdalene is fully booked on {prettyDate(date)}. Please choose
                       another day on the calendar.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                       {avail.grid.map((slot) => {
                         const canBook = bookable.has(slot.startMin);
                         const taken = !canBook && (slot.status === "OCCUPIED" || slot.status === "PENDING");
@@ -492,11 +488,11 @@ export default function BookingWizard({
                                 );
                               }
                             }}
-                            className={`rounded-xl px-2 py-2.5 text-xs font-semibold ring-1 transition ${
+                            className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 transition-colors ${
                               selected
-                                ? "bg-royal-600 text-white ring-royal-600 shadow-soft"
+                                ? "bg-royal-600 text-white ring-royal-600"
                                 : STATUS_STYLE[status] || STATUS_STYLE.CLOSED
-                            } ${canBook ? "cursor-pointer hover:ring-2 hover:ring-royal-400" : taken ? "cursor-pointer" : "cursor-not-allowed"}`}
+                            } ${canBook ? "cursor-pointer hover:ring-royal-500 hover:text-royal-700" : taken ? "cursor-pointer" : "cursor-not-allowed"}`}
                           >
                             {slot.label}
                           </button>
@@ -506,11 +502,11 @@ export default function BookingWizard({
                   )}
 
                   {slotNotice && (
-                    <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+                    <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-charcoal-soft">
                       {slotNotice}
                       {avail.bookableStarts.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
-                          <span className="text-red-700/80">Free times:</span>
+                          <span className="text-charcoal-muted">Free times:</span>
                           {avail.bookableStarts.slice(0, 6).map((m) => (
                             <button
                               key={m}
@@ -518,7 +514,7 @@ export default function BookingWizard({
                                 setStartMin(m);
                                 setSlotNotice(null);
                               }}
-                              className="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-200"
+                              className="rounded-md border border-gray-300 px-2 py-0.5 text-xs font-medium text-charcoal hover:border-royal-500 hover:text-royal-700"
                             >
                               {minutesToLabel(m)}
                             </button>
@@ -529,7 +525,7 @@ export default function BookingWizard({
                   )}
 
                   {startMin != null && (
-                    <p className="mt-4 rounded-xl bg-royal-50 px-4 py-3 text-sm text-royal-700">
+                    <p className="mt-4 rounded-lg bg-royal-50 px-4 py-3 text-sm text-royal-800">
                       Selected: <strong>{minutesToLabel(startMin)}</strong> to{" "}
                       {minutesToLabel(startMin + service.durationMin)} (
                       {durationLabel(service.durationMin)})
@@ -552,7 +548,7 @@ export default function BookingWizard({
         {/* ── Step 3: Details ─────────────────────────────── */}
         {step === 3 && service && startMin != null && (
           <Section title="Your details" subtitle="So I can confirm your booking with you.">
-            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            <div>
               <div className="card p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Full name *">
@@ -608,12 +604,6 @@ export default function BookingWizard({
                 </div>
               </div>
 
-              <Summary
-                service={service}
-                serviceType={serviceType}
-                date={date}
-                startMin={startMin}
-              />
             </div>
 
             <NavRow
@@ -632,17 +622,15 @@ export default function BookingWizard({
         {step === 4 && service && startMin != null && (
           <Section
             title="Check your booking"
-            subtitle="Please look over everything below. Press proceed when it all looks right."
+            subtitle="Make sure everything is right, then book."
           >
-            <div className="mx-auto max-w-xl">
+            <div className="max-w-xl">
               <div className="card overflow-hidden">
-                <div className="bg-royal-gradient px-5 py-4 text-white">
-                  <p className="text-xs uppercase tracking-widest text-lavender-100">
-                    Booking summary
-                  </p>
-                  <p className="font-display text-xl font-bold">{service.name}</p>
+                <div className="border-b border-gray-200 px-5 py-4">
+                  <p className="text-sm text-charcoal-muted">Your booking</p>
+                  <p className="font-display text-lg font-bold text-charcoal">{service.name}</p>
                 </div>
-                <dl className="divide-y divide-black/5 px-5">
+                <dl className="divide-y divide-gray-100 px-5">
                   <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
                   <ReviewRow k="Date" v={prettyDate(date)} />
                   <ReviewRow k="Time" v={`${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`} />
@@ -661,16 +649,16 @@ export default function BookingWizard({
                     </>
                   )}
                 </dl>
-                <div className="flex items-center justify-between border-t border-black/5 bg-lavender-50 px-5 py-4">
+                <div className="flex items-center justify-between border-t border-gray-200 bg-cream-soft px-5 py-4">
                   <span className="font-medium text-charcoal">Service price</span>
-                  <span className="font-display text-2xl font-bold text-royal-600">
+                  <span className="font-display text-xl font-bold text-charcoal">
                     {formatKes(priceFor(service, serviceType))}
                   </span>
                 </div>
               </div>
 
               {serviceType === "OUTCALL" && (
-                <p className="mt-3 rounded-xl bg-gold/10 px-4 py-3 text-sm text-charcoal-soft ring-1 ring-gold/30">
+                <p className="mt-3 rounded-lg bg-cream-soft px-4 py-3 text-sm text-charcoal-soft">
                   This is the service price. I will send you the transport fare once I
                   confirm your booking.
                 </p>
@@ -678,21 +666,21 @@ export default function BookingWizard({
 
               {/* Deposit / M-Pesa — recommended, optional */}
               {stkEnabled ? (
-                <div className="mt-4 overflow-hidden rounded-2xl border border-gold/40 bg-white shadow-card">
-                  <div className="flex items-center justify-between gap-3 bg-gold-sheen px-5 py-3">
+                <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <div className="border-b border-gray-200 px-5 py-3">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-royal-900/80">
+                      <p className="text-sm text-charcoal-muted">
                         Secure your slot
                       </p>
-                      <p className="font-display text-lg font-bold text-royal-900">
+                      <p className="font-display text-base font-bold text-charcoal">
                         {depositPercent}% deposit ·{" "}
                         {formatKes(Math.round((priceFor(service, serviceType) * depositPercent) / 100))}
                       </p>
                     </div>
-                    <Icon name="sparkle" size={26} className="text-royal-900/70" />
+                    
                   </div>
                   <div className="space-y-2 p-5 text-sm">
-                    <label className={`flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 transition ${payNow ? "bg-royal-50 ring-royal-300" : "ring-black/10"}`}>
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-lg p-3 ring-1 transition ${payNow ? "bg-royal-50 ring-royal-500" : "ring-gray-200"}`}>
                       <input type="radio" className="mt-1" checked={payNow} onChange={() => setPayNow(true)} />
                       <span>
                         <span className="block font-semibold text-charcoal">Pay deposit now with M-Pesa (recommended)</span>
@@ -701,7 +689,7 @@ export default function BookingWizard({
                         </span>
                       </span>
                     </label>
-                    <label className={`flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 transition ${!payNow ? "bg-royal-50 ring-royal-300" : "ring-black/10"}`}>
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-lg p-3 ring-1 transition ${!payNow ? "bg-royal-50 ring-royal-500" : "ring-gray-200"}`}>
                       <input type="radio" className="mt-1" checked={!payNow} onChange={() => setPayNow(false)} />
                       <span>
                         <span className="block font-semibold text-charcoal">Book now, pay later</span>
@@ -711,18 +699,18 @@ export default function BookingWizard({
                   </div>
                 </div>
               ) : (
-              <div className="mt-4 overflow-hidden rounded-2xl border border-gold/40 bg-white shadow-card">
-                <div className="flex items-center justify-between gap-3 bg-gold-sheen px-5 py-3">
+              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="border-b border-gray-200 px-5 py-3">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-royal-900/80">
+                    <p className="text-sm text-charcoal-muted">
                       Secure your slot
                     </p>
-                    <p className="font-display text-lg font-bold text-royal-900">
+                    <p className="font-display text-base font-bold text-charcoal">
                       Pay {depositPercent}% deposit ·{" "}
                       {formatKes(Math.round((priceFor(service, serviceType) * depositPercent) / 100))}
                     </p>
                   </div>
-                  <Icon name="sparkle" size={26} className="text-royal-900/70" />
+                  
                 </div>
                 <div className="p-5">
                   <p className="text-sm text-charcoal-soft">
@@ -790,26 +778,20 @@ export default function BookingWizard({
 
         {/* ── Step 5: Done ────────────────────────────────── */}
         {step === 5 && service && startMin != null && (
-          <div className="mx-auto max-w-lg overflow-hidden rounded-3xl border border-gold/30 bg-white shadow-soft">
-            <div className="bg-royal-gradient px-8 py-10 text-center text-white">
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/15 text-gold-light ring-2 ring-gold/50">
-                <Icon name="checkCircle" size={36} />
+          <div className="mx-auto max-w-lg animate-fade-up">
+            <div className="card p-6 sm:p-8">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-royal-50 text-royal-600">
+                <Icon name="check" size={24} />
               </div>
-              <h2 className="mt-5 font-display text-3xl font-semibold">
+              <h2 className="mt-4 font-display text-2xl font-bold text-charcoal">
                 Thank you, {customer.name.split(" ")[0]}
               </h2>
-              <p className="mt-2 text-sm text-lavender-100">
-                Your booking request has been received.
-              </p>
-            </div>
-
-            <div className="p-8 text-center">
-              <p className="text-charcoal-soft">
+              <p className="mt-2 text-charcoal-muted">
                 {depositPaid || Number(mpesa.amount) > 0
-                  ? "Magdalene will personally call or message you on WhatsApp to confirm your appointment and your deposit."
+                  ? "Your booking request is in. Magdalene will message you on WhatsApp to confirm your appointment and deposit."
                   : stkEnabled && payNow
-                    ? "Complete the M-Pesa payment below to secure your slot. Magdalene will then message you on WhatsApp to confirm."
-                    : "Magdalene will personally call or message you on WhatsApp to confirm your appointment and talk you through the deposit."}
+                    ? "Your booking request is in. Complete the M-Pesa payment below to secure your slot."
+                    : "Your booking request is in. Magdalene will call or message you on WhatsApp to confirm and talk you through the deposit."}
               </p>
 
               {stkEnabled && appointmentId && appointmentId !== "skipped" && (
@@ -825,15 +807,15 @@ export default function BookingWizard({
                 </div>
               )}
 
-              <div className="mt-6 rounded-2xl bg-lavender-50 p-5 text-left text-sm">
-                <Row k="Service" v={service.name} />
-                <Row k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
-                <Row k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
-                <Row k="Price" v={formatKes(priceFor(service, serviceType))} />
+              <dl className="mt-6 divide-y divide-gray-100 border-y border-gray-100 text-sm">
+                <ReviewRow k="Service" v={service.name} />
+                <ReviewRow k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
+                <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
+                <ReviewRow k="Price" v={formatKes(priceFor(service, serviceType))} />
                 {Number(mpesa.amount) > 0 && (
-                  <Row k="Deposit paid" v={formatKes(Number(mpesa.amount))} />
+                  <ReviewRow k="Deposit paid" v={formatKes(Number(mpesa.amount))} />
                 )}
-              </div>
+              </dl>
 
               <a
                 href={`https://wa.me/${salonPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
@@ -841,17 +823,17 @@ export default function BookingWizard({
                 )}`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-primary mt-6 w-full"
+                className="btn-outline mt-6 w-full"
               >
-                <Icon name="whatsapp" size={18} /> Message Magdalene now
+                <Icon name="whatsapp" size={18} /> Message Magdalene on WhatsApp
               </a>
 
-              <div className="mt-3 flex justify-center gap-3">
+              <div className="mt-3 flex justify-between gap-3">
                 <Link href="/" className="btn-ghost">
                   Back to home
                 </Link>
                 <button
-                  className="btn-outline"
+                  className="btn-ghost"
                   onClick={() => {
                     setStep(0);
                     setServiceId(undefined);
@@ -869,6 +851,18 @@ export default function BookingWizard({
           </div>
         )}
       </div>
+
+      {/* Summary panel: always visible on desktop while booking */}
+      {step < 5 && (
+        <BookingSummary
+          service={service}
+          serviceType={serviceType}
+          date={step >= 2 ? date : null}
+          startMin={startMin}
+          depositPercent={depositPercent}
+        />
+      )}
+      </div>
     </div>
   );
 }
@@ -876,40 +870,21 @@ export default function BookingWizard({
 /* ── Small presentational helpers ───────────────────────────── */
 
 function Stepper({ step }: { step: number }) {
+  const shown = Math.min(step, STEPS.length - 1);
   return (
-    <ol className="flex items-center gap-1 sm:gap-2">
-      {STEPS.map((label, i) => {
-        const done = i < step;
-        const active = i === step;
-        return (
-          <li key={label} className="flex flex-1 items-center gap-1 sm:gap-2">
-            <div className="flex items-center gap-2">
-              <span
-                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold transition ${
-                  done
-                    ? "bg-royal-600 text-white"
-                    : active
-                      ? "bg-royal-600 text-white ring-4 ring-royal-100"
-                      : "bg-white text-charcoal-muted ring-1 ring-black/10"
-                }`}
-              >
-                {done ? <Icon name="check" size={14} /> : i + 1}
-              </span>
-              <span
-                className={`hidden text-xs font-medium sm:block ${
-                  active ? "text-royal-700" : "text-charcoal-muted"
-                }`}
-              >
-                {label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <span className={`h-px flex-1 ${done ? "bg-royal-400" : "bg-black/10"}`} />
-            )}
-          </li>
-        );
-      })}
-    </ol>
+    <div>
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-medium text-charcoal">
+          Step {shown + 1} of {STEPS.length}: {STEPS[shown]}
+        </span>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+        <div
+          className="h-full rounded-full bg-royal-600 transition-all duration-300"
+          style={{ width: `${((shown + 1) / STEPS.length) * 100}%` }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -925,7 +900,7 @@ function Section({
   return (
     <div className="animate-fade-up">
       <h2 className="font-display text-2xl font-bold text-charcoal">{title}</h2>
-      {subtitle && <p className="mt-1 text-sm text-charcoal-muted">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-charcoal-muted">{subtitle}</p>}
       <div className="mt-6">{children}</div>
     </div>
   );
@@ -949,26 +924,24 @@ function TypeCard({
   return (
     <button
       onClick={onClick}
-      className={`flex items-start gap-4 rounded-2xl border p-5 text-left transition ${
-        active
-          ? "border-royal-500 bg-royal-50 shadow-glow ring-2 ring-royal-200"
-          : "border-black/10 bg-white hover:border-royal-300"
+      aria-pressed={active}
+      className={`flex items-start gap-4 rounded-xl border bg-white p-5 text-left transition-colors ${
+        active ? "border-royal-600 ring-1 ring-royal-600" : "border-gray-200 hover:border-gray-300"
       }`}
     >
-      <span
-        className={`inline-flex rounded-xl p-2.5 ${
-          active ? "bg-royal-600 text-white" : "bg-royal-50 text-royal-600"
-        }`}
-      >
+      <span className={`mt-0.5 ${active ? "text-royal-600" : "text-charcoal-muted"}`}>
         <Icon name={icon} size={22} />
       </span>
       <span className="flex-1">
-        <span className="block font-display text-lg font-semibold text-charcoal">{title}</span>
-        <span className="block text-sm text-charcoal-muted">{desc}</span>
-        <span className="mt-2 inline-block font-display text-lg font-bold text-royal-600">
-          {price}
-        </span>
+        <span className="block font-semibold text-charcoal">{title}</span>
+        <span className="mt-0.5 block text-sm text-charcoal-muted">{desc}</span>
+        <span className="mt-2 inline-block font-semibold text-charcoal">{price}</span>
       </span>
+      <span
+        className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
+          active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_2px_white]" : "border-gray-300"
+        }`}
+      />
     </button>
   );
 }
@@ -985,7 +958,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Legend({ dot, label }: { dot: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+      <span className={`h-3 w-3 rounded ${dot}`} />
       {label}
     </span>
   );
@@ -1003,7 +976,7 @@ function NavRow({
   nextDisabled?: boolean;
 }) {
   return (
-    <div className="mt-8 flex items-center justify-between">
+    <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-5">
       {onBack ? (
         <button onClick={onBack} className="btn-ghost">
           ← Back
@@ -1018,42 +991,58 @@ function NavRow({
   );
 }
 
-function Summary({
+function BookingSummary({
   service,
   serviceType,
   date,
   startMin,
+  depositPercent,
 }: {
-  service: Service;
+  service?: Service;
   serviceType: "INCALL" | "OUTCALL";
-  date: string;
-  startMin: number;
+  date: string | null;
+  startMin: number | null;
+  depositPercent: number;
 }) {
+  const price = service ? priceFor(service, serviceType) : null;
   return (
-    <aside className="card h-fit p-5">
-      <h4 className="font-display text-lg font-semibold">Booking summary</h4>
-      <div className="mt-4 space-y-2 text-sm">
-        <Row k="Service" v={service.name} />
-        <Row k="Duration" v={durationLabel(service.durationMin)} />
-        <Row k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At my studio"} />
-        <Row k="Date" v={prettyDate(date)} />
-        <Row k="Time" v={`${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`} />
-      </div>
-      <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-4">
-        <span className="font-medium">Total</span>
-        <span className="font-display text-xl font-bold text-royal-600">
-          {formatKes(priceFor(service, serviceType))}
-        </span>
+    <aside className="hidden lg:block">
+      <div className="card sticky top-24 p-5">
+        <h3 className="font-display text-base font-bold text-charcoal">Your booking</h3>
+        <dl className="mt-3 divide-y divide-gray-100 text-sm">
+          <SummaryRow k="Style" v={service?.name} />
+          <SummaryRow k="Where" v={service ? (serviceType === "OUTCALL" ? "I come to you" : "At my studio") : undefined} />
+          <SummaryRow k="Date" v={date ? prettyDate(date) : undefined} />
+          <SummaryRow
+            k="Time"
+            v={
+              service && startMin != null
+                ? `${minutesToLabel(startMin)} to ${minutesToLabel(startMin + service.durationMin)}`
+                : undefined
+            }
+          />
+        </dl>
+        <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
+          <span className="text-sm font-medium text-charcoal">Total</span>
+          <span className="font-display text-lg font-bold text-charcoal">
+            {price != null ? formatKes(price) : "—"}
+          </span>
+        </div>
+        {price != null && depositPercent > 0 && (
+          <p className="mt-1 text-right text-xs text-charcoal-muted">
+            Deposit {formatKes(Math.round((price * depositPercent) / 100))} to secure
+          </p>
+        )}
       </div>
     </aside>
   );
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function SummaryRow({ k, v }: { k: string; v?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-charcoal-muted">{k}</span>
-      <span className="text-right font-medium text-charcoal">{v}</span>
+    <div className="flex justify-between gap-3 py-2">
+      <dt className="shrink-0 text-charcoal-muted">{k}</dt>
+      <dd className={`text-right ${v ? "font-medium text-charcoal" : "text-gray-400"}`}>{v || "Not chosen"}</dd>
     </div>
   );
 }

@@ -17,9 +17,9 @@ export default function WhatsAppButton({
       target="_blank"
       rel="noreferrer"
       aria-label="Chat on WhatsApp"
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-3 font-semibold text-white shadow-soft transition hover:brightness-105 sm:bottom-6 sm:right-6"
+      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-charcoal shadow-soft transition hover:border-gray-300 sm:bottom-6 sm:right-6"
     >
-      <Icon name="whatsapp" size={22} />
+      <Icon name="whatsapp" size={20} className="text-[#25D366]" />
       <span className="hidden sm:inline">Chat with me</span>
     </a>
   );

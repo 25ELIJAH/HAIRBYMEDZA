@@ -103,27 +103,25 @@ export default function MpesaPayPanel({
 
   if (phase === "SUCCESS") {
     return (
-      <div className="rounded-2xl bg-emerald-50 p-5 text-left ring-1 ring-emerald-200">
-        <p className="flex items-center gap-2 font-semibold text-emerald-800">
-          <Icon name="checkCircle" size={20} /> Deposit of {formatKes(amount)} received
+      <div className="rounded-xl border border-gray-200 bg-white p-5 text-left">
+        <p className="flex items-center gap-2 font-semibold text-charcoal">
+          <Icon name="checkCircle" size={20} className="text-royal-600" /> Deposit of {formatKes(amount)} received
         </p>
         {receipt && (
-          <p className="mt-1 text-sm text-emerald-800">
+          <p className="mt-1 text-sm text-charcoal-soft">
             M-Pesa receipt: <span className="font-mono font-semibold">{receipt}</span>
           </p>
         )}
-        <p className="mt-1 text-sm text-emerald-700">Your slot is secured. Thank you!</p>
+        <p className="mt-1 text-sm text-charcoal-muted">Your slot is secured. Thank you!</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gold/40 bg-white text-left shadow-card">
-      <div className="bg-gold-sheen px-5 py-3">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-royal-900/80">
-          Secure your slot with M-Pesa
-        </p>
-        <p className="font-display text-lg font-bold text-royal-900">Deposit · {formatKes(amount)}</p>
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left">
+      <div className="border-b border-gray-200 px-5 py-3">
+        <p className="text-sm text-charcoal-muted">Pay your deposit with M-Pesa</p>
+        <p className="font-display text-base font-bold text-charcoal">{formatKes(amount)}</p>
       </div>
       <div className="space-y-3 p-5">
         <label className="block">
@@ -139,7 +137,7 @@ export default function MpesaPayPanel({
         </label>
 
         {phase === "waiting" && (
-          <div className="flex items-start gap-3 rounded-xl bg-royal-50 px-4 py-3 text-sm text-royal-800">
+          <div className="flex items-start gap-3 rounded-lg bg-royal-50 px-4 py-3 text-sm text-royal-800">
             <span className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-royal-300 border-t-royal-700" />
             <span>
               {message}
@@ -149,7 +147,7 @@ export default function MpesaPayPanel({
           </div>
         )}
         {(phase === "error" || phase === "FAILED" || phase === "CANCELLED" || phase === "TIMEOUT") && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p>
+          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p>
         )}
 
         <button

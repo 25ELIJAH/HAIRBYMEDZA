@@ -1,18 +1,17 @@
 import type { Config } from "tailwindcss";
 
-// Magdalene Medz brand palette
-//   Primary   Royal Purple  #6A0DAD
-//   Secondary Lavender      #C8A2C8
-//   Accent    Soft Gold     #D4AF37
-//   Background White         #FFFFFF
-//   Text      Charcoal      #1F1F1F
+// Hair by Medza palette: one calm blue on white, with neutral greys for text.
+//   Primary  Blue   #2152B2 (royal-600)
+//   Surface  White  #FFFFFF, soft grey #F6F8FB
+//   Text     Ink    #111827, muted #6B7280
+// The legacy names (royal / lavender / gold / cream / charcoal) are kept so
+// existing markup keeps working; they all resolve to the blue + grey system.
 const config: Config = {
   content: ["./src/app/**/*.{ts,tsx}", "./src/components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Brand colours are driven by CSS variables so the whole site can be
-        // re-themed (purple / pink / blue / orange) from the admin in real time.
+        // Brand blue scale, driven by CSS variables in globals.css.
         royal: {
           50: "rgb(var(--r-50) / <alpha-value>)",
           100: "rgb(var(--r-100) / <alpha-value>)",
@@ -25,7 +24,7 @@ const config: Config = {
           800: "rgb(var(--r-800) / <alpha-value>)",
           900: "rgb(var(--r-900) / <alpha-value>)",
         },
-        // Light brand tints (used for soft backgrounds and text on dark gradients).
+        // Light blue tints for soft backgrounds.
         lavender: {
           DEFAULT: "rgb(var(--r-300) / <alpha-value>)",
           50: "rgb(var(--r-50) / <alpha-value>)",
@@ -34,40 +33,39 @@ const config: Config = {
           300: "rgb(var(--r-300) / <alpha-value>)",
           400: "rgb(var(--r-400) / <alpha-value>)",
         },
+        // Former gold accent, now a quiet blue so nothing "shouts".
         gold: {
-          DEFAULT: "#c8a24a",
-          light: "#e7cd86",
-          dark: "#a07d2c",
+          DEFAULT: "rgb(var(--r-500) / <alpha-value>)",
+          light: "rgb(var(--r-100) / <alpha-value>)",
+          dark: "rgb(var(--r-700) / <alpha-value>)",
         },
         charcoal: {
-          DEFAULT: "#191016",
-          soft: "#3a2f38",
-          muted: "#7a6f78",
+          DEFAULT: "#111827",
+          soft: "#374151",
+          muted: "#6b7280",
         },
         cream: {
-          DEFAULT: "#f8f4ee",
-          soft: "#f2ebe1",
+          DEFAULT: "#ffffff",
+          soft: "#f6f8fb",
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "Georgia", "serif"],
+        display: ["var(--font-display)", "system-ui", "Segoe UI", "sans-serif"],
         sans: ["var(--font-body)", "system-ui", "Segoe UI", "sans-serif"],
       },
       letterSpacing: {
-        luxe: "0.28em",
+        luxe: "0.08em",
       },
       boxShadow: {
-        soft: "0 24px 60px -24px rgba(25, 16, 22, 0.35)",
-        card: "0 10px 40px -18px rgba(25, 16, 22, 0.22)",
-        glow: "0 0 0 1px rgb(var(--r-500) / 0.10), 0 20px 50px -18px rgb(var(--r-700) / 0.5)",
+        soft: "0 1px 2px rgba(17, 24, 39, 0.06), 0 4px 12px -2px rgba(17, 24, 39, 0.08)",
+        card: "0 1px 2px rgba(17, 24, 39, 0.05)",
+        glow: "0 0 0 1px rgb(var(--r-600) / 0.25)",
       },
+      // Flat fills: the old gradient names now render as solid colours.
       backgroundImage: {
-        "royal-gradient":
-          "linear-gradient(135deg, rgb(var(--r-600)) 0%, rgb(var(--r-800)) 55%, rgb(var(--r-900)) 100%)",
-        "royal-hero":
-          "linear-gradient(120deg, rgb(var(--r-900) / 0.92) 0%, rgb(var(--r-900) / 0.70) 42%, rgb(var(--r-700) / 0.34) 100%)",
-        "gold-sheen":
-          "linear-gradient(135deg, #e7cd86 0%, #c8a24a 50%, #a07d2c 100%)",
+        "royal-gradient": "linear-gradient(rgb(var(--r-700)), rgb(var(--r-700)))",
+        "royal-hero": "linear-gradient(rgb(var(--r-900) / 0.55), rgb(var(--r-900) / 0.55))",
+        "gold-sheen": "linear-gradient(rgb(var(--r-50)), rgb(var(--r-50)))",
       },
     },
   },
