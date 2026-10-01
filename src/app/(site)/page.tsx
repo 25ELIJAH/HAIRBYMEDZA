@@ -16,8 +16,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   Package: "Packages",
 };
 
-const STEPS = ["Choose a style", "Studio or home", "Pick a time", "Pay online"];
-
 export default async function HomePage() {
   // Cached reads: photos come as small links, not embedded in the page.
   const [services, settings, hours] = await Promise.all([
@@ -123,35 +121,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────────── */}
-      <section id="how" className="py-16">
-        <div className="container-px">
-          <h2 className="font-display text-3xl font-bold text-charcoal">How it works</h2>
-          <ol className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((t, i) => (
-              <li key={t} className="flex items-center gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-royal-600 text-sm font-bold text-white">
-                  {i + 1}
-                </span>
-                <span className="font-display font-semibold text-charcoal">{t}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ── Call to action ───────────────────────────────────── */}
-      <section className="pb-16">
-        <div className="container-px">
-          <div className="flex flex-col items-start justify-between gap-5 rounded-2xl bg-royal-700 px-6 py-10 text-white sm:flex-row sm:items-center sm:px-10">
-            <h2 className="font-display text-2xl font-bold">Ready for your next look?</h2>
-            <Link href="/book" className="btn shrink-0 bg-white !px-6 !py-3.5 text-base text-royal-800 hover:bg-royal-50">
-              Book now
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Structured data: lets Google show the salon as a local business with
           hours, location and prices. */}
       <script
@@ -162,6 +131,9 @@ export default async function HomePage() {
 
       <SiteFooter
         phone={settings.phone}
+        email={settings.email}
+        location={settings.location}
+        hours={hours}
         devWhatsapp={process.env.DEV_WHATSAPP || ""}
       />
       <WhatsAppButton phone={settings.phone} />
