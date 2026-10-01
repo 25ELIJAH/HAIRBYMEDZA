@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Icon from "./Icon";
 import { formatKes } from "@/lib/time";
 
 type Phase = "idle" | "sending" | "waiting" | "SUCCESS" | "FAILED" | "CANCELLED" | "TIMEOUT" | "error";
@@ -59,7 +58,7 @@ export default function MpesaPayPanel({
         }
         if (Date.now() - startedAt > 4 * 60_000) {
           setPhase("TIMEOUT");
-          setMessage("We did not get a reply from M-Pesa. If money left your account, Magdalene will still see it.");
+          setMessage("No reply from M-Pesa. If you were charged, it will still show.");
           return;
         }
         poll(paymentId, startedAt);
@@ -132,14 +131,14 @@ export default function MpesaPayPanel({
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-5 text-left">
         <p className="flex items-center gap-2 font-semibold text-charcoal">
-          <Icon name="checkCircle" size={20} className="text-royal-600" /> Deposit of {formatKes(amount)} received
+          Deposit of {formatKes(amount)} received
         </p>
         {receipt && (
           <p className="mt-1 text-sm text-charcoal-soft">
             M-Pesa receipt: <span className="font-mono font-semibold">{receipt}</span>
           </p>
         )}
-        <p className="mt-1 text-sm text-charcoal-muted">Your slot is secured. Thank you!</p>
+        <p className="mt-1 text-sm text-charcoal-muted">Your slot is secured.</p>
       </div>
     );
   }
@@ -147,12 +146,12 @@ export default function MpesaPayPanel({
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left">
       <div className="border-b border-gray-200 px-5 py-3">
-        <p className="text-sm text-charcoal-muted">Pay your deposit with M-Pesa</p>
+        <p className="text-sm text-charcoal-muted">Deposit</p>
         <p className="font-display text-base font-bold text-charcoal">{formatKes(amount)}</p>
       </div>
       <div className="space-y-3 p-5">
         <label className="block">
-          <span className="label">M-Pesa number to charge</span>
+          <span className="label">M-Pesa number</span>
           <input
             className="input"
             value={phone}
@@ -169,7 +168,7 @@ export default function MpesaPayPanel({
             <span>
               {message}
               <br />
-              <span className="text-xs text-royal-700/80">Keep this page open. It updates by itself.</span>
+              <span className="text-xs text-royal-700/80">Keep this page open.</span>
             </span>
           </div>
         )}
@@ -196,12 +195,12 @@ export default function MpesaPayPanel({
           disabled={busy || cardBusy}
           onClick={payByCard}
         >
-          {cardBusy ? "Opening secure payment page…" : "Pay by card instead"}
+          {cardBusy ? "Opening…" : "Pay by card"}
         </button>
         {manualNumber && (
           <p className="text-xs text-charcoal-muted">
-            Prompt not coming? You can also send the deposit to{" "}
-            <strong>M-Pesa {manualNumber}</strong> and share the confirmation on WhatsApp.
+            No prompt? Send to{" "}
+            <strong>M-Pesa {manualNumber}</strong>.
           </p>
         )}
       </div>

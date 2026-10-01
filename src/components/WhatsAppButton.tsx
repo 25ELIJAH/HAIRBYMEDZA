@@ -1,5 +1,3 @@
-import Icon from "./Icon";
-
 // Floating WhatsApp contact button. The number comes from the database
 // (settings), never hard coded in the source.
 export default function WhatsAppButton({
@@ -19,8 +17,7 @@ export default function WhatsAppButton({
       aria-label="Chat on WhatsApp"
       className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-charcoal shadow-soft transition hover:border-gray-300 sm:bottom-6 sm:right-6"
     >
-      <Icon name="whatsapp" size={20} className="text-[#25D366]" />
-      <span className="hidden sm:inline">Chat with me</span>
+      WhatsApp
     </a>
   );
 }

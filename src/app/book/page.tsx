@@ -1,10 +1,8 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import BookingWizard from "@/components/BookingWizard";
-import { prisma } from "@/lib/prisma";
-import { getSettings } from "@/lib/booking";
+import { getPublicHours, getPublicServices, getPublicSettings, getUpcomingBlockedDates } from "@/lib/public-data";
 import { paymentsEnabled } from "@/lib/payments";
-import { todayStr } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -13,21 +11,15 @@ export default async function BookPage({
 }: {
   searchParams: { service?: string };
 }) {
-  const [services, settings, hours, blocked] = await Promise.all([
-    prisma.service.findMany({
-      where: { active: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-    getSettings(),
-    prisma.workingHours.findMany(),
-    prisma.blockedDate.findMany({
-      where: { date: { gte: todayStr() } },
-      select: { date: true },
-    }),
+  // Cached reads: photos come as small links, not embedded in the page.
+  const [services, settings, hours, blockedDates] = await Promise.all([
+    getPublicServices(),
+    getPublicSettings(),
+    getPublicHours(),
+    getUpcomingBlockedDates(),
   ]);
 
   const openDays = hours.filter((h) => h.isOpen).map((h) => h.dayOfWeek);
-  const blockedDates = blocked.map((b) => b.date);
 
   return (
     <div className="min-h-screen bg-cream-soft">

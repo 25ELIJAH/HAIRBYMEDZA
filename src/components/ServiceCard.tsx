@@ -74,18 +74,15 @@ export default function ServiceCard({
 
         <dl className="mt-4 divide-y divide-gray-100 border-y border-gray-100 text-sm">
           <div className="flex items-center justify-between py-2">
-            <dt className="text-charcoal-muted">At the studio</dt>
+            <dt className="text-charcoal-muted">Studio</dt>
             <dd className="font-semibold text-charcoal">{formatKes(service.priceKes)}</dd>
           </div>
           <div className="flex items-center justify-between py-2">
-            <dt className="text-charcoal-muted">I come to you</dt>
+            <dt className="text-charcoal-muted">Home visit</dt>
             <dd className="font-semibold text-charcoal">{formatKes(service.outCallPriceKes)}</dd>
           </div>
         </dl>
 
-        {includes.length > 0 && (
-          <p className="mt-3 text-xs text-charcoal-muted">Includes {includes.join(", ").toLowerCase()}.</p>
-        )}
 
         {footer && <div className="mt-auto pt-5">{footer}</div>}
       </div>

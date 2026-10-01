@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ServiceCard, { ServiceCardData } from "./ServiceCard";
-import Icon, { IconName } from "./Icon";
 import MonthCalendar from "./MonthCalendar";
 import MpesaPayPanel from "./MpesaPayPanel";
 import { SlotGridSkeleton } from "./Skeleton";
@@ -21,8 +20,8 @@ type Service = ServiceCardData & { durationMin: number; category: string };
 
 const CATEGORY_ORDER = ["Kids", "Teen", "Package"];
 const CATEGORY_LABEL: Record<string, string> = {
-  Kids: "Kids Braiding",
-  Teen: "Teen Braiding",
+  Kids: "Kids",
+  Teen: "Teens",
   Package: "Packages",
 };
 
@@ -43,10 +42,10 @@ interface AvailabilityResponse {
 const STEPS = ["Style", "Where", "Date & time", "Your details", "Confirm", "Done"];
 
 // Time slots are grouped by part of the day.
-const SLOT_GROUPS: { label: string; icon: IconName; from: number; to: number }[] = [
-  { label: "Morning", icon: "sun", from: 0, to: 12 * 60 },
-  { label: "Afternoon", icon: "sunset", from: 12 * 60, to: 17 * 60 },
-  { label: "Evening", icon: "moon", from: 17 * 60, to: 24 * 60 },
+const SLOT_GROUPS: { label: string; from: number; to: number }[] = [
+  { label: "Morning", from: 0, to: 12 * 60 },
+  { label: "Afternoon", from: 12 * 60, to: 17 * 60 },
+  { label: "Evening", from: 17 * 60, to: 24 * 60 },
 ];
 
 /** "Thu 8 Oct" style label for a YYYY-MM-DD date. */
@@ -340,7 +339,7 @@ export default function BookingWizard({
       <div className="min-w-0">
         {/* ── Step 0: Service ─────────────────────────────── */}
         {step === 0 && (
-          <Section title="Choose your style" subtitle="Pick the service you'd like to book.">
+          <Section title="Choose a style">
             <div className="space-y-10">
               {categories.map(
                 (cat) => (
@@ -366,7 +365,7 @@ export default function BookingWizard({
                                   setStep(1);
                                 }}
                               >
-                                {serviceId === s.id ? "Selected" : "Choose this style"}
+                                {serviceId === s.id ? "Selected" : "Choose"}
                               </button>
                             }
                           />
@@ -382,38 +381,30 @@ export default function BookingWizard({
         {/* ── Step 1: Where ───────────────────────────────── */}
         {step === 1 && service && (
           <Section
-            title="Where would you like your braids done?"
-            subtitle="Visit the studio, or have me come to you. Home visits cost a little more."
+            title="Studio or home?"
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <TypeCard
                 active={serviceType === "INCALL"}
                 onClick={() => setServiceType("INCALL")}
-                icon="home"
-                title="At the studio"
-                desc={location ? `Visit me at ${location}.` : "Visit me at the studio."}
+                title="Studio"
+                desc={location || "At the studio"}
                 price={formatKes(service.priceKes)}
-                points={["Everything set up and ready for you", "A calm, private space"]}
               />
               <TypeCard
                 active={serviceType === "OUTCALL"}
                 onClick={() => setServiceType("OUTCALL")}
-                icon="car"
-                title="I come to you"
-                desc="At your home or office, wherever is easiest."
+                title="Home visit"
+                desc="Your home or office"
                 price={formatKes(service.outCallPriceKes)}
-                points={["I bring all tools and products", "Transport fare shared when I confirm"]}
               />
             </div>
 
             {serviceType === "OUTCALL" && (
               <div className="mt-6 animate-fade-up rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-                <h4 className="font-display text-lg font-semibold text-charcoal">Where should I come?</h4>
-                <p className="mt-1 text-sm text-charcoal-muted">
-                  Clear directions help me arrive on time. All fields marked * are needed.
-                </p>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <Field label="Town / estate / area *">
+                <h4 className="font-display text-lg font-semibold text-charcoal">Your address</h4>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <Field label="Area *">
                     <input
                       className="input"
                       value={loc.estate}
@@ -437,7 +428,7 @@ export default function BookingWizard({
                       placeholder="e.g. opposite Yaya Centre"
                     />
                   </Field>
-                  <Field label="Google Maps link" hint="Optional">
+                  <Field label="Maps link" hint="Optional">
                     <input
                       className="input"
                       value={loc.mapsPin}
@@ -446,12 +437,12 @@ export default function BookingWizard({
                     />
                   </Field>
                   <div className="sm:col-span-2">
-                    <Field label="Directions to your door *">
+                    <Field label="Directions *">
                       <textarea
                         className="input min-h-[80px]"
                         value={loc.travelNotes}
                         onChange={(e) => setLoc({ ...loc, travelNotes: e.target.value })}
-                        placeholder="Gate colour, gate code, floor, parking, who to ask for…"
+                        placeholder="Gate, floor, who to ask for"
                       />
                     </Field>
                   </div>
@@ -470,13 +461,12 @@ export default function BookingWizard({
         {/* ── Step 2: Date & Time ─────────────────────────── */}
         {step === 2 && service && (
           <Section
-            title="Choose a day and time"
-            subtitle={`${service.name} takes about ${durationLabel(service.durationMin).toLowerCase()}.`}
+            title="Pick a time"
+            subtitle={`${service.name} · ${durationLabel(service.durationMin)}`}
           >
             <div className="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)]">
               <div>
                 <MonthCalendar value={date} onChange={setDate} isDisabled={dayDisabled} />
-                <p className="mt-3 text-xs text-charcoal-muted">Greyed out days are closed.</p>
               </div>
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5">
@@ -494,8 +484,7 @@ export default function BookingWizard({
 
                   {!loadingAvail && avail && (!avail.open || avail.dayFull || bookable.size === 0) && (
                     <div className="grid place-items-center rounded-xl bg-cream-soft px-4 py-8 text-center">
-                      <Icon name="calendar" size={22} className="text-charcoal-muted" />
-                      <p className="mt-2 font-medium text-charcoal">
+                      <p className="font-medium text-charcoal">
                         {!avail.open
                           ? avail.reason || "Closed on this day"
                           : date === todayStr()
@@ -503,17 +492,16 @@ export default function BookingWizard({
                             : "Fully booked on this day"}
                       </p>
                       {findingNext ? (
-                        <p className="mt-1 text-sm text-charcoal-muted">Looking for the next free day…</p>
+                        <p className="mt-1 text-sm text-charcoal-muted">Finding the next free day…</p>
                       ) : nextFree ? (
                         <button
                           onClick={() => setDate(nextFree)}
                           className="btn-primary mt-4 !px-4 !py-2 text-sm"
                         >
                           Next free day: {shortDate(nextFree)}
-                          <Icon name="arrowRight" size={16} />
                         </button>
                       ) : (
-                        <p className="mt-1 text-sm text-charcoal-muted">Please pick another day on the calendar.</p>
+                        <p className="mt-1 text-sm text-charcoal-muted">Pick another day.</p>
                       )}
                     </div>
                   )}
@@ -525,8 +513,8 @@ export default function BookingWizard({
                         if (slots.length === 0) return null;
                         return (
                           <div key={g.label}>
-                            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-charcoal-muted">
-                              <Icon name={g.icon} size={14} /> {g.label}
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-charcoal-muted">
+                              {g.label}
                             </p>
                             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                               {slots.map((slot) => {
@@ -542,7 +530,7 @@ export default function BookingWizard({
                                         setStartMin(slot.startMin);
                                         setSlotNotice(null);
                                       } else if (taken) {
-                                        setSlotNotice(`${slot.label} is already booked. Please choose a free time.`);
+                                        setSlotNotice(`${slot.label} is taken.`);
                                       }
                                     }}
                                     className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 transition-all duration-200 ${
@@ -575,9 +563,6 @@ export default function BookingWizard({
 
                 {startMin != null && (
                   <div className="mt-5 flex animate-fade-up items-center gap-3 rounded-xl bg-royal-50 px-4 py-3 text-sm text-charcoal">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-royal-600 text-white">
-                      <Icon name="check" size={16} />
-                    </span>
                     <span>
                       <strong>{shortDate(date)}</strong>, {minutesToLabel(startMin)} to{" "}
                       {minutesToLabel(startMin + service.durationMin)}
@@ -593,11 +578,10 @@ export default function BookingWizard({
 
         {/* ── Step 3: Details ─────────────────────────────── */}
         {step === 3 && service && startMin != null && (
-          <Section title="Your details" subtitle="So Magdalene can confirm your appointment with you.">
+          <Section title="Your details">
             <div className="rounded-2xl border border-gray-200 bg-white">
               <div className="p-5 sm:p-6">
-                <h4 className="text-sm font-semibold text-charcoal">Contact</h4>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Full name">
                     <input
                       className="input"
@@ -607,7 +591,7 @@ export default function BookingWizard({
                       placeholder="e.g. Jane Wanjiku"
                     />
                   </Field>
-                  <Field label="Phone number" hint="Booking updates come on WhatsApp">
+                  <Field label="Phone (WhatsApp)">
                     <input
                       className="input"
                       type="tel"
@@ -619,7 +603,7 @@ export default function BookingWizard({
                     />
                   </Field>
                   <div className="sm:col-span-2">
-                    <Field label="Email" hint="Optional, for an email copy">
+                    <Field label="Email" hint="Optional">
                       <input
                         className="input"
                         type="email"
@@ -633,14 +617,13 @@ export default function BookingWizard({
                 </div>
               </div>
               <div className="border-t border-gray-200 p-5 sm:p-6">
-                <h4 className="text-sm font-semibold text-charcoal">About the hair</h4>
-                <div className="mt-4">
-                  <Field label="Notes for Magdalene" hint="Optional">
+                <div>
+                  <Field label="Notes" hint="Optional">
                     <textarea
                       className="input min-h-[88px]"
                       value={customer.notes}
                       onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
-                      placeholder="Hair length, preferred colour or length of braids, any allergies…"
+                      placeholder="Hair length, colour, allergies"
                     />
                   </Field>
                 </div>
@@ -659,13 +642,10 @@ export default function BookingWizard({
                 />
               </div>
             </div>
-            <p className="mt-3 flex items-center gap-2 text-xs text-charcoal-muted">
-              <Icon name="shield" size={14} /> Your details are only used for this booking.
-            </p>
 
             <NavRow
               onBack={() => setStep(2)}
-              nextLabel="Review booking"
+              nextLabel="Continue"
               onNext={() => setStep(4)}
               nextDisabled={
                 customer.name.trim().length < 2 ||
@@ -677,7 +657,7 @@ export default function BookingWizard({
 
         {/* ── Step 4: Confirm ─────────────────────────────── */}
         {step === 4 && service && startMin != null && (
-          <Section title="Confirm your booking" subtitle="Check the details, then confirm.">
+          <Section title="Confirm">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
               {/* Appointment summary */}
               <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
@@ -699,13 +679,13 @@ export default function BookingWizard({
                     k="Where"
                     v={
                       serviceType === "OUTCALL"
-                        ? `I come to you · ${[loc.estate, loc.houseNumber].filter(Boolean).join(", ")}`
-                        : `At the studio${location ? ` · ${location}` : ""}`
+                        ? `Home visit · ${[loc.estate, loc.houseNumber].filter(Boolean).join(", ")}`
+                        : `Studio${location ? ` · ${location}` : ""}`
                     }
                     onEdit={() => setStep(1)}
                   />
                   <ConfirmRow
-                    k="Your details"
+                    k="Contact"
                     v={[customer.name, customer.phone, customer.email].filter(Boolean).join(" · ")}
                     onEdit={() => setStep(3)}
                   />
@@ -718,13 +698,13 @@ export default function BookingWizard({
                 <h4 className="font-display text-base font-bold text-charcoal">Payment</h4>
                 <dl className="mt-3 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-charcoal-muted">Service price</dt>
+                    <dt className="text-charcoal-muted">Price</dt>
                     <dd className="font-medium text-charcoal">{formatKes(priceFor(service, serviceType))}</dd>
                   </div>
                   {depositPercent > 0 && (
                     <>
                       <div className="flex justify-between">
-                        <dt className="text-charcoal-muted">Deposit to secure ({depositPercent}%)</dt>
+                        <dt className="text-charcoal-muted">Deposit ({depositPercent}%)</dt>
                         <dd className="font-semibold text-charcoal">{formatKes(depositDue)}</dd>
                       </div>
                       <div className="flex justify-between">
@@ -738,7 +718,7 @@ export default function BookingWizard({
                 </dl>
                 {serviceType === "OUTCALL" && (
                   <p className="mt-3 text-xs text-charcoal-muted">
-                    Transport fare is shared when Magdalene confirms.
+                    Transport fare is extra.
                   </p>
                 )}
 
@@ -748,28 +728,24 @@ export default function BookingWizard({
                       <PayOption
                         active={payNow}
                         onClick={() => setPayNow(true)}
-                        title={`Pay ${formatKes(depositDue)} deposit now`}
-                        text="An M-Pesa prompt comes to your phone. You can also pay by card."
+                        title={`Pay ${formatKes(depositDue)} now`}
+                        text="M-Pesa or card"
                       />
                       <PayOption
                         active={!payNow}
                         onClick={() => setPayNow(false)}
-                        title="Book now, pay later"
-                        text="Magdalene will message you to arrange the deposit."
+                        title="Pay later"
+                        text="Arranged on WhatsApp"
                       />
-                      <p className="flex items-start gap-2 pt-2 text-xs text-charcoal-muted">
-                        <Icon name="shield" size={14} className="mt-0.5 shrink-0" />
-                        Payments are processed securely by Paystack for Magdalene Medza.
-                      </p>
+                      <p className="pt-2 text-xs text-charcoal-muted">Secured by Paystack.</p>
                     </div>
                   ) : (
                     <div className="text-sm">
                       <p className="text-charcoal">
-                        Send the {depositPercent > 0 ? `${formatKes(depositDue)} deposit` : "payment"} by M-Pesa to:
+                        Send {depositPercent > 0 ? formatKes(depositDue) : "payment"} by M-Pesa to:
                       </p>
                       <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-cream-soft px-4 py-3">
                         <div>
-                          <p className="text-xs text-charcoal-muted">M-Pesa · Send Money</p>
                           <p className="font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
                           <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
                         </div>
@@ -782,25 +758,25 @@ export default function BookingWizard({
                           }}
                           className="btn-outline !px-3 !py-2 text-xs"
                         >
-                          <Icon name="copy" size={14} /> {copied ? "Copied" : "Copy"}
+                          {copied ? "Copied" : "Copy"}
                         </button>
                       </div>
                       <p className="mt-4 text-xs text-charcoal-muted">
-                        Paid already? Add the details so Magdalene can match it (optional).
+                        Already paid? Add the code (optional).
                       </p>
                       <div className="mt-2 grid gap-3">
                         <input
                           className="input"
                           value={mpesa.message}
                           onChange={(e) => setMpesa({ ...mpesa, message: e.target.value })}
-                          placeholder="M-Pesa code or message, e.g. TAB1234XYZ"
+                          placeholder="M-Pesa code"
                         />
                         <div className="grid grid-cols-2 gap-3">
                           <input
                             className="input"
                             value={mpesa.number}
                             onChange={(e) => setMpesa({ ...mpesa, number: e.target.value })}
-                            placeholder="Paid from 07…"
+                            placeholder="Paid from"
                           />
                           <input
                             className="input"
@@ -839,18 +815,13 @@ export default function BookingWizard({
         {step === 5 && service && startMin != null && (
           <div className="mx-auto max-w-lg animate-fade-up">
             <div className="card p-6 sm:p-8">
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-royal-50 text-royal-600">
-                <Icon name="check" size={24} />
-              </div>
-              <h2 className="mt-4 font-display text-2xl font-bold text-charcoal">
+              <h2 className="font-display text-2xl font-bold text-charcoal">
                 Thank you, {customer.name.split(" ")[0]}
               </h2>
               <p className="mt-2 text-charcoal-muted">
-                {depositPaid || Number(mpesa.amount) > 0
-                  ? "Your booking request is in. Magdalene will message you on WhatsApp to confirm your appointment and deposit."
-                  : stkEnabled && payNow
-                    ? "Your booking request is in. Complete the M-Pesa payment below to secure your slot."
-                    : "Your booking request is in. Magdalene will call or message you on WhatsApp to confirm and talk you through the deposit."}
+                {stkEnabled && payNow && !depositPaid
+                  ? "Booking received. Complete the payment below."
+                  : "Booking received. You'll get a WhatsApp confirmation."}
               </p>
 
               {stkEnabled && appointmentId && appointmentId !== "skipped" && (
@@ -869,7 +840,7 @@ export default function BookingWizard({
               {!stkEnabled && depositPercent > 0 && !(Number(mpesa.amount) > 0) && (
                 <div className="mt-6 rounded-xl bg-cream-soft px-4 py-3 text-sm">
                   <p className="text-charcoal">
-                    To secure your slot, send the <strong>{formatKes(depositDue)}</strong> deposit by M-Pesa to
+                    Send the <strong>{formatKes(depositDue)}</strong> deposit by M-Pesa to
                   </p>
                   <p className="mt-1 font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
                   <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
@@ -879,7 +850,7 @@ export default function BookingWizard({
               <dl className="mt-6 divide-y divide-gray-100 border-y border-gray-100 text-sm">
                 <ReviewRow k="Service" v={service.name} />
                 <ReviewRow k="When" v={`${prettyDate(date)}, ${minutesToLabel(startMin)}`} />
-                <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "I come to you" : "At the studio"} />
+                <ReviewRow k="Where" v={serviceType === "OUTCALL" ? "Home visit" : "Studio"} />
                 <ReviewRow k="Price" v={formatKes(priceFor(service, serviceType))} />
                 {depositPercent > 0 && <ReviewRow k="Deposit" v={formatKes(depositDue)} />}
                 {Number(mpesa.amount) > 0 && (
@@ -895,7 +866,7 @@ export default function BookingWizard({
                 rel="noreferrer"
                 className="btn-outline mt-6 w-full"
               >
-                <Icon name="whatsapp" size={18} /> Message Magdalene on WhatsApp
+                WhatsApp Magdalene
               </a>
 
               <div className="mt-3 flex justify-between gap-3">
@@ -979,58 +950,36 @@ function Section({
 function TypeCard({
   active,
   onClick,
-  icon,
   title,
   desc,
   price,
-  points,
 }: {
   active: boolean;
   onClick: () => void;
-  icon: IconName;
   title: string;
   desc: string;
   price: string;
-  points: string[];
 }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`group relative flex h-full flex-col rounded-2xl border bg-white p-6 text-left transition-all duration-300 ${
+      className={`flex h-full flex-col rounded-2xl border bg-white p-6 text-left transition-all duration-300 ${
         active
           ? "border-royal-600 shadow-soft ring-1 ring-royal-600"
           : "border-gray-200 hover:-translate-y-0.5 hover:border-royal-200 hover:shadow-soft"
       }`}
     >
-      <span
-        className={`absolute right-5 top-5 grid h-6 w-6 place-items-center rounded-full border transition-colors ${
-          active ? "border-royal-600 bg-royal-600 text-white" : "border-gray-300 text-transparent"
-        }`}
-      >
-        <Icon name="check" size={14} />
+      <span className="flex items-start justify-between gap-3">
+        <span className="font-display text-lg font-bold text-charcoal">{title}</span>
+        <span
+          className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${
+            active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_3px_white]" : "border-gray-300"
+          }`}
+        />
       </span>
-      <span
-        className={`grid h-12 w-12 place-items-center rounded-full transition-colors ${
-          active ? "bg-royal-600 text-white" : "bg-royal-50 text-royal-600"
-        }`}
-      >
-        <Icon name={icon} size={22} />
-      </span>
-      <span className="mt-5 block font-display text-lg font-bold text-charcoal">{title}</span>
       <span className="mt-1 block text-sm text-charcoal-muted">{desc}</span>
-      <span className="mt-4 block border-t border-gray-100 pt-4">
-        {points.map((p) => (
-          <span key={p} className="mt-1.5 flex items-start gap-2 text-sm text-charcoal first:mt-0">
-            <Icon name="check" size={15} className="mt-0.5 shrink-0 text-royal-600" />
-            {p}
-          </span>
-        ))}
-      </span>
-      <span className="mt-auto flex items-baseline justify-between pt-5">
-        <span className="text-xs uppercase tracking-wide text-charcoal-muted">Price</span>
-        <span className="font-display text-2xl font-bold text-charcoal">{price}</span>
-      </span>
+      <span className="mt-auto pt-6 font-display text-2xl font-bold text-charcoal">{price}</span>
     </button>
   );
 }
@@ -1175,7 +1124,7 @@ function BookingSummary({
         )}
         <dl className="mt-3 divide-y divide-gray-100 text-sm">
           {!service && <SummaryRow k="Style" v={undefined} />}
-          <SummaryRow k="Where" v={service ? (serviceType === "OUTCALL" ? "I come to you" : "At the studio") : undefined} />
+          <SummaryRow k="Where" v={service ? (serviceType === "OUTCALL" ? "Home visit" : "Studio") : undefined} />
           <SummaryRow k="Date" v={date ? prettyDate(date) : undefined} />
           <SummaryRow
             k="Time"
