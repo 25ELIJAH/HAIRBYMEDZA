@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import AppointmentCard, { ApptData } from "@/components/AppointmentCard";
 import BlockedAttempts, { BlockedAttempt } from "@/components/BlockedAttempts";
-import { mpesaEnabled } from "@/lib/mpesa";
+import { paymentsEnabled } from "@/lib/payments";
 import { phoneVariants } from "@/lib/phone";
 import { todayStr } from "@/lib/time";
 
@@ -112,7 +112,7 @@ export default async function AppointmentsPage({
     prisma.notificationLog.count({ where: { channel: "BLOCKED_BOOKING", status: "BLOCKED" } }),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const stkOn = mpesaEnabled();
+  const stkOn = paymentsEnabled();
 
   const data: ApptData[] = appts.map((a) => ({
     id: a.id,
@@ -144,6 +144,7 @@ export default async function AppointmentsPage({
       id: p.id,
       status: p.status,
       amount: p.amount,
+      channel: p.channel,
       phone: p.phone,
       receiptNumber: p.receiptNumber,
       createdAt: p.createdAt.toISOString(),

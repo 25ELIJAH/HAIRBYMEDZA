@@ -104,7 +104,7 @@ export default function BookingWizard({
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   // Honeypot: hidden from real users; bots tend to auto-fill it.
   const [company, setCompany] = useState("");
-  // M-Pesa STK Push: pay the deposit right after booking (recommended).
+  // Online deposit via Paystack (M-Pesa prompt or card) right after booking.
   const [payNow, setPayNow] = useState(true);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [depositPaid, setDepositPaid] = useState(false);
@@ -238,7 +238,7 @@ export default function BookingWizard({
           },
           location: serviceType === "OUTCALL" ? loc : undefined,
           notes: customer.notes,
-          // With STK Push the deposit is confirmed by Safaricom, never self-reported.
+          // With online payments the deposit is confirmed by Paystack, never self-reported.
           deposit: stkEnabled
             ? undefined
             : {

@@ -25,7 +25,7 @@ export async function getSettings() {
       location: process.env.SALON_LOCATION || "",
       outcallFeeKes: 0,
       theme: "purple",
-      mpesaNumber: (process.env.WHATSAPP_NUMBER || "").replace(/^\+?254/, "0"),
+      mpesaNumber: process.env.MPESA_NUMBER || "0701508259",
       depositPercent: 50,
     }
   );

@@ -7,8 +7,9 @@ import { formatKes } from "@/lib/time";
 type Phase = "idle" | "sending" | "waiting" | "SUCCESS" | "FAILED" | "CANCELLED" | "TIMEOUT" | "error";
 
 /**
- * Pays a booking's deposit with an M-Pesa STK Push: the client gets a PIN
- * prompt on their phone, and this panel follows the payment until it settles.
+ * Pays a booking's deposit through Paystack: the client gets an M-Pesa PIN
+ * prompt on their phone (or pays by card on Paystack's page), and this panel
+ * follows the payment until it settles.
  */
 export default function MpesaPayPanel({
   appointmentId,
@@ -42,7 +43,7 @@ export default function MpesaPayPanel({
     (paymentId: string, startedAt: number) => {
       timer.current = setTimeout(async () => {
         try {
-          const r = await fetch(`/api/payments/mpesa/status?id=${paymentId}`, { cache: "no-store" });
+          const r = await fetch(`/api/payments/status?id=${paymentId}`, { cache: "no-store" });
           const data = await r.json();
           if (r.ok && data.status && data.status !== "PENDING") {
             setPhase(data.status);
@@ -72,7 +73,7 @@ export default function MpesaPayPanel({
     setPhase("sending");
     setMessage("");
     try {
-      const r = await fetch("/api/payments/mpesa/stk", {
+      const r = await fetch("/api/payments/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appointmentId, phone }),
@@ -100,6 +101,32 @@ export default function MpesaPayPanel({
   }, [autoStart, send]);
 
   const busy = phase === "sending" || phase === "waiting";
+
+  // Card (or other methods) on Paystack's secure page; Paystack sends the
+  // client back to /pay/complete, which confirms the result with Paystack.
+  const [cardBusy, setCardBusy] = useState(false);
+  async function payByCard() {
+    setCardBusy(true);
+    try {
+      const r = await fetch("/api/payments/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointmentId }),
+      });
+      const data = await r.json();
+      if (r.ok && typeof data.url === "string" && data.url.startsWith("https://")) {
+        stop();
+        window.location.href = data.url;
+        return;
+      }
+      setPhase("error");
+      setMessage(data.error || "Could not open the card payment page.");
+    } catch {
+      setPhase("error");
+      setMessage("Network error. Please try again.");
+    }
+    setCardBusy(false);
+  }
 
   if (phase === "SUCCESS") {
     return (
@@ -162,6 +189,14 @@ export default function MpesaPayPanel({
               : phase === "idle"
                 ? `Pay ${formatKes(amount)} with M-Pesa`
                 : "Try again"}
+        </button>
+        <button
+          type="button"
+          className="btn-ghost w-full"
+          disabled={busy || cardBusy}
+          onClick={payByCard}
+        >
+          {cardBusy ? "Opening secure payment page…" : "Pay by card instead"}
         </button>
         {manualNumber && (
           <p className="text-xs text-charcoal-muted">

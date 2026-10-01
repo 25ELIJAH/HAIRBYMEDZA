@@ -10,7 +10,7 @@ import { prisma } from "./prisma";
 import { requireAdmin } from "./auth";
 import { findOrCreateCustomer } from "./booking";
 import { overlaps } from "./availability";
-import { startStkPayment } from "./payments";
+import { startMpesaPayment } from "./payments";
 import { customerPhoneKey, formatPhone, normalizeKePhone } from "./phone";
 import { bookingSchema } from "./validation";
 
@@ -371,7 +371,7 @@ export async function requestMpesaPayment(
   if (!appt) return { error: "Booking not found." };
   const target = phone?.trim() || appt.customer.phone;
   if (!normalizeKePhone(target)) return { error: "That is not a valid Safaricom number." };
-  const res = await startStkPayment({ appointmentId, phone: target, purpose, initiatedBy: "ADMIN" });
+  const res = await startMpesaPayment({ appointmentId, phone: target, purpose, initiatedBy: "ADMIN" });
   if (!res.ok) return { error: res.error };
   revalidatePath("/admin/appointments");
   return {
@@ -380,7 +380,7 @@ export async function requestMpesaPayment(
   };
 }
 
-/** Records a payment received outside STK Push (cash, or M-Pesa sent manually). */
+/** Records a payment received outside Paystack (cash, or M-Pesa sent manually). */
 export async function recordManualPayment(
   appointmentId: string,
   amount: number,

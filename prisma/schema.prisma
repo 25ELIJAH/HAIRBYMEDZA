@@ -89,33 +89,34 @@ model Appointment {
   createdAt   DateTime  @default(now())
   completedAt DateTime? // set when marked COMPLETED; revenue is recognised here
 
-  payments MpesaPayment[]
+  payments Payment[]
 
   @@index([date])
   @@index([customerId])
   @@index([status])
 }
 
-// One row per M-Pesa STK Push (Lipa Na M-Pesa Online) request. Safaricom
-// reports the result to /api/payments/mpesa/callback/<secret>; if that callback
-// never arrives the status endpoint asks Safaricom directly (STK query).
-model MpesaPayment {
-  id                String       @id @default(cuid())
-  appointmentId     String
-  appointment       Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  phone             String // 2547XXXXXXXX that received the prompt
-  amount            Int // KES
-  purpose           String       @default("DEPOSIT") // DEPOSIT | BALANCE
-  status            String       @default("PENDING") // PENDING | SUCCESS | FAILED | CANCELLED | TIMEOUT
-  merchantRequestId String?
-  checkoutRequestId String?      @unique
-  resultCode        Int?
-  resultDesc        String?
-  receiptNumber     String?      @unique // e.g. "TJK4H2XYZ1"
-  paidAt            DateTime?
-  initiatedBy       String       @default("CLIENT") // CLIENT | ADMIN
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+// One row per online payment attempt (Paystack: M-Pesa prompt or card
+// checkout). The result is confirmed by verifying with Paystack and by its
+// signed webhook; money is only added to a booking once (PENDING -> SUCCESS).
+model Payment {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  provider      String      @default("PAYSTACK")
+  channel       String      @default("MPESA") // MPESA (prompt) | CHECKOUT (card / hosted page)
+  reference     String      @unique // our Paystack transaction reference
+  phone         String? // 2547XXXXXXXX that received the prompt
+  amount        Int // KES
+  purpose       String      @default("DEPOSIT") // DEPOSIT | BALANCE
+  status        String      @default("PENDING") // PENDING | SUCCESS | FAILED | CANCELLED | TIMEOUT
+  resultDesc    String?
+  receiptNumber String? // M-Pesa receipt code when available
+  providerTxnId String? // Paystack transaction id
+  paidAt        DateTime?
+  initiatedBy   String      @default("CLIENT") // CLIENT | ADMIN
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([appointmentId])
   @@index([status])
@@ -158,6 +159,6 @@ model Settings {
   location        String @default("Kilimani, Nairobi")
   outcallFeeKes   Int    @default(500)
   theme           String @default("purple") // fixed royal theme (kept for compatibility)
-  mpesaNumber     String @default("") // owner's M-Pesa number/till to receive deposits
+  mpesaNumber     String @default("0701508259") // owner's M-Pesa number (manual deposit fallback)
   depositPercent  Int    @default(50) // % of price advised as deposit
 }

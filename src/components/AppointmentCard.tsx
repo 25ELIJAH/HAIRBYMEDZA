@@ -17,7 +17,8 @@ export interface PaymentData {
   id: string;
   status: string;
   amount: number;
-  phone: string;
+  channel: string;
+  phone: string | null;
   receiptNumber: string | null;
   createdAt: string;
   resultDesc: string | null;
@@ -198,7 +199,7 @@ export default function AppointmentCard({
             </div>
           )}
 
-          {/* M-Pesa STK history + actions */}
+          {/* Online payment history (Paystack) + actions */}
           <div className="rounded-xl bg-white p-3 ring-1 ring-black/5">
             <p className="mb-2 font-semibold text-royal-700">
               Payments · balance {formatKes(balance)}
@@ -212,7 +213,7 @@ export default function AppointmentCard({
                     </span>
                     <span className="font-medium">{formatKes(p.amount)}</span>
                     <span className="text-charcoal-muted">
-                      STK to {formatPhone(p.phone)} ·{" "}
+                      {p.channel === "MPESA" && p.phone ? `M-Pesa prompt to ${formatPhone(p.phone)}` : "Card / online checkout"} ·{" "}
                       {new Date(p.createdAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}
                     </span>
                     {p.receiptNumber && (
@@ -246,7 +247,7 @@ export default function AppointmentCard({
                   </>
                 ) : (
                   <p className="text-xs text-charcoal-muted">
-                    M-Pesa STK Push is not switched on yet (see MPESA_SETUP.md).
+                    Online payments (Paystack) are not switched on yet (see PAYMENTS_SETUP.md).
                   </p>
                 )}
               </div>

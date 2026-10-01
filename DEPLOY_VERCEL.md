@@ -22,10 +22,10 @@ In Vercel → your project → **Settings → Git**, connect this repo (or impor
 fresh and delete the old project).
 
 ## 2. Create a Postgres database (free)
-**Neon** (https://neon.tech) or **Supabase** (https://supabase.com). After
-creating it, copy two connection strings:
-- **Pooled** (Neon: the `-pooler` host / Supabase: port `6543`) → `DATABASE_URL`
-- **Direct** (Neon: non-pooler host / Supabase: port `5432`) → `DIRECT_URL`
+Use **Neon**, added from Vercel → Storage (see **DATABASE.md** for why and the
+exact steps). Copy two connection strings:
+- **Pooled** (the `-pooler` host) → `DATABASE_URL`
+- **Direct** (the non-pooler host) → `DIRECT_URL`
 
 ## 3. Create a Vercel Blob store
 Vercel → your project → **Storage → Create → Blob**. This auto-adds the
@@ -45,9 +45,10 @@ Project → **Settings → Environment Variables** (Production + Preview):
 | `WEB3FORMS_ACCESS_KEY`, `NEXT_PUBLIC_WEB3FORMS_KEY`, `NEXT_PUBLIC_OWNER_EMAIL` | your Web3Forms values |
 | `DEV_WHATSAPP` | footer credit number |
 | `BLOB_READ_WRITE_TOKEN` | added automatically in step 3 |
-| `NEXT_PUBLIC_SITE_URL` | your live address, e.g. `https://hairbymedza.co.ke` (SEO + M-Pesa callback) |
+| `NEXT_PUBLIC_SITE_URL` | your live address, e.g. `https://hairbymedza.co.ke` (SEO + card payment return) |
 | `SALON_TIMEZONE` | `Africa/Nairobi` (optional, this is the default) |
-| `MPESA_*` | M-Pesa STK Push keys, see **MPESA_SETUP.md** (optional; leave out to keep manual deposits) |
+| `PAYSTACK_SECRET_KEY` | Paystack secret key, see **PAYMENTS_SETUP.md** (optional; leave out to keep manual deposits) |
+| `MPESA_NUMBER` | `0701508259`, the salon's M-Pesa number (used when seeding) |
 
 ## 5. Create the tables + seed (run once, locally)
 > The Vercel build (`npm run vercel-build`) now runs `prisma db push` itself,

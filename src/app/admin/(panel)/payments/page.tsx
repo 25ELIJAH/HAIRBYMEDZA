@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { mpesaEnabled, mpesaEnvironment } from "@/lib/mpesa";
+import { paystackEnabled, paystackMode } from "@/lib/paystack";
 import { formatPhone } from "@/lib/phone";
 import { formatKes, prettyDate, salonMidnight, addDaysStr, todayStr } from "@/lib/time";
 
@@ -20,13 +20,13 @@ export default async function PaymentsPage({ searchParams }: { searchParams: { s
     : undefined;
   const today = todayStr();
   const [payments, monthSum] = await Promise.all([
-    prisma.mpesaPayment.findMany({
+    prisma.payment.findMany({
       where: status ? { status } : {},
       include: { appointment: { include: { customer: true, service: true } } },
       orderBy: { createdAt: "desc" },
       take: 200,
     }),
-    prisma.mpesaPayment.aggregate({
+    prisma.payment.aggregate({
       _sum: { amount: true },
       _count: true,
       where: { status: "SUCCESS", paidAt: { gte: salonMidnight(addDaysStr(today, -29)) } },
@@ -36,11 +36,12 @@ export default async function PaymentsPage({ searchParams }: { searchParams: { s
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-bold text-charcoal">M-Pesa payments</h1>
+        <h1 className="font-display text-3xl font-bold text-charcoal">Payments</h1>
         <p className="mt-1 text-sm text-charcoal-muted">
-          Every STK Push prompt sent to a client, with Safaricom receipt numbers for reconciliation.
-          {!mpesaEnabled() && " STK Push is not switched on yet (see MPESA_SETUP.md)."}
-          {mpesaEnabled() && mpesaEnvironment() === "sandbox" && " Running in sandbox (test) mode."}
+          Every online payment (M-Pesa prompt or card) through Paystack, with references for
+          matching against your Paystack dashboard.
+          {!paystackEnabled() && " Paystack is not switched on yet (see PAYMENTS_SETUP.md)."}
+          {paystackEnabled() && paystackMode() === "test" && " Running in test mode (no real money)."}
         </p>
       </header>
 
@@ -68,7 +69,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: { s
       </div>
 
       {payments.length === 0 ? (
-        <div className="card p-10 text-center text-charcoal-muted">No M-Pesa payments yet.</div>
+        <div className="card p-10 text-center text-charcoal-muted">No online payments yet.</div>
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full text-sm">
@@ -92,7 +93,9 @@ export default async function PaymentsPage({ searchParams }: { searchParams: { s
                     <Link href={`/admin/customers/${p.appointment.customerId}`} className="font-medium hover:text-royal-600">
                       {p.appointment.customer.name}
                     </Link>
-                    <p className="text-xs text-charcoal-muted">{formatPhone(p.phone)}</p>
+                    <p className="text-xs text-charcoal-muted">
+                      {p.channel === "MPESA" && p.phone ? `M-Pesa ${formatPhone(p.phone)}` : "Card / online"}
+                    </p>
                   </td>
                   <td className="px-4 py-3 text-xs text-charcoal-soft">
                     {p.appointment.service.name}
@@ -109,7 +112,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: { s
                     )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-emerald-700">
-                    {p.receiptNumber || ""}
+                    {p.receiptNumber || p.reference}
                   </td>
                 </tr>
               ))}

@@ -4,7 +4,7 @@ _October 2026_
 
 This file covers what was found on the site, what has been changed, and what is
 still recommended before and after launch. The two things the owner asked for
-were M-Pesa STK Push and getting past clients to show in the admin. Both are
+were online payments (now Paystack) and getting past clients to show in the admin. Both are
 done. The rest of the file covers polish and the remaining risks.
 
 ---
@@ -29,7 +29,7 @@ those on every deploy), those bookings are not in the current database and no
 code change can bring them back. To recover them:
 
 1. In Vercel → Settings → Environment Variables, check that `DATABASE_URL`
-   has always pointed at the same Neon/Supabase database. If an older database
+   has always pointed at the same database. If an older database
    still exists, its data can be exported and imported.
 2. Otherwise, use the booking emails (Web3Forms sent one per booking) and the
    new tools:
@@ -38,30 +38,36 @@ code change can bring them back. To recover them:
    - **Appointments → + Add booking**: re-enter an old booking (set status
      *Completed* and the amount paid, and tick "allow overlap").
 
-## 2. M-Pesa STK Push (done)
+## 2. Payments with Paystack (done)
 
-- At the review step the client chooses **"Pay deposit now with M-Pesa"**
-  (recommended) or **"Book now, pay later"**. After booking, an M-Pesa PIN
-  prompt pops up on their phone. The page waits for the payment and shows the
-  receipt number when it goes through.
+- At the review step the client chooses **"Pay deposit now"** (recommended) or
+  **"Book now, pay later"**. After booking, an **M-Pesa PIN prompt** pops up on
+  their phone through Paystack, or they can tap **"Pay by card instead"**. The
+  page waits for the payment and confirms it.
 - The amount is always worked out **on the server** from the service price and
   the deposit % set in Admin → Availability. The browser cannot change it.
 - Every booking card in the admin shows its payment history, with **Request
-  deposit** and **Request balance via M-Pesa** buttons and **Record cash /
-  manual payment**.
-- New **Payments** page: every prompt with its M-Pesa receipt number and the
-  last 30 days' total, for checking against the M-Pesa statement.
+  deposit / balance** buttons and **Record cash / manual payment**.
+- New **Payments** page: every online payment with its reference and the last
+  30 days' total, for checking against the Paystack dashboard.
 - Built to be reliable and safe:
-  - A repeated Safaricom callback is never counted twice.
-  - A lost callback is recovered with a direct status query to Safaricom.
-  - Prompts nobody answers expire after 3 minutes.
-  - The callback URL contains a secret, so payments cannot be faked.
-  - Requests from other websites are refused, and prompts are rate limited.
-- **What the owner needs to provide:** a **Paybill or Buy Goods Till** (a
-  personal 07… line cannot receive STK payments) and a Safaricom Daraja app.
-  Step-by-step instructions are in **MPESA_SETUP.md**. Until the keys are
-  added, the site falls back to the old manual "send and paste the message"
-  method, so nothing breaks.
+  - Paystack's webhook is signature-checked and every result is verified with
+    Paystack before it counts.
+  - A repeated webhook or a page reload is never counted twice.
+  - Payments in the wrong currency or for less than the amount due are refused.
+  - Requests from other websites are refused, and attempts are rate limited.
+- **Receiving number: 0701508259.** It is the default M-Pesa number for manual
+  deposits, and the payout number to give Paystack if M-Pesa payouts are offered
+  (otherwise a bank account). See **PAYMENTS_SETUP.md**.
+- Until a Paystack key is added, the site keeps the manual "send to M-Pesa
+  0701508259 and paste the message" method, so nothing breaks.
+
+## Database: Neon Postgres (recommended)
+
+Long term, the data should live in **Neon Postgres**, added from Vercel. Free
+databases there aren't paused for inactivity, unlike Supabase's free tier,
+which would take the site down. It needs no code changes, and it has
+point-in-time restore. Full reasoning and setup steps are in **DATABASE.md**.
 
 ## 3. Other improvements made
 
@@ -82,13 +88,14 @@ code change can bring them back. To recover them:
 - Restored `.gitignore` (it had been deleted, which risks committing `.env`
   with the database password) and `.env.example`, now documenting the new
   variables.
-- Deploys create new database tables automatically (`vercel-build` runs
-  `prisma db push`, which never deletes data).
+- Production deploys create new database tables automatically
+  (`scripts/db-sync.mjs` runs `prisma db push`, which never deletes data).
+  Preview deploys never touch the database.
 
 ## 4. Recommended next steps (not done yet), in priority order
 
 **Before launch**
-1. **Get a Paybill/Till and go live with Daraja** (MPESA_SETUP.md). Do one real
+1. **Activate Paystack and switch to the live key** (PAYMENTS_SETUP.md). Do one real
    KES 10 test.
 2. **Set `NEXT_PUBLIC_SITE_URL`** to the real domain. Ideally buy a `.co.ke`
    domain (about KES 1,000 a year) and connect it in Vercel.
@@ -122,7 +129,7 @@ code change can bring them back. To recover them:
 13. The "Home visit fee" setting is not used anywhere: out-call prices are set
     per service. Remove it, or use it to calculate out-call prices.
 14. Vercel Analytics, to see where bookings come from.
-15. Turn on Neon/Supabase point-in-time restore, and export a CSV monthly as an
+15. Check the Neon point-in-time restore window, and export a CSV monthly as an
     extra backup.
 
 ## 5. Go-live checklist
@@ -130,7 +137,9 @@ code change can bring them back. To recover them:
 - [ ] `DATABASE_URL` / `DIRECT_URL` point at the production database that holds all past data
 - [ ] `AUTH_SECRET` is set (32+ random characters) and the admin password is strong
 - [ ] `NEXT_PUBLIC_SITE_URL` = real https domain
-- [ ] M-Pesa variables set, with `MPESA_ENV=production` (MPESA_SETUP.md), and a KES 10 test payment received
+- [ ] Live `PAYSTACK_SECRET_KEY` set, webhook URL added in Paystack, payout account (0701508259 or bank) confirmed, and one small real payment received (PAYMENTS_SETUP.md)
+- [ ] Database on Neon via Vercel, seeded once (DATABASE.md)
+- [ ] Admin → Availability: M-Pesa number is 0701508259
 - [ ] Admin → Availability: correct hours, address, phone, deposit %
 - [ ] Real photos uploaded for each service
 - [ ] Customers → **Find & merge duplicates** run once

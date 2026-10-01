@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 // Polled by the booking page every few seconds while the client enters their PIN.
 export async function GET(req: NextRequest) {
-  const blocked = guard(req, "stk-status", 90, 60 * 1000);
+  const blocked = guard(req, "pay-status", 90, 60 * 1000);
   if (blocked) return blocked;
 
   const id = req.nextUrl.searchParams.get("id") || "";
@@ -15,5 +15,6 @@ export async function GET(req: NextRequest) {
   }
   const view = await refreshPaymentStatus(id);
   if (!view) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(view, { headers: { "Cache-Control": "no-store" } });
+  const { reference: _ref, ...publicView } = view;
+  return NextResponse.json(publicView, { headers: { "Cache-Control": "no-store" } });
 }
