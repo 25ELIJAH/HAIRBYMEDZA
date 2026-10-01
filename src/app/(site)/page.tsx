@@ -39,35 +39,57 @@ export default async function HomePage() {
     <>
       <SiteHeader />
 
-      {/* ── Hero: photo backdrop, words on top ──────────────── */}
-      <section className="relative isolate overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&fit=crop&w=2000&q=75"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 -z-20 h-full w-full object-cover object-[70%_25%]"
-        />
+      {/* ── Hero: words left, full photo right ─────────────── */}
+      <section className="relative overflow-hidden bg-white">
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-gradient-to-t from-white via-white/80 to-white/30 sm:bg-gradient-to-r sm:from-white sm:from-25% sm:via-white/60 sm:via-45% sm:to-transparent sm:to-65%"
+          className="absolute inset-y-0 right-0 -z-0 hidden w-[38%] bg-royal-50 lg:block"
         />
-        <div className="container-px flex min-h-[70vh] items-center py-16 sm:py-24">
+        <div className="container-px relative grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:py-20">
           <div className="max-w-xl">
-            <h1 className="font-display text-4xl font-bold leading-tight text-charcoal sm:text-6xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-royal-700">
+              Hair braiding · Nairobi
+            </p>
+            <h1 className="mt-4 font-display text-4xl font-bold leading-[1.1] text-charcoal sm:text-6xl">
               Braiding for kids and teens.
             </h1>
-            <p className="mt-4 text-lg text-charcoal">
+            <p className="mt-5 text-lg text-charcoal-soft">
               Studio or home visits{fromPrice != null ? ` · from ${formatKes(fromPrice)}` : ""}.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/book" className="btn-primary !px-6 !py-3.5 text-base">
                 Book now
               </Link>
-              <Link href="/#services" className="btn-outline !bg-white/90 !px-6 !py-3.5 text-base">
+              <Link href="/#services" className="btn-outline !px-6 !py-3.5 text-base">
                 Prices
               </Link>
             </div>
+            <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-gray-200 pt-6 text-sm">
+              <div>
+                <dt className="text-charcoal-muted">Book</dt>
+                <dd className="mt-1 font-semibold text-charcoal">Online</dd>
+              </div>
+              <div>
+                <dt className="text-charcoal-muted">Pay</dt>
+                <dd className="mt-1 font-semibold text-charcoal">M-Pesa</dd>
+              </div>
+              <div>
+                <dt className="text-charcoal-muted">Visit</dt>
+                <dd className="mt-1 font-semibold text-charcoal">Studio or home</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="mx-auto w-full max-w-sm sm:max-w-md lg:max-w-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&fit=crop&crop=faces&w=900&h=1125&q=75"
+              alt="Box braids by Magdalene Medza"
+              width={900}
+              height={1125}
+              fetchPriority="high"
+              className="aspect-[4/3] w-full rounded-2xl object-cover object-[center_30%] sm:aspect-[4/5] shadow-[0_24px_60px_-20px_rgba(15,23,42,0.35)]"
+            />
           </div>
         </div>
       </section>
