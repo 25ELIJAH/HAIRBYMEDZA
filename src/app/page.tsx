@@ -7,7 +7,8 @@ import Icon from "@/components/Icon";
 import Reveal from "@/components/Reveal";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/booking";
-import { DAY_NAMES, formatKes, minutesToLabel } from "@/lib/time";
+import { headers } from "next/headers";
+import { DAY_NAMES, formatKes, minutesToHHMM, minutesToLabel } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -372,6 +373,14 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Structured data: lets Google show the salon as a local business with
+          hours, location and prices. */}
+      <script
+        type="application/ld+json"
+        nonce={headers().get("x-nonce") || undefined}
+        dangerouslySetInnerHTML={{ __html: jsonLd(settings, hours, services) }}
+      />
+
       <SiteFooter
         phone={settings.phone}
         location={settings.location}
@@ -380,4 +389,46 @@ export default async function HomePage() {
       <WhatsAppButton phone={settings.phone} />
     </>
   );
+}
+
+function jsonLd(
+  settings: { salonName: string; phone: string; email: string; location: string },
+  hours: { dayOfWeek: number; isOpen: boolean; startMin: number; endMin: number }[],
+  services: { name: string; priceKes: number }[]
+): string {
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/+$/, "");
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "HairSalon",
+    name: settings.salonName,
+    url: site || undefined,
+    image: site ? `${site}/logo.jpg` : undefined,
+    telephone: settings.phone || undefined,
+    email: settings.email || undefined,
+    priceRange: "KES",
+    currenciesAccepted: "KES",
+    paymentAccepted: "M-Pesa, Cash",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: settings.location,
+      addressLocality: "Nairobi",
+      addressCountry: "KE",
+    },
+    openingHoursSpecification: hours
+      .filter((h) => h.isOpen)
+      .map((h) => ({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: DAY_NAMES[h.dayOfWeek],
+        opens: minutesToHHMM(h.startMin),
+        closes: minutesToHHMM(h.endMin),
+      })),
+    makesOffer: services.slice(0, 30).map((s) => ({
+      "@type": "Offer",
+      price: s.priceKes,
+      priceCurrency: "KES",
+      itemOffered: { "@type": "Service", name: s.name },
+    })),
+  };
+  // Escape "<" so client-entered text can never close the script tag.
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }

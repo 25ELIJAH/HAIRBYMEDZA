@@ -96,3 +96,10 @@ export async function getVerifiedAdmin(): Promise<SessionPayload | null> {
 }
 
 export const SESSION_COOKIE_NAME = COOKIE_NAME;
+
+/** Throws unless the caller is a verified admin. Use at the top of every admin mutation. */
+export async function requireAdmin(): Promise<SessionPayload> {
+  const session = await getVerifiedAdmin();
+  if (!session) throw new Error("Not authorised");
+  return session;
+}

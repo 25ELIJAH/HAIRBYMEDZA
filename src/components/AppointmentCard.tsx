@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import Icon from "./Icon";
 import { StatusBadge, PaymentBadge, TypeBadge } from "./StatusBadge";
 import {
@@ -8,7 +9,27 @@ import {
   updateAppointmentStatus,
   updatePaymentStatus,
 } from "@/lib/admin-actions";
+import { recordManualPayment, requestMpesaPayment } from "@/lib/client-actions";
+import { formatPhone } from "@/lib/phone";
 import { formatKes, minutesToLabel, prettyDate } from "@/lib/time";
+
+export interface PaymentData {
+  id: string;
+  status: string;
+  amount: number;
+  phone: string;
+  receiptNumber: string | null;
+  createdAt: string;
+  resultDesc: string | null;
+}
+
+const PAY_STYLE: Record<string, string> = {
+  SUCCESS: "bg-emerald-100 text-emerald-700",
+  PENDING: "bg-amber-100 text-amber-700",
+  CANCELLED: "bg-gray-100 text-gray-600",
+  TIMEOUT: "bg-gray-100 text-gray-600",
+  FAILED: "bg-red-100 text-red-600",
+};
 
 export interface ApptData {
   id: string;
@@ -28,31 +49,65 @@ export interface ApptData {
   landmark: string | null;
   mapsPin: string | null;
   travelNotes: string | null;
+  customerId: string;
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
   serviceName: string;
+  source: string;
+  createdAt: string;
+  overdue: boolean;
+  payments: PaymentData[];
 }
 
-export default function AppointmentCard({ appt }: { appt: ApptData }) {
+export default function AppointmentCard({
+  appt,
+  stkEnabled = false,
+}: {
+  appt: ApptData;
+  stkEnabled?: boolean;
+}) {
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(appt.notes || "");
+  const [payMsg, setPayMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [manual, setManual] = useState({ amount: "", ref: "" });
   const waNumber = appt.customerPhone.replace(/[^0-9]/g, "");
+  const balance = Math.max(0, appt.priceKes - appt.amountPaid);
 
   const act = (fn: () => Promise<void>) => startTransition(() => void fn());
+  const payAct = (fn: () => Promise<{ ok?: boolean; error?: string; message?: string } | null>) =>
+    startTransition(async () => {
+      const r = await fn();
+      setPayMsg(r?.error ? { ok: false, text: r.error } : { ok: true, text: r?.message || "Done." });
+    });
 
   return (
-    <div className={`card p-4 ${pending ? "opacity-60" : ""}`}>
+    <div
+      className={`card p-4 ${pending ? "opacity-60" : ""} ${
+        appt.overdue ? "ring-2 ring-amber-300" : ""
+      }`}
+    >
+      {appt.overdue && (
+        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          This day has passed. Mark it completed (to count the revenue) or cancelled.
+        </p>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-lg font-semibold text-charcoal">
+            <Link
+              href={`/admin/customers/${appt.customerId}`}
+              className="font-display text-lg font-semibold text-charcoal hover:text-royal-600"
+            >
               {appt.customerName}
-            </h3>
+            </Link>
             <StatusBadge status={appt.status} />
             <TypeBadge type={appt.serviceType} />
             <PaymentBadge status={appt.paymentStatus} />
+            {appt.source !== "WEBSITE" && (
+              <span className="badge bg-gray-100 text-gray-600">Added by you</span>
+            )}
           </div>
           <p className="mt-1 text-sm text-charcoal-muted">
             {appt.serviceName} · {prettyDate(appt.date)} ·{" "}
@@ -60,7 +115,7 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
           </p>
           <p className="mt-0.5 text-sm text-charcoal-muted">
             <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="text-royal-600 hover:underline">
-              {appt.customerPhone}
+              {formatPhone(appt.customerPhone)}
             </a>
             {appt.customerEmail ? ` · ${appt.customerEmail}` : ""}
           </p>
@@ -69,6 +124,11 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
           <div className="font-display text-lg font-bold text-royal-600">
             {formatKes(appt.priceKes)}
           </div>
+          {appt.amountPaid > 0 && (
+            <div className="text-xs font-medium text-emerald-700">
+              Paid {formatKes(appt.amountPaid)}
+            </div>
+          )}
           <button
             onClick={() => setOpen((o) => !o)}
             className="mt-1 text-xs font-medium text-charcoal-muted hover:text-royal-600"
@@ -112,7 +172,7 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
               <p className="mb-1 font-semibold text-royal-700">Deposit / M-Pesa</p>
               <p className="text-charcoal-soft">
                 Paid: <strong>{formatKes(appt.amountPaid)}</strong> of {formatKes(appt.priceKes)}
-                {appt.mpesaNumber ? ` · from ${appt.mpesaNumber}` : ""}
+                {appt.mpesaNumber ? ` · from ${formatPhone(appt.mpesaNumber)}` : ""}
               </p>
               {appt.mpesaMessage && (
                 <p className="mt-1 break-words text-charcoal-muted">“{appt.mpesaMessage}”</p>
@@ -138,6 +198,100 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
             </div>
           )}
 
+          {/* M-Pesa STK history + actions */}
+          <div className="rounded-xl bg-white p-3 ring-1 ring-black/5">
+            <p className="mb-2 font-semibold text-royal-700">
+              Payments · balance {formatKes(balance)}
+            </p>
+            {appt.payments.length > 0 && (
+              <ul className="mb-3 space-y-1.5">
+                {appt.payments.map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className={`badge ${PAY_STYLE[p.status] || "bg-gray-100"}`}>
+                      {p.status[0] + p.status.slice(1).toLowerCase()}
+                    </span>
+                    <span className="font-medium">{formatKes(p.amount)}</span>
+                    <span className="text-charcoal-muted">
+                      STK to {formatPhone(p.phone)} ·{" "}
+                      {new Date(p.createdAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}
+                    </span>
+                    {p.receiptNumber && (
+                      <span className="font-mono font-semibold text-emerald-700">{p.receiptNumber}</span>
+                    )}
+                    {p.status === "FAILED" && p.resultDesc && (
+                      <span className="text-red-600">{p.resultDesc}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {balance > 0 && appt.status !== "CANCELLED" && (
+              <div className="flex flex-wrap gap-2">
+                {stkEnabled ? (
+                  <>
+                    {appt.amountPaid === 0 && (
+                      <button
+                        className="btn-primary !px-3 !py-1.5 text-xs"
+                        onClick={() => payAct(() => requestMpesaPayment(appt.id, "DEPOSIT"))}
+                      >
+                        Request deposit via M-Pesa
+                      </button>
+                    )}
+                    <button
+                      className="btn-outline !px-3 !py-1.5 text-xs"
+                      onClick={() => payAct(() => requestMpesaPayment(appt.id, "BALANCE"))}
+                    >
+                      Request {formatKes(balance)} via M-Pesa
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-xs text-charcoal-muted">
+                    M-Pesa STK Push is not switched on yet (see MPESA_SETUP.md).
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <label className="block">
+                <span className="label">Record cash / manual payment (KES)</span>
+                <input
+                  className="input !w-32"
+                  type="number"
+                  min={1}
+                  value={manual.amount}
+                  onChange={(e) => setManual({ ...manual, amount: e.target.value })}
+                />
+              </label>
+              <label className="block flex-1">
+                <span className="label">Reference (optional)</span>
+                <input
+                  className="input"
+                  value={manual.ref}
+                  onChange={(e) => setManual({ ...manual, ref: e.target.value })}
+                  placeholder="e.g. Cash, or M-Pesa code"
+                />
+              </label>
+              <button
+                className="btn-outline !px-3 !py-2 text-xs"
+                disabled={!Number(manual.amount)}
+                onClick={() =>
+                  payAct(async () => {
+                    const r = await recordManualPayment(appt.id, Number(manual.amount), manual.ref);
+                    if (r?.ok) setManual({ amount: "", ref: "" });
+                    return r;
+                  })
+                }
+              >
+                Record
+              </button>
+            </div>
+            {payMsg && (
+              <p className={`mt-2 text-xs font-medium ${payMsg.ok ? "text-emerald-700" : "text-red-600"}`}>
+                {payMsg.text}
+              </p>
+            )}
+          </div>
+
           {/* Payment status */}
           <div>
             <p className="label">Payment status</p>
@@ -157,6 +311,11 @@ export default function AppointmentCard({ appt }: { appt: ApptData }) {
               ))}
             </div>
           </div>
+
+          <p className="text-xs text-charcoal-muted">
+            Booked {new Date(appt.createdAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}
+            {appt.source === "WEBSITE" ? " on the website" : " by you"}
+          </p>
 
           {/* Internal note */}
           <div>

@@ -23,6 +23,17 @@ system and the recommended steps before going to production.
 - **Shorter session lifetime** (2 days) and `robots.txt` + `X-Robots-Tag` keeping
   the admin area out of search indexes. `/.well-known/security.txt` added.
 
+## Payments (M-Pesa STK Push)
+- Amounts are computed server-side from the booking price; the browser only
+  sends the booking id and phone number.
+- The Safaricom callback lives at `/api/payments/mpesa/callback/<secret>`;
+  Daraja does not sign callbacks, so `MPESA_CALLBACK_SECRET` (24+ random bytes)
+  is compared in constant time and unknown CheckoutRequestIDs are ignored.
+- Results are applied idempotently (a `PENDING → final` conditional update), so
+  replayed callbacks can never add money twice.
+- STK requests: same-origin only, 6 / IP / 10 min and 5 / booking / hour.
+- Admin CSV exports neutralise spreadsheet formula injection.
+
 ## What is implemented
 
 ### Authentication & authorization

@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/booking";
 import SettingsForm from "@/components/SettingsForm";
 import WorkingHoursForm from "@/components/WorkingHoursForm";
 import { prettyDate } from "@/lib/time";
+import { callbackUrl, mpesaEnabled, mpesaEnvironment } from "@/lib/mpesa";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,31 @@ export default async function AvailabilityPage() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* M-Pesa STK Push status (credentials live in environment variables) */}
+      <section className="card p-5">
+        <h2 className="mb-2 font-display text-lg font-semibold">M-Pesa payments (STK Push)</h2>
+        {mpesaEnabled() ? (
+          <div className="space-y-1 text-sm">
+            <p className="font-medium text-emerald-700">
+              ● Switched on ({mpesaEnvironment() === "production" ? "live payments" : "sandbox / test mode"})
+            </p>
+            <p className="text-charcoal-muted">
+              Clients get an M-Pesa PIN prompt for the deposit when they book, and you can request
+              deposits or balances from any appointment. Receipts appear on the booking automatically.
+            </p>
+            <p className="text-xs text-charcoal-muted">
+              Results are sent to {callbackUrl().replace(/callback\/.+$/, "callback/••••••")}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-charcoal-muted">
+            ○ Not switched on yet. Clients see the manual “send to M-Pesa number and paste the
+            message” option. Add the Safaricom Daraja keys to the hosting environment variables to
+            switch on automatic M-Pesa prompts (see <code>MPESA_SETUP.md</code>).
+          </p>
         )}
       </section>
 

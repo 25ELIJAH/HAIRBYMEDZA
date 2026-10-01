@@ -3,6 +3,7 @@ import Logo from "@/components/Logo";
 import BookingWizard from "@/components/BookingWizard";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/booking";
+import { mpesaEnabled } from "@/lib/mpesa";
 import { todayStr } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,7 @@ export default async function BookPage({
           blockedDates={blockedDates}
           mpesaNumber={settings.mpesaNumber}
           depositPercent={settings.depositPercent}
+          stkEnabled={mpesaEnabled() && settings.depositPercent > 0}
         />
       </main>
     </div>

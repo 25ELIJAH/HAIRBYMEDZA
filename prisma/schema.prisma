@@ -1,6 +1,4 @@
-// Magdalene Medza – Smart Salon Booking System
-// SQLite for local/self-contained dev. Swap `provider` to "postgresql" to
-// move to Supabase/Postgres later — the models below are portable.
+// Magdalene Medza – Smart Salon Booking System (Postgres via Prisma).
 
 generator client {
   provider = "prisma-client-js"
@@ -52,7 +50,7 @@ model BlockedDate {
 model Customer {
   id           String        @id @default(cuid())
   name         String
-  phone        String        @unique
+  phone        String        @unique // canonical "2547XXXXXXXX" (see src/lib/phone.ts)
   email        String?
   notes        String? // allergies, preferences, etc.
   createdAt    DateTime      @default(now())
@@ -87,10 +85,40 @@ model Appointment {
   travelNotes String?
 
   notes       String?
+  source      String    @default("WEBSITE") // WEBSITE | ADMIN (added by owner) | IMPORT
   createdAt   DateTime  @default(now())
   completedAt DateTime? // set when marked COMPLETED; revenue is recognised here
 
+  payments MpesaPayment[]
+
   @@index([date])
+  @@index([customerId])
+  @@index([status])
+}
+
+// One row per M-Pesa STK Push (Lipa Na M-Pesa Online) request. Safaricom
+// reports the result to /api/payments/mpesa/callback/<secret>; if that callback
+// never arrives the status endpoint asks Safaricom directly (STK query).
+model MpesaPayment {
+  id                String       @id @default(cuid())
+  appointmentId     String
+  appointment       Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  phone             String // 2547XXXXXXXX that received the prompt
+  amount            Int // KES
+  purpose           String       @default("DEPOSIT") // DEPOSIT | BALANCE
+  status            String       @default("PENDING") // PENDING | SUCCESS | FAILED | CANCELLED | TIMEOUT
+  merchantRequestId String?
+  checkoutRequestId String?      @unique
+  resultCode        Int?
+  resultDesc        String?
+  receiptNumber     String?      @unique // e.g. "TJK4H2XYZ1"
+  paidAt            DateTime?
+  initiatedBy       String       @default("CLIENT") // CLIENT | ADMIN
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([appointmentId])
+  @@index([status])
 }
 
 model AdminUser {

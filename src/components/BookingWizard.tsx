@@ -5,6 +5,7 @@ import Link from "next/link";
 import ServiceCard, { ServiceCardData } from "./ServiceCard";
 import Icon, { IconName } from "./Icon";
 import MonthCalendar from "./MonthCalendar";
+import MpesaPayPanel from "./MpesaPayPanel";
 import {
   dayOfWeek,
   durationLabel,
@@ -58,6 +59,7 @@ export default function BookingWizard({
   blockedDates,
   mpesaNumber,
   depositPercent,
+  stkEnabled = false,
 }: {
   services: Service[];
   initialServiceId?: string;
@@ -68,6 +70,7 @@ export default function BookingWizard({
   blockedDates: string[];
   mpesaNumber: string;
   depositPercent: number;
+  stkEnabled?: boolean;
 }) {
   const [step, setStep] = useState(0);
   const [serviceId, setServiceId] = useState<string | undefined>(initialServiceId);
@@ -99,6 +102,10 @@ export default function BookingWizard({
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   // Honeypot: hidden from real users; bots tend to auto-fill it.
   const [company, setCompany] = useState("");
+  // M-Pesa STK Push: pay the deposit right after booking (recommended).
+  const [payNow, setPayNow] = useState(true);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [depositPaid, setDepositPaid] = useState(false);
 
   const [avail, setAvail] = useState<AvailabilityResponse | null>(null);
   const [loadingAvail, setLoadingAvail] = useState(false);
@@ -171,9 +178,13 @@ export default function BookingWizard({
       `Phone: ${customer.phone}`,
       customer.email ? `Email: ${customer.email}` : "",
       customer.notes ? `Notes: ${customer.notes}` : "",
-      Number(mpesa.amount) > 0
-        ? `\nDeposit paid: ${formatKes(Number(mpesa.amount))} (M-Pesa ${mpesa.number})\nM-Pesa message: ${mpesa.message}`
-        : "\nNo deposit paid yet. Please call the client to confirm.",
+      stkEnabled
+        ? payNow
+          ? "\nThe client is paying the deposit by M-Pesa prompt. The receipt shows on the booking in your dashboard."
+          : "\nThe client chose to pay later. You can send them an M-Pesa prompt from the dashboard."
+        : Number(mpesa.amount) > 0
+          ? `\nDeposit paid: ${formatKes(Number(mpesa.amount))} (M-Pesa ${mpesa.number})\nM-Pesa message: ${mpesa.message}`
+          : "\nNo deposit paid yet. Please call the client to confirm.",
     ];
     if (serviceType === "OUTCALL") {
       lines.push(
@@ -225,11 +236,14 @@ export default function BookingWizard({
           },
           location: serviceType === "OUTCALL" ? loc : undefined,
           notes: customer.notes,
-          deposit: {
-            mpesaNumber: mpesa.number,
-            mpesaMessage: mpesa.message,
-            amountPaid: Number(mpesa.amount) || 0,
-          },
+          // With STK Push the deposit is confirmed by Safaricom, never self-reported.
+          deposit: stkEnabled
+            ? undefined
+            : {
+                mpesaNumber: mpesa.number,
+                mpesaMessage: mpesa.message,
+                amountPaid: Number(mpesa.amount) || 0,
+              },
           company, // honeypot
         }),
       });
@@ -248,6 +262,7 @@ export default function BookingWizard({
       // Email the owner so she knows to check the admin portal. Best effort:
       // a failed email never blocks the confirmed booking.
       await emailOwnerOfBooking();
+      setAppointmentId(data.appointmentId || null);
       setStep(5);
     } catch {
       setError("Network error. Please try again.");
@@ -323,7 +338,7 @@ export default function BookingWizard({
                 onClick={() => setServiceType("INCALL")}
                 icon="home"
                 title="Come to my studio"
-                desc={`At ${location.split(",")[0]} along Ngong Road.`}
+                desc={location ? `At my studio in ${location}.` : "At my studio."}
                 price={formatKes(service.priceKes)}
               />
               <TypeCard
@@ -580,9 +595,11 @@ export default function BookingWizard({
                   {/* Honeypot: hidden from people, off-screen, not announced. */}
                   <input
                     type="text"
-                    name="company"
+                    name="mm_ref_code"
                     tabIndex={-1}
                     autoComplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore
                     aria-hidden="true"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
@@ -660,6 +677,40 @@ export default function BookingWizard({
               )}
 
               {/* Deposit / M-Pesa — recommended, optional */}
+              {stkEnabled ? (
+                <div className="mt-4 overflow-hidden rounded-2xl border border-gold/40 bg-white shadow-card">
+                  <div className="flex items-center justify-between gap-3 bg-gold-sheen px-5 py-3">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-royal-900/80">
+                        Secure your slot
+                      </p>
+                      <p className="font-display text-lg font-bold text-royal-900">
+                        {depositPercent}% deposit ·{" "}
+                        {formatKes(Math.round((priceFor(service, serviceType) * depositPercent) / 100))}
+                      </p>
+                    </div>
+                    <Icon name="sparkle" size={26} className="text-royal-900/70" />
+                  </div>
+                  <div className="space-y-2 p-5 text-sm">
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 transition ${payNow ? "bg-royal-50 ring-royal-300" : "ring-black/10"}`}>
+                      <input type="radio" className="mt-1" checked={payNow} onChange={() => setPayNow(true)} />
+                      <span>
+                        <span className="block font-semibold text-charcoal">Pay deposit now with M-Pesa (recommended)</span>
+                        <span className="text-charcoal-muted">
+                          After you press book, an M-Pesa prompt pops up on your phone. Enter your PIN and you are done.
+                        </span>
+                      </span>
+                    </label>
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 transition ${!payNow ? "bg-royal-50 ring-royal-300" : "ring-black/10"}`}>
+                      <input type="radio" className="mt-1" checked={!payNow} onChange={() => setPayNow(false)} />
+                      <span>
+                        <span className="block font-semibold text-charcoal">Book now, pay later</span>
+                        <span className="text-charcoal-muted">Magdalene will call or message you to confirm.</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              ) : (
               <div className="mt-4 overflow-hidden rounded-2xl border border-gold/40 bg-white shadow-card">
                 <div className="flex items-center justify-between gap-3 bg-gold-sheen px-5 py-3">
                   <div>
@@ -713,6 +764,8 @@ export default function BookingWizard({
                 </div>
               </div>
 
+              )}
+
               {error && (
                 <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
                   {error}
@@ -721,7 +774,13 @@ export default function BookingWizard({
 
               <NavRow
                 onBack={() => setStep(3)}
-                nextLabel={submitting ? "Booking…" : "Proceed and book"}
+                nextLabel={
+                  submitting
+                    ? "Booking…"
+                    : stkEnabled && payNow
+                      ? "Book & pay deposit"
+                      : "Proceed and book"
+                }
                 onNext={submit}
                 nextDisabled={submitting}
               />
@@ -746,10 +805,25 @@ export default function BookingWizard({
 
             <div className="p-8 text-center">
               <p className="text-charcoal-soft">
-                {Number(mpesa.amount) > 0
+                {depositPaid || Number(mpesa.amount) > 0
                   ? "Magdalene will personally call or message you on WhatsApp to confirm your appointment and your deposit."
-                  : "Magdalene will personally call or message you on WhatsApp to confirm your appointment and talk you through the deposit."}
+                  : stkEnabled && payNow
+                    ? "Complete the M-Pesa payment below to secure your slot. Magdalene will then message you on WhatsApp to confirm."
+                    : "Magdalene will personally call or message you on WhatsApp to confirm your appointment and talk you through the deposit."}
               </p>
+
+              {stkEnabled && appointmentId && appointmentId !== "skipped" && (
+                <div className="mt-6">
+                  <MpesaPayPanel
+                    appointmentId={appointmentId}
+                    defaultPhone={customer.phone}
+                    amount={Math.round((priceFor(service, serviceType) * depositPercent) / 100)}
+                    autoStart={payNow}
+                    manualNumber={mpesaNumber}
+                    onPaid={() => setDepositPaid(true)}
+                  />
+                </div>
+              )}
 
               <div className="mt-6 rounded-2xl bg-lavender-50 p-5 text-left text-sm">
                 <Row k="Service" v={service.name} />
@@ -784,6 +858,8 @@ export default function BookingWizard({
                     setStartMin(null);
                     setCustomer({ name: "", phone: "", email: "", notes: "" });
                     setMpesa({ number: "", message: "", amount: "" });
+                    setAppointmentId(null);
+                    setDepositPaid(false);
                   }}
                 >
                   Book another

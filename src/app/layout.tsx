@@ -16,7 +16,11 @@ const jost = Jost({
   display: "swap",
 });
 
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: "/" },
   title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
   icons: {
     icon: "/logo.jpg",
@@ -35,7 +39,20 @@ export const metadata: Metadata = {
     title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
     description: "Book premium hair braiding in Nairobi. Studio visits or I come to you.",
     type: "website",
+    locale: "en_KE",
+    siteName: "Magdalene Medza",
+    images: [{ url: "/logo.jpg", alt: "Magdalene Medza hair braiding" }],
   },
+  twitter: {
+    card: "summary",
+    title: "Magdalene Medza | Luxury Hair Braiding in Nairobi",
+    description: "Book premium hair braiding in Nairobi. Studio visits or I come to you.",
+    images: ["/logo.jpg"],
+  },
+};
+
+export const viewport = {
+  themeColor: "#2a0f3d",
 };
 
 export default function RootLayout({
