@@ -10,8 +10,8 @@ export default function SiteHeader() {
           <Link href="/#services" className="hover:text-royal-700">
             Services
           </Link>
-          <Link href="/#how" className="hover:text-royal-700">
-            How it works
+          <Link href="/#contact" className="hover:text-royal-700">
+            Contact
           </Link>
         </nav>
         <Link href="/book" className="btn-primary !px-4 !py-2.5">
