@@ -1,7 +1,8 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { PUBLIC_TAG } from "./public-data";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 import {
@@ -218,6 +219,7 @@ export async function saveService(formData: FormData) {
   }
   revalidatePath("/admin/services");
   revalidatePath("/");
+  revalidateTag(PUBLIC_TAG);
 }
 
 export async function toggleService(id: string, active: boolean) {
@@ -225,6 +227,7 @@ export async function toggleService(id: string, active: boolean) {
   await prisma.service.update({ where: { id }, data: { active } });
   revalidatePath("/admin/services");
   revalidatePath("/");
+  revalidateTag(PUBLIC_TAG);
 }
 
 export async function deleteService(id: string) {
@@ -238,6 +241,7 @@ export async function deleteService(id: string) {
   }
   revalidatePath("/admin/services");
   revalidatePath("/");
+  revalidateTag(PUBLIC_TAG);
 }
 
 // ── Availability ────────────────────────────────────────────────
@@ -282,6 +286,7 @@ export async function saveWorkingHours(
   }
   revalidatePath("/admin/availability");
   revalidatePath("/");
+  revalidateTag(PUBLIC_TAG);
   return { ok: true };
   } catch (e) {
     console.error("saveWorkingHours failed", e);
@@ -304,12 +309,14 @@ export async function addBlockedDate(formData: FormData) {
     create: { date, reason, type },
   });
   revalidatePath("/admin/availability");
+  revalidateTag(PUBLIC_TAG);
 }
 
 export async function removeBlockedDate(id: string) {
   await requireAdmin();
   await prisma.blockedDate.delete({ where: { id } });
   revalidatePath("/admin/availability");
+  revalidateTag(PUBLIC_TAG);
 }
 
 // Used with useActionState so the form can show a "Saved" message.
@@ -344,6 +351,7 @@ export async function saveSettings(
     });
     revalidatePath("/admin/availability");
     revalidatePath("/");
+    revalidateTag(PUBLIC_TAG);
     return { ok: true };
   } catch (e) {
     console.error("saveSettings failed", e);

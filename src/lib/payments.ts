@@ -97,7 +97,7 @@ export async function startMpesaPayment(opts: {
       ok: true,
       paymentId: recent.id,
       amount: recent.amount,
-      message: "A payment prompt was just sent. Check your phone and enter your M-Pesa PIN.",
+      message: "Check your phone and enter your M-Pesa PIN.",
     };
   }
 
@@ -136,7 +136,7 @@ export async function startMpesaPayment(opts: {
     ok: true,
     paymentId: payment.id,
     amount,
-    message: `An M-Pesa prompt for KES ${amount.toLocaleString("en-KE")} was sent to your phone. Enter your M-Pesa PIN to pay.`,
+    message: "Check your phone and enter your M-Pesa PIN.",
   };
 }
 
@@ -281,10 +281,10 @@ export interface PaymentStatusView {
 }
 
 const MESSAGES: Record<string, string> = {
-  PENDING: "Waiting for you to enter your M-Pesa PIN on your phone…",
-  SUCCESS: "Payment received. Thank you!",
+  PENDING: "Enter your M-Pesa PIN on your phone…",
+  SUCCESS: "Payment received.",
   CANCELLED: "The payment was cancelled.",
-  TIMEOUT: "The payment prompt expired before it was answered.",
+  TIMEOUT: "The prompt expired.",
   FAILED: "The payment did not go through.",
 };
 

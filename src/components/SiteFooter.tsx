@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Logo from "./Logo";
-import Icon from "./Icon";
 
 export default function SiteFooter({
   phone,
@@ -20,8 +19,7 @@ export default function SiteFooter({
         <div>
           <Logo href={null} />
           <p className="mt-4 max-w-xs text-sm text-charcoal-muted">
-            Hair braiding for kids and teens in Nairobi. Come to my studio, or I come
-            to you.
+            Braiding for kids and teens in Nairobi.
           </p>
         </div>
 
@@ -37,7 +35,6 @@ export default function SiteFooter({
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 hover:text-royal-700"
               >
-                <Icon name="whatsapp" size={18} />
                 {phone}
               </a>
             </li>
@@ -78,7 +75,6 @@ export default function SiteFooter({
               rel="noreferrer"
               className="inline-flex items-center gap-1 font-semibold text-charcoal-soft hover:text-royal-700"
             >
-              <Icon name="whatsapp" size={14} />
               EliDevs
             </a>
           </p>

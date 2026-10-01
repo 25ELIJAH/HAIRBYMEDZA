@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
-import Icon from "@/components/Icon";
 import { prisma } from "@/lib/prisma";
 import { syncWithPaystack } from "@/lib/payments";
 import { formatKes, minutesToLabel, prettyDate } from "@/lib/time";
@@ -55,14 +54,7 @@ export default async function PaymentCompletePage({
       </header>
       <main className="container-px py-12">
         <div className="card mx-auto max-w-lg p-6 sm:p-8">
-          <div
-            className={`grid h-12 w-12 place-items-center rounded-full ${
-              status === "SUCCESS" ? "bg-royal-50 text-royal-600" : "bg-gray-100 text-charcoal-muted"
-            }`}
-          >
-            <Icon name={status === "SUCCESS" ? "check" : "clock"} size={24} />
-          </div>
-          <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">{title}</h1>
+          <h1 className="font-display text-2xl font-bold text-charcoal">{title}</h1>
           <p className="mt-2 text-charcoal-muted">{text}</p>
 
           {payment && (
