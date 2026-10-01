@@ -35,7 +35,7 @@ export default async function PaymentCompletePage({
           : "Payment not completed";
   const text =
     status === "SUCCESS"
-      ? "Thank you. Your deposit is in and your slot is secured. Magdalene will message you on WhatsApp to confirm."
+      ? "Thank you. Your booking is paid. You'll get a WhatsApp confirmation."
       : status === "PENDING"
         ? "We are waiting for the payment provider to confirm. Refresh this page in a minute."
         : status === "UNKNOWN"

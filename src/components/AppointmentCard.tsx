@@ -167,10 +167,10 @@ export default function AppointmentCard({
 
       {open && (
         <div className="mt-4 space-y-4 border-t border-black/5 pt-4 text-sm">
-          {/* Deposit / M-Pesa */}
+          {/* Payment / M-Pesa */}
           {(appt.amountPaid > 0 || appt.mpesaNumber || appt.mpesaMessage) && (
             <div className="rounded-xl bg-gold/10 p-3 ring-1 ring-gold/30">
-              <p className="mb-1 font-semibold text-royal-700">Deposit / M-Pesa</p>
+              <p className="mb-1 font-semibold text-royal-700">Payment / M-Pesa</p>
               <p className="text-charcoal-soft">
                 Paid: <strong>{formatKes(appt.amountPaid)}</strong> of {formatKes(appt.priceKes)}
                 {appt.mpesaNumber ? ` · from ${formatPhone(appt.mpesaNumber)}` : ""}
@@ -230,14 +230,6 @@ export default function AppointmentCard({
               <div className="flex flex-wrap gap-2">
                 {stkEnabled ? (
                   <>
-                    {appt.amountPaid === 0 && (
-                      <button
-                        className="btn-primary !px-3 !py-1.5 text-xs"
-                        onClick={() => payAct(() => requestMpesaPayment(appt.id, "DEPOSIT"))}
-                      >
-                        Request deposit via M-Pesa
-                      </button>
-                    )}
                     <button
                       className="btn-outline !px-3 !py-1.5 text-xs"
                       onClick={() => payAct(() => requestMpesaPayment(appt.id, "BALANCE"))}

@@ -16,7 +16,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   Package: "Packages",
 };
 
-const STEPS = ["Choose a style", "Studio or home", "Pick a time", "Pay a deposit"];
+const STEPS = ["Choose a style", "Studio or home", "Pick a time", "Pay online"];
 
 export default async function HomePage() {
   // Cached reads: photos come as small links, not embedded in the page.
