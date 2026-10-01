@@ -1,12 +1,12 @@
-# Taking payments with Paystack
+# Taking payments online
 
-Clients pay the **full price** for their booking through **Paystack**:
+Clients pay the **full price** for their booking through **IntaSend** or **Paystack**:
 
 - **M-Pesa prompt:** after booking, the client gets an M-Pesa PIN prompt on
   their phone. They enter the PIN and the payment shows on the booking in the
   admin automatically.
-- **Card:** the client can tap **"Pay by card"** to pay on Paystack's
-  secure page and is brought back to the site afterwards.
+- **Card (Paystack only):** the client can tap **"Pay by card"** to pay on
+  Paystack's secure page and is brought back to the site afterwards.
 - **From the admin:** any appointment card can send the client a payment
   prompt, or record a cash payment.
 
@@ -15,21 +15,62 @@ Paystack dashboard. The website never holds money or card details.
 
 > **Receiving number: 0701508259.** This is the salon's M-Pesa number. It is
 > shown to clients for manual payments (and used when online payments are
-> off), and it is the number to give Paystack as the payout destination if
-> Paystack offers M-Pesa payouts on the account (see step 4).
+> off), and the number to withdraw collected money to from IntaSend (or to
+> give Paystack as the payout destination if it offers M-Pesa payouts).
 
-Until a Paystack key is added, the site keeps the manual option: "send the
-payment to M-Pesa 0701508259 and paste the confirmation".
+Until IntaSend or Paystack keys are added, the site keeps the manual option:
+"send the payment to M-Pesa 0701508259 and paste the confirmation".
 
 ---
 
-## 1. Create the Paystack account
+## Choose a provider
+
+| | **IntaSend** (recommended, quicker to start) | **Paystack** |
+|---|---|---|
+| M-Pesa prompt to the client's phone | Yes | Yes |
+| Card payments | Not wired up here | Yes |
+| Needs your own Paybill / Till | No | No |
+| Sign-up | Lighter; IntaSend says you can go live the same day | Business verification, can take days |
+| Where money goes | IntaSend wallet, then withdraw to M-Pesa (0701508259) or bank | Paystack payout account |
+
+Every licensed payment provider must verify who you are (ID, phone), so some
+sign-up is unavoidable. IntaSend's is the lightest of the two. If both are
+configured, the site uses **IntaSend**.
+
+## IntaSend setup
+
+1. Sign up at <https://intasend.com> and verify your phone and ID.
+2. Start with the **sandbox** (test) account: copy the **Publishable key**
+   (`ISPubKey_test_…`) and **Secret key** (`ISSecretKey_test_…`) from
+   *Settings → API Keys*.
+3. In *Settings → Webhooks*, add
+   `https://<your-domain>/api/payments/intasend/webhook` and set a
+   **challenge** (any long random text).
+4. In Vercel → Settings → Environment Variables add:
+   ```
+   INTASEND_PUBLISHABLE_KEY=ISPubKey_test_…
+   INTASEND_SECRET_KEY=ISSecretKey_test_…
+   INTASEND_WEBHOOK_CHALLENGE=<the challenge text from step 3>
+   NEXT_PUBLIC_SITE_URL=https://<your-domain>
+   ```
+5. Redeploy. **Admin → Availability → Online payments** should say
+   *IntaSend switched on (test mode)*. Book a test appointment and pay.
+6. To go live, switch IntaSend to live mode, replace the two keys with the
+   live ones (`…_live_…`) and redeploy.
+7. In the IntaSend dashboard, withdraw collected money to **M-Pesa
+   0701508259** (or a bank account). Fees are listed on IntaSend's pricing page.
+
+---
+
+## Paystack setup (alternative)
+
+### 1. Create the Paystack account
 
 1. Sign up at <https://paystack.com> and choose **Kenya**.
 2. You land in **test mode** straight away. No real money moves, so you can
    try everything first.
 
-## 2. Test on the live site (no real money)
+### 2. Test on the live site (no real money)
 
 1. Paystack dashboard → **Settings → API Keys & Webhooks**. Copy the **Test
    Secret Key** (`sk_test_…`).
@@ -46,7 +87,7 @@ payment to M-Pesa 0701508259 and paste the confirmation".
    (listed in Paystack's docs under *Test payments*). The booking should show
    *Partial* with the payment listed under **Admin → Payments**.
 
-## 3. Go live
+### 3. Go live
 
 1. Complete Paystack's **activation / compliance** form (business details,
    ID and KRA PIN, and the payout account). Paystack reviews it, usually
@@ -60,7 +101,7 @@ payment to M-Pesa 0701508259 and paste the confirmation".
    The admin should now say *Switched on (live payments)*.
 5. Make one small real payment yourself to confirm the money arrives.
 
-## 4. Where the money goes (payouts)
+### 4. Where the money goes (payouts)
 
 Paystack pays out the collected money on its settlement schedule to the
 payout account on the business profile (Dashboard → Settings → **Payouts**).
@@ -73,7 +114,7 @@ payout account on the business profile (Dashboard → Settings → **Payouts**).
 Paystack charges a fee per successful payment. See the current rates at
 <https://paystack.com/ke/pricing>.
 
-## 5. Also check in the admin
+### 5. Also check in the admin
 
 **Admin → Availability → Booking rules & business info**:
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import BookingWizard from "@/components/BookingWizard";
 import { getPublicHours, getPublicServices, getPublicSettings, getUpcomingBlockedDates } from "@/lib/public-data";
-import { paymentsEnabled } from "@/lib/payments";
+import { cardPaymentsEnabled, paymentsEnabled, providerInfo } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +53,8 @@ export default async function BookPage({
           blockedDates={blockedDates}
           mpesaNumber={settings.mpesaNumber}
           stkEnabled={paymentsEnabled()}
+          cardEnabled={cardPaymentsEnabled()}
+          providerName={providerInfo()?.name || ""}
         />
       </main>
     </div>

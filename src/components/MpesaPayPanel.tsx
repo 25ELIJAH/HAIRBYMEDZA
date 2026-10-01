@@ -16,6 +16,7 @@ export default function MpesaPayPanel({
   amount,
   autoStart,
   manualNumber,
+  cardEnabled = false,
   onPaid,
 }: {
   appointmentId: string;
@@ -23,6 +24,7 @@ export default function MpesaPayPanel({
   amount: number;
   autoStart?: boolean;
   manualNumber: string;
+  cardEnabled?: boolean;
   onPaid?: (receipt: string | null) => void;
 }) {
   const [phone, setPhone] = useState(defaultPhone);
@@ -189,14 +191,16 @@ export default function MpesaPayPanel({
                 ? `Pay ${formatKes(amount)} with M-Pesa`
                 : "Try again"}
         </button>
-        <button
-          type="button"
-          className="btn-ghost w-full"
-          disabled={busy || cardBusy}
-          onClick={payByCard}
-        >
-          {cardBusy ? "Opening…" : "Pay by card"}
-        </button>
+        {cardEnabled && (
+          <button
+            type="button"
+            className="btn-ghost w-full"
+            disabled={busy || cardBusy}
+            onClick={payByCard}
+          >
+            {cardBusy ? "Opening…" : "Pay by card"}
+          </button>
+        )}
         {manualNumber && (
           <p className="text-xs text-charcoal-muted">
             No prompt? Send to{" "}

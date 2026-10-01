@@ -1,5 +1,8 @@
-// Ties online payments (Paystack) to appointments. Amounts are always decided
-// here on the server from the booking's price, never sent by the browser.
+// Ties online payments to appointments. Two providers are supported:
+//   • IntaSend (preferred when its keys are set): M-Pesa prompt, no Paybill needed.
+//   • Paystack: M-Pesa prompt plus card checkout.
+// Amounts are always decided here on the server from the booking's price,
+// never sent by the browser.
 
 import { prisma } from "./prisma";
 import {
@@ -12,6 +15,8 @@ import {
   verifyTransaction,
   type PaystackState,
 } from "./paystack";
+import { intasendEnabled, intasendMode, intasendStatus, intasendStkPush } from "./intasend";
+import { paystackMode } from "./paystack";
 import { normalizeKePhone } from "./phone";
 
 export type PaymentPurpose = "DEPOSIT" | "BALANCE";
@@ -21,8 +26,29 @@ type FinalState = Exclude<PaystackState, "PENDING">;
 // expired (the M-Pesa PIN screen itself closes after about a minute).
 const PENDING_TIMEOUT_MS = 3 * 60_000;
 
+export type Provider = "INTASEND" | "PAYSTACK";
+
+/** The provider in use: IntaSend if configured, otherwise Paystack, otherwise none. */
+export function activeProvider(): Provider | null {
+  if (intasendEnabled()) return "INTASEND";
+  if (paystackEnabled()) return "PAYSTACK";
+  return null;
+}
+
 export function paymentsEnabled(): boolean {
-  return paystackEnabled();
+  return activeProvider() !== null;
+}
+
+/** Card payments need Paystack's hosted checkout. */
+export function cardPaymentsEnabled(): boolean {
+  return activeProvider() === "PAYSTACK" && !!siteUrl();
+}
+
+export function providerInfo(): { name: string; mode: "test" | "live" } | null {
+  const p = activeProvider();
+  if (p === "INTASEND") return { name: "IntaSend", mode: intasendMode() };
+  if (p === "PAYSTACK") return { name: "Paystack", mode: paystackMode() };
+  return null;
 }
 
 // Clients pay the full price (no deposit): whatever is still owed.
@@ -82,11 +108,13 @@ export async function startMpesaPayment(opts: {
     };
   }
 
+  const provider = activeProvider()!;
   const reference = newReference(appt.id);
   // Record first, so a fast webhook always finds its payment row.
   const payment = await prisma.payment.create({
     data: {
       appointmentId: appt.id,
+      provider,
       channel: "MPESA",
       reference,
       phone,
@@ -95,6 +123,30 @@ export async function startMpesaPayment(opts: {
       initiatedBy: opts.initiatedBy,
     },
   });
+
+  if (provider === "INTASEND") {
+    const r = await intasendStkPush({
+      reference,
+      amountKes: amount,
+      phone,
+      email: appt.customer.email || undefined,
+      name: appt.customer.name,
+    });
+    if (!r.ok) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: "FAILED", resultDesc: r.error.slice(0, 250) },
+      });
+      return r;
+    }
+    await prisma.payment.update({ where: { id: payment.id }, data: { providerTxnId: r.invoiceId } });
+    return {
+      ok: true,
+      paymentId: payment.id,
+      amount,
+      message: "Check your phone and enter your M-Pesa PIN.",
+    };
+  }
 
   const res = await chargeMpesa({
     reference,
@@ -127,9 +179,8 @@ export async function startCheckout(opts: {
   purpose: PaymentPurpose;
   initiatedBy: "CLIENT" | "ADMIN";
 }): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-  if (!paymentsEnabled()) return { ok: false, error: "Online payments are not switched on yet." };
+  if (!cardPaymentsEnabled()) return { ok: false, error: "Card payments are not available." };
   const site = siteUrl();
-  if (!site) return { ok: false, error: "Card payments are not set up yet." };
 
   const loaded = await loadPayable(opts.appointmentId);
   if (!("appt" in loaded) || !loaded.appt) return { ok: false, error: loaded.error! };
@@ -139,6 +190,7 @@ export async function startCheckout(opts: {
   await prisma.payment.create({
     data: {
       appointmentId: appt.id,
+      provider: "PAYSTACK",
       channel: "CHECKOUT",
       reference,
       amount,
@@ -252,6 +304,28 @@ export async function syncWithPaystack(reference: string): Promise<void> {
   });
 }
 
+/** Asks IntaSend for an invoice's status and records the outcome if final. */
+export async function syncWithIntasend(reference: string, invoiceId: string): Promise<void> {
+  const v = await intasendStatus(invoiceId);
+  if (!v || v.state === "PENDING") return;
+  await applyPaymentResult(reference, {
+    state: v.state,
+    resultDesc: v.message,
+    receiptNumber: v.receipt,
+    providerTxnId: invoiceId,
+    paidAmountKes: v.currency && v.currency !== "KES" ? -1 : v.amountKes,
+  });
+}
+
+/** Checks a payment with whichever provider handled it. */
+export async function syncPayment(p: { reference: string; provider: string; providerTxnId: string | null }) {
+  if (p.provider === "INTASEND") {
+    if (p.providerTxnId) await syncWithIntasend(p.reference, p.providerTxnId);
+    return;
+  }
+  await syncWithPaystack(p.reference);
+}
+
 export interface PaymentStatusView {
   id: string;
   status: string;
@@ -269,11 +343,11 @@ const MESSAGES: Record<string, string> = {
   FAILED: "The payment did not go through.",
 };
 
-// Ask Paystack at most every 8s per payment while the client waits.
+// Ask the provider at most every 8s per payment while the client waits.
 const lastChecked = new Map<string, number>();
 
 /**
- * Current status of a payment. While still pending it asks Paystack directly
+ * Current status of a payment. While still pending it asks the provider directly
  * (in case the webhook is slow), and expires prompts nobody answered.
  */
 export async function refreshPaymentStatus(paymentId: string): Promise<PaymentStatusView | null> {
@@ -285,7 +359,7 @@ export async function refreshPaymentStatus(paymentId: string): Promise<PaymentSt
   if (p.status === "PENDING" && age > 6_000 && !recentlyAsked) {
     lastChecked.set(p.id, Date.now());
     if (lastChecked.size > 500) lastChecked.delete(lastChecked.keys().next().value!);
-    await syncWithPaystack(p.reference);
+    await syncPayment(p);
     p = (await prisma.payment.findUnique({ where: { id: paymentId } }))!;
     if (p.status === "PENDING" && p.channel === "MPESA" && age > PENDING_TIMEOUT_MS) {
       await applyPaymentResult(p.reference, { state: "TIMEOUT", resultDesc: "No answer from the phone" });

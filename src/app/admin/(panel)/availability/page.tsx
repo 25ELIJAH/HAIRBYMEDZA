@@ -4,11 +4,13 @@ import { getSettings } from "@/lib/booking";
 import SettingsForm from "@/components/SettingsForm";
 import WorkingHoursForm from "@/components/WorkingHoursForm";
 import { prettyDate } from "@/lib/time";
-import { paystackEnabled, paystackMode, siteUrl } from "@/lib/paystack";
+import { siteUrl } from "@/lib/paystack";
+import { providerInfo } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
 export default async function AvailabilityPage() {
+  const provider = providerInfo();
   const [hoursRows, blocked, settings] = await Promise.all([
     prisma.workingHours.findMany({ orderBy: { dayOfWeek: "asc" } }),
     prisma.blockedDate.findMany({ orderBy: { date: "asc" } }),
@@ -80,29 +82,29 @@ export default async function AvailabilityPage() {
         )}
       </section>
 
-      {/* Online payments status (Paystack keys live in environment variables) */}
+      {/* Online payments status (provider keys live in environment variables) */}
       <section className="card p-5">
-        <h2 className="mb-2 font-display text-lg font-semibold">Online payments (Paystack)</h2>
-        {paystackEnabled() ? (
+        <h2 className="mb-2 font-display text-lg font-semibold">Online payments</h2>
+        {provider ? (
           <div className="space-y-1 text-sm">
             <p className="font-medium text-charcoal">
-              ● Switched on ({paystackMode() === "live" ? "live payments" : "test mode, no real money"})
+              ● {provider.name} switched on ({provider.mode === "live" ? "live payments" : "test mode, no real money"})
             </p>
             <p className="text-charcoal-muted">
-              Clients pay the full price when they book, by M-Pesa prompt or card. You can also
-              request payment from any appointment. Paystack pays the money
-              out to the account set in your Paystack dashboard.
+              Clients pay the full price when they book with an M-Pesa prompt
+              {provider.name === "Paystack" ? " or card" : ""}. You can also request payment from any
+              appointment.
             </p>
             <p className="text-xs text-charcoal-muted">
-              Webhook URL to set in Paystack: {siteUrl() || "(set NEXT_PUBLIC_SITE_URL)"}
-              /api/payments/paystack/webhook
+              Webhook URL to set in {provider.name}: {siteUrl() || "(set NEXT_PUBLIC_SITE_URL)"}
+              {provider.name === "IntaSend" ? "/api/payments/intasend/webhook" : "/api/payments/paystack/webhook"}
             </p>
           </div>
         ) : (
           <p className="text-sm text-charcoal-muted">
-            ○ Not switched on yet. Clients see the manual “send to M-Pesa {settings.mpesaNumber || "number"} and
-            paste the message” option. Add your Paystack secret key to the hosting environment
-            variables to switch on M-Pesa prompts and card payments (see <code>PAYMENTS_SETUP.md</code>).
+            ○ Not switched on yet. Clients are asked to send money to M-Pesa{" "}
+            {settings.mpesaNumber || "number"}. Add IntaSend (or Paystack) keys to the hosting
+            environment variables to switch on M-Pesa prompts (see <code>PAYMENTS_SETUP.md</code>).
           </p>
         )}
       </section>
