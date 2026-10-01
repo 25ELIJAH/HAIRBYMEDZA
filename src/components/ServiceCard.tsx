@@ -27,24 +27,35 @@ export default function ServiceCard({
 
   return (
     <article
-      className={`flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
+      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
         selected
           ? "border-royal-600 ring-1 ring-royal-600"
           : "border-gray-200 hover:-translate-y-1 hover:border-royal-200 hover:shadow-soft"
       }`}
     >
-      {/* The whole photo is shown at its natural shape, never cropped. */}
-      <div className="bg-gray-50">
+      {/* Every card has the same photo frame. The whole photo is always visible
+          (never cropped); any spare space is filled with a soft blurred copy. */}
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-gray-100">
         {service.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={service.imageUrl}
-            alt={service.name}
-            className="block h-auto w-full"
-            loading="lazy"
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={service.imageUrl}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
+              loading="lazy"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={service.imageUrl}
+              alt={service.name}
+              className="relative h-full w-full object-contain"
+              loading="lazy"
+            />
+          </>
         ) : (
-          <div className="grid aspect-[4/3] w-full place-items-center font-display text-4xl text-gray-300">
+          <div className="grid h-full w-full place-items-center font-display text-4xl text-gray-300">
             M
           </div>
         )}

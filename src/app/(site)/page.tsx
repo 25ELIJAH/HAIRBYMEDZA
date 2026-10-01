@@ -63,15 +63,24 @@ export default async function HomePage() {
     <>
       <SiteHeader />
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-royal-50 via-white to-white">
-        {/* soft background shapes */}
-        <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-royal-100/70 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -right-20 top-40 h-80 w-80 rounded-full bg-royal-100/60 blur-3xl" />
+      {/* ── Hero: photo as a full backdrop, words on top ────── */}
+      <section className="relative isolate overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&fit=crop&w=1800&q=75"
+          alt=""
+          aria-hidden="true"
+          className="animate-slow-zoom absolute inset-0 -z-20 h-full w-full object-cover object-center"
+        />
+        {/* soft white wash so the black text always reads clearly */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-white/80 sm:bg-transparent sm:bg-gradient-to-r sm:from-white sm:via-white/85 sm:to-white/20"
+        />
 
-        <div className="container-px relative grid items-center gap-12 py-12 lg:grid-cols-2 lg:gap-16 lg:py-20">
-          <div>
-            <p className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-royal-200 bg-white/80 px-3 py-1 text-xs font-medium text-royal-700">
+        <div className="container-px flex min-h-[80vh] items-center py-16 sm:py-24">
+          <div className="max-w-xl">
+            <p className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-gray-300 bg-white/90 px-3 py-1 text-xs font-medium text-charcoal">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-royal-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-royal-600" />
@@ -79,13 +88,13 @@ export default async function HomePage() {
               Now booking · {studio || "Nairobi"}
             </p>
             <h1
-              className="mt-5 animate-fade-up font-display text-4xl font-bold leading-tight text-charcoal sm:text-5xl"
+              className="mt-5 animate-fade-up font-display text-4xl font-bold leading-tight text-charcoal sm:text-6xl"
               style={{ animationDelay: "80ms" }}
             >
-              Neat, gentle braiding for <span className="text-royal-600">kids and teens</span>.
+              Neat, gentle braiding for kids and teens.
             </h1>
             <p
-              className="mt-5 max-w-lg animate-fade-up text-lg leading-relaxed text-charcoal-muted"
+              className="mt-5 max-w-lg animate-fade-up text-lg leading-relaxed text-charcoal"
               style={{ animationDelay: "160ms" }}
             >
               Come to my studio or I come to you. Pick a free time online, pay a small deposit
@@ -99,12 +108,12 @@ export default async function HomePage() {
                 Book an appointment
                 <Icon name="arrowRight" size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
-              <Link href="/#services" className="btn-outline !px-6 !py-3.5 text-base">
+              <Link href="/#services" className="btn-outline !bg-white/90 !px-6 !py-3.5 text-base">
                 See prices
               </Link>
             </div>
             <ul
-              className="mt-8 grid max-w-md animate-fade-up grid-cols-2 gap-x-6 gap-y-2 text-sm text-charcoal-soft"
+              className="mt-8 grid max-w-md animate-fade-up grid-cols-2 gap-x-6 gap-y-2 text-sm font-medium text-charcoal"
               style={{ animationDelay: "320ms" }}
             >
               {fromPrice != null && (
@@ -122,24 +131,6 @@ export default async function HomePage() {
                 <Icon name="check" size={16} className="text-royal-600" /> Open {openDays.length} days a week
               </li>
             </ul>
-          </div>
-
-          <div className="relative animate-fade-up" style={{ animationDelay: "200ms" }}>
-            <div className="overflow-hidden rounded-3xl bg-white p-2 shadow-soft ring-1 ring-black/5">
-              {/* min height keeps the frame in place while the photo loads */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&w=1200&q=75"
-                alt="Braided hairstyle"
-                className="block h-auto min-h-[220px] w-full rounded-2xl bg-royal-50"
-              />
-            </div>
-            {fromPrice != null && (
-              <div className="animate-float absolute -bottom-5 left-4 rounded-2xl bg-white px-4 py-3 shadow-soft ring-1 ring-black/5 sm:-left-6">
-                <p className="text-xs text-charcoal-muted">Styles from</p>
-                <p className="font-display text-lg font-bold text-charcoal">{formatKes(fromPrice)}</p>
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -179,11 +170,11 @@ export default async function HomePage() {
                 <h3 className="font-display text-lg font-semibold text-charcoal">{labelFor(cat)}</h3>
                 <span className="h-px flex-1 bg-gray-200" />
               </Reveal>
-              <div className="grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {services
                   .filter((s) => s.category === cat)
                   .map((s, i) => (
-                    <Reveal key={s.id} delay={(i % 3) * 80}>
+                    <Reveal key={s.id} delay={(i % 3) * 80} className="h-full">
                       <ServiceCard
                         service={s}
                         footer={

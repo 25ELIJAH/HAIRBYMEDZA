@@ -76,7 +76,7 @@ h1, h2, h3, h4 {
   }
 
   .eyebrow {
-    @apply text-sm font-semibold text-royal-600;
+    @apply text-sm font-semibold text-charcoal;
   }
 
   /* Thin divider, kept for older markup. */
@@ -112,6 +112,15 @@ h1, h2, h3, h4 {
   animation: float 6s ease-in-out infinite;
 }
 
+/* Very slow zoom-out on the hero backdrop photo. */
+@keyframes slow-zoom {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+.animate-slow-zoom {
+  animation: slow-zoom 14s ease-out both;
+}
+
 @keyframes shimmer {
   0% { background-position: 150% 0; }
   100% { background-position: -50% 0; }
@@ -131,5 +140,5 @@ h1, h2, h3, h4 {
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
-  .animate-fade-up, .animate-float, .skeleton, .animate-ping { animation: none; }
+  .animate-fade-up, .animate-float, .animate-slow-zoom, .skeleton, .animate-ping { animation: none; }
 }
