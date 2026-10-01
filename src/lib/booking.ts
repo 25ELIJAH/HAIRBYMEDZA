@@ -7,7 +7,8 @@ import {
   overlaps,
   WorkingDay,
 } from "./availability";
-import { dayOfWeek } from "./time";
+import { customerPhoneKey, phoneVariants } from "./phone";
+import { dayOfWeek, nowMinutesForDate, todayStr } from "./time";
 
 export async function getSettings() {
   const s = await prisma.settings.findUnique({ where: { id: 1 } });
@@ -24,7 +25,7 @@ export async function getSettings() {
       location: process.env.SALON_LOCATION || "",
       outcallFeeKes: 0,
       theme: "purple",
-      mpesaNumber: (process.env.WHATSAPP_NUMBER || "").replace(/^\+?254/, "0"),
+      mpesaNumber: process.env.MPESA_NUMBER || "0701508259",
       depositPercent: 50,
     }
   );
@@ -135,6 +136,11 @@ export async function createBooking(
   const endMin = startMin + service.durationMin;
   const reserved = { start: startMin, end: endMin + service.bufferMin };
 
+  // Never accept a time that has already passed (salon time).
+  if (input.date < todayStr() || startMin <= nowMinutesForDate(input.date)) {
+    return { ok: false, error: "That time has already passed. Please pick a later time." };
+  }
+
   // Validate against working hours, lunch and blocked dates.
   const dow = dayOfWeek(input.date);
   const [wh, blocked] = await Promise.all([
@@ -165,19 +171,7 @@ export async function createBooking(
         return { ok: false, error: "Sorry, that slot was just taken. Please pick another." };
       }
 
-      // Upsert customer by phone.
-      const customer = await tx.customer.upsert({
-        where: { phone: input.customer.phone },
-        update: {
-          name: input.customer.name,
-          email: input.customer.email || undefined,
-        },
-        create: {
-          name: input.customer.name,
-          phone: input.customer.phone,
-          email: input.customer.email,
-        },
-      });
+      const customer = await findOrCreateCustomer(tx, input.customer);
 
       const appt = await tx.appointment.create({
         data: {
@@ -205,6 +199,7 @@ export async function createBooking(
           landmark: input.location?.landmark,
           travelNotes: input.location?.travelNotes,
           notes: input.notes,
+          source: "WEBSITE",
         },
       });
 
@@ -214,4 +209,39 @@ export async function createBooking(
     console.error("createBooking failed", e);
     return { ok: false, error: "Could not create the booking. Please try again." };
   }
+}
+
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+/**
+ * Finds a returning client by phone number, whatever shape it was typed in
+ * ("0712…", "+254 712…", "254712…"), so their whole history stays on one
+ * record. New clients are stored with the canonical number.
+ */
+export async function findOrCreateCustomer(
+  tx: Tx | typeof prisma,
+  c: { name: string; phone: string; email?: string | null }
+) {
+  const key = customerPhoneKey(c.phone);
+  const existing = await tx.customer.findFirst({
+    where: { phone: { in: phoneVariants(c.phone) } },
+    orderBy: { createdAt: "asc" },
+  });
+  if (existing) {
+    // Canonicalise an old-style number unless another record already holds it.
+    const keyTaken =
+      existing.phone !== key &&
+      (await tx.customer.findUnique({ where: { phone: key } })) !== null;
+    return tx.customer.update({
+      where: { id: existing.id },
+      data: {
+        name: c.name || existing.name,
+        email: c.email || undefined,
+        phone: keyTaken ? undefined : key,
+      },
+    });
+  }
+  return tx.customer.create({
+    data: { name: c.name, phone: key, email: c.email || null },
+  });
 }

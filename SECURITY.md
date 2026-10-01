@@ -23,14 +23,31 @@ system and the recommended steps before going to production.
 - **Shorter session lifetime** (2 days) and `robots.txt` + `X-Robots-Tag` keeping
   the admin area out of search indexes. `/.well-known/security.txt` added.
 
+## Payments (Paystack)
+- Amounts are computed server-side from the booking price; the browser only
+  sends the booking id (and phone number for M-Pesa).
+- The webhook (`/api/payments/paystack/webhook`) checks the
+  `x-paystack-signature` HMAC-SHA512 in constant time, then **verifies the
+  transaction with Paystack** before recording anything. Only references this
+  app created are processed.
+- A payment counts only if Paystack reports it successful, in KES, for at
+  least the amount due. Card payers' return page shows the verified result,
+  never what the URL claims.
+- Results are applied idempotently (a `PENDING → final` conditional update), so
+  replayed webhooks or page reloads can never add money twice.
+- Payment requests: same-origin only, 6 / IP / 10 min and 5 / booking / hour.
+- No card data ever touches this app (Paystack's hosted page handles cards).
+- Admin CSV exports neutralise spreadsheet formula injection.
+
 ## What is implemented
 
 ### Authentication & authorization
 - Admin passwords are hashed with **bcrypt**; plaintext is never stored.
 - Session is a signed **JWT (HS256)** stored in an **httpOnly, SameSite=Lax,
   Secure-in-production** cookie. JavaScript cannot read it (mitigates XSS token theft).
-- `AUTH_SECRET` is validated at boot: the app **refuses to start in production**
-  with a missing/short secret.
+- `AUTH_SECRET` is validated at runtime: in production, admin code **refuses to
+  load** with a missing/short secret (checked outside the build phase so
+  preview builds without secrets still complete).
 - **Middleware** (`src/middleware.ts`) protects `/admin/*` and `/api/admin/*`,
   verifying the JWT signature **and** that the role is in `OWNER`/`ADMIN`.
 - Every admin Server Action also calls `requireAdmin()` (defence in depth — a

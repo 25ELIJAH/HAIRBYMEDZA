@@ -17,10 +17,10 @@ export default function AdminLoginPage() {
   const [state, formAction] = useFormState(loginAction, null as { error?: string } | null);
 
   return (
-    <div className="grid min-h-screen place-items-center bg-royal-gradient px-5">
+    <div className="grid min-h-screen place-items-center bg-cream-soft px-5">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex justify-center">
-          <Logo variant="light" href="/" />
+          <Logo href="/" />
         </div>
         <div className="card p-7">
           <h1 className="font-display text-2xl font-bold text-charcoal">Admin sign in</h1>

@@ -3,6 +3,7 @@ import Logo from "@/components/Logo";
 import BookingWizard from "@/components/BookingWizard";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/booking";
+import { paymentsEnabled } from "@/lib/payments";
 import { todayStr } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -29,17 +30,17 @@ export default async function BookPage({
   const blockedDates = blocked.map((b) => b.date);
 
   return (
-    <div className="min-h-screen bg-cream">
-      <header className="sticky top-0 z-30 border-b border-charcoal/5 bg-cream/85 backdrop-blur">
+    <div className="min-h-screen bg-cream-soft">
+      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
         <div className="container-px flex h-16 items-center justify-between">
           <Logo />
-          <Link href="/" className="text-sm font-medium text-charcoal-muted transition hover:text-royal-700">
+          <Link href="/" className="text-sm text-charcoal-muted transition hover:text-royal-700">
             Back to site
           </Link>
         </div>
       </header>
 
-      <main className="container-px py-8 sm:py-12">
+      <main className="container-px py-8 sm:py-10">
         <BookingWizard
           services={services.map((s) => ({
             id: s.id,
@@ -60,6 +61,7 @@ export default async function BookPage({
           blockedDates={blockedDates}
           mpesaNumber={settings.mpesaNumber}
           depositPercent={settings.depositPercent}
+          stkEnabled={paymentsEnabled() && settings.depositPercent > 0}
         />
       </main>
     </div>

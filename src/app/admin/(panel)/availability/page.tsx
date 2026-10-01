@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/booking";
 import SettingsForm from "@/components/SettingsForm";
 import WorkingHoursForm from "@/components/WorkingHoursForm";
 import { prettyDate } from "@/lib/time";
+import { paystackEnabled, paystackMode, siteUrl } from "@/lib/paystack";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,33 @@ export default async function AvailabilityPage() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* Online payments status (Paystack keys live in environment variables) */}
+      <section className="card p-5">
+        <h2 className="mb-2 font-display text-lg font-semibold">Online payments (Paystack)</h2>
+        {paystackEnabled() ? (
+          <div className="space-y-1 text-sm">
+            <p className="font-medium text-charcoal">
+              ● Switched on ({paystackMode() === "live" ? "live payments" : "test mode, no real money"})
+            </p>
+            <p className="text-charcoal-muted">
+              Clients get an M-Pesa PIN prompt for the deposit when they book, or can pay by card.
+              You can request deposits or balances from any appointment. Paystack pays the money
+              out to the account set in your Paystack dashboard.
+            </p>
+            <p className="text-xs text-charcoal-muted">
+              Webhook URL to set in Paystack: {siteUrl() || "(set NEXT_PUBLIC_SITE_URL)"}
+              /api/payments/paystack/webhook
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-charcoal-muted">
+            ○ Not switched on yet. Clients see the manual “send to M-Pesa {settings.mpesaNumber || "number"} and
+            paste the message” option. Add your Paystack secret key to the hosting environment
+            variables to switch on M-Pesa prompts and card payments (see <code>PAYMENTS_SETUP.md</code>).
+          </p>
         )}
       </section>
 

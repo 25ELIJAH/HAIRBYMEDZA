@@ -51,18 +51,18 @@ export default function MonthCalendar({
     });
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <button
           type="button"
           onClick={() => canPrev && move(-1)}
           disabled={!canPrev}
           aria-label="Previous month"
-          className="grid h-9 w-9 place-items-center rounded-full text-charcoal-soft transition hover:bg-royal-50 disabled:opacity-30"
+          className="grid h-9 w-9 place-items-center rounded-lg text-lg text-charcoal-soft transition hover:bg-gray-100 disabled:opacity-30"
         >
           ‹
         </button>
-        <div className="font-display text-base font-semibold text-charcoal">
+        <div className="text-sm font-semibold text-charcoal">
           {MONTHS[view.month]} {view.year}
         </div>
         <button
@@ -70,13 +70,13 @@ export default function MonthCalendar({
           onClick={() => canNext && move(1)}
           disabled={!canNext}
           aria-label="Next month"
-          className="grid h-9 w-9 place-items-center rounded-full text-charcoal-soft transition hover:bg-royal-50 disabled:opacity-30"
+          className="grid h-9 w-9 place-items-center rounded-lg text-lg text-charcoal-soft transition hover:bg-gray-100 disabled:opacity-30"
         >
           ›
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-charcoal-muted">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-charcoal-muted">
         {WEEKDAYS.map((w) => (
           <div key={w} className="py-1">
             {w}
@@ -97,17 +97,17 @@ export default function MonthCalendar({
               type="button"
               disabled={disabled}
               onClick={() => onChange(date)}
-              className={`relative grid aspect-square place-items-center rounded-xl text-sm font-medium transition ${
+              className={`relative grid aspect-square place-items-center rounded-lg text-sm transition-colors ${
                 selected
-                  ? "bg-royal-gradient text-white shadow-soft"
+                  ? "bg-royal-600 font-semibold text-white"
                   : disabled
-                    ? "text-charcoal-muted/30"
-                    : "text-charcoal hover:bg-royal-50"
+                    ? "text-gray-300"
+                    : "text-charcoal hover:bg-royal-50 hover:text-royal-700"
               }`}
             >
               {day}
               {isToday && !selected && (
-                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-royal-500" />
+                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-royal-600" />
               )}
             </button>
           );

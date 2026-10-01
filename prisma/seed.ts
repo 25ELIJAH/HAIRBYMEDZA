@@ -9,7 +9,8 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "owner@example.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "change-me";
 const SALON_NAME = process.env.SALON_NAME || "Magdalene Medza";
 const SALON_PHONE = process.env.WHATSAPP_NUMBER || "";
-const MPESA_NUMBER = process.env.MPESA_NUMBER || (process.env.WHATSAPP_NUMBER || "").replace(/^\+?254/, "0").replace(/\s/g, "");
+// The salon's M-Pesa number for receiving deposits (shown for manual payments).
+const MPESA_NUMBER = process.env.MPESA_NUMBER || "0701508259";
 const SALON_EMAIL = process.env.OWNER_EMAIL || "";
 const SALON_LOCATION = process.env.SALON_LOCATION || "";
 

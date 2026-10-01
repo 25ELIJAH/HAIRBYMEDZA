@@ -31,9 +31,24 @@ export async function POST(req: NextRequest) {
   }
   const body = parsed.data;
 
-  // Honeypot: if a bot filled the hidden "company" field, quietly accept and
-  // drop it (no booking created) so the bot can't tell it was blocked.
+  // Honeypot: a bot that fills the hidden field gets a fake success. The
+  // attempt is still recorded (never silently lost) so the owner can restore
+  // it from Admin → Appointments → Blocked if a real client was caught.
   if (body.company && body.company.length > 0) {
+    try {
+      const { company: _hp, ...attempt } = body;
+      await prisma.notificationLog.create({
+        data: {
+          channel: "BLOCKED_BOOKING",
+          recipient: body.customer.phone,
+          subject: `Blocked booking attempt: ${body.customer.name}`,
+          body: JSON.stringify(attempt),
+          status: "BLOCKED",
+        },
+      });
+    } catch (e) {
+      console.error("could not record blocked booking", e);
+    }
     return NextResponse.json({ ok: true, appointmentId: "skipped" });
   }
 

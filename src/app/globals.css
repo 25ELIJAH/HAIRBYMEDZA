@@ -2,21 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Brand palette (fixed, luxury) ─────────────────────────────────────
-   Deep royal purple + champagne gold on warm ivory. Colours are exposed as
-   "R G B" triplets so Tailwind's royal/lavender scales resolve from them. */
+/* ── Brand palette ─────────────────────────────────────────────────────
+   One calm blue on white. Colours are "R G B" triplets so Tailwind's
+   royal / lavender / gold scales resolve from them. */
 :root {
   color-scheme: light;
-  --r-50: 246 239 249;
-  --r-100: 236 221 242;
-  --r-200: 213 184 226;
-  --r-300: 181 135 199;
-  --r-400: 139 78 160;
-  --r-500: 106 44 130;
-  --r-600: 79 26 100;
-  --r-700: 58 18 74;
-  --r-800: 40 12 52;
-  --r-900: 26 8 35;
+  --r-50: 240 245 252;
+  --r-100: 222 233 250;
+  --r-200: 191 211 245;
+  --r-300: 147 179 236;
+  --r-400: 96 140 222;
+  --r-500: 55 104 205;
+  --r-600: 33 82 178;
+  --r-700: 27 66 145;
+  --r-800: 24 53 112;
+  --r-900: 17 36 74;
 }
 
 html {
@@ -24,13 +24,17 @@ html {
 }
 
 body {
-  @apply bg-cream text-charcoal antialiased;
+  @apply bg-white text-charcoal antialiased;
   font-feature-settings: "kern", "liga";
 }
 
+h1, h2, h3, h4 {
+  letter-spacing: -0.015em;
+}
+
 ::selection {
-  background: rgb(var(--r-600));
-  color: #fff;
+  background: rgb(var(--r-100));
+  color: rgb(var(--r-900));
 }
 
 /* Reusable component classes */
@@ -40,74 +44,75 @@ body {
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium tracking-wide transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-royal-gradient text-cream shadow-soft hover:shadow-glow hover:-translate-y-0.5;
+    @apply btn bg-royal-600 text-white hover:bg-royal-700;
   }
+  /* Kept for older markup: same as the primary button. */
   .btn-gold {
-    @apply btn bg-gold-sheen font-semibold text-royal-900 shadow-card hover:-translate-y-0.5 hover:brightness-[1.03];
+    @apply btn-primary;
   }
   .btn-outline {
-    @apply btn border border-royal-300 bg-transparent text-royal-700 hover:border-royal-600 hover:bg-royal-50;
+    @apply btn border border-gray-300 bg-white text-charcoal hover:border-royal-400 hover:text-royal-700;
   }
   .btn-ghost {
-    @apply btn text-royal-700 hover:bg-royal-50;
+    @apply btn text-charcoal-soft hover:bg-gray-100;
   }
 
   .card {
-    @apply rounded-2xl border border-charcoal/5 bg-white shadow-card;
+    @apply rounded-xl border border-gray-200 bg-white;
   }
 
   .label {
-    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-charcoal-muted;
+    @apply mb-1.5 block text-sm font-medium text-charcoal-soft;
   }
   .input {
-    @apply w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal transition placeholder:text-charcoal-muted/60 focus:border-royal-500 focus:outline-none focus:ring-2 focus:ring-royal-100;
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-charcoal transition placeholder:text-gray-400 focus:border-royal-500 focus:outline-none focus:ring-2 focus:ring-royal-100;
   }
 
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium;
   }
 
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-luxe text-gold-dark;
+    @apply text-sm font-semibold text-royal-600;
   }
 
-  /* Thin gold divider used between luxury sections */
+  /* Thin divider, kept for older markup. */
   .gold-rule {
-    @apply mx-auto h-px w-16 bg-gold/60;
+    @apply hidden;
+  }
+
+  /* Skeleton placeholder shown while content loads. */
+  .skeleton {
+    @apply rounded-md bg-gray-200/80;
+    background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: shimmer 1.4s ease-in-out infinite;
   }
 }
 
 /* ── Animations ───────────────────────────────────────────────────────── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-up {
-  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes kenburns {
-  from { transform: scale(1.08); }
-  to { transform: scale(1); }
-}
-.animate-kenburns {
-  animation: kenburns 12s ease-out both;
+  animation: fade-up 0.35s ease-out both;
 }
 
 @keyframes shimmer {
-  0% { background-position: -150% 0; }
-  100% { background-position: 250% 0; }
+  0% { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
 }
 
 /* Scroll reveal: elements start hidden, .is-visible fades them up in view. */
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(8px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
   will-change: opacity, transform;
 }
 .reveal.is-visible {
@@ -117,5 +122,5 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
-  .animate-fade-up, .animate-kenburns { animation: none; }
+  .animate-fade-up, .skeleton { animation: none; }
 }

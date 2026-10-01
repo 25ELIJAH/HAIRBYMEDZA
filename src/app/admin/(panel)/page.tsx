@@ -2,7 +2,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/booking";
 import { StatusBadge, TypeBadge } from "@/components/StatusBadge";
-import { formatKes, minutesToLabel, prettyDate, todayStr } from "@/lib/time";
+import {
+  addDaysStr,
+  dayOfWeek,
+  formatKes,
+  minutesToLabel,
+  prettyDate,
+  salonMidnight,
+  todayStr,
+} from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +22,10 @@ export default async function DashboardPage() {
 
   // Revenue is recognised when a booking is marked completed, so the windows
   // below count by completedAt, not the scheduled date.
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfWeek = new Date(startOfToday);
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  const startOfMonth = new Date(startOfToday);
-  startOfMonth.setDate(startOfMonth.getDate() - 29);
+  // Day boundaries are computed in salon time (the server runs in UTC).
+  const startOfToday = salonMidnight(today);
+  const startOfWeek = salonMidnight(addDaysStr(today, -6));
+  const startOfMonth = salonMidnight(addDaysStr(today, -29));
   const completedRevenue = (gte: Date) =>
     prisma.appointment.aggregate({
       _sum: { priceKes: true },
@@ -36,6 +42,8 @@ export default async function DashboardPage() {
     completedCount,
     customerCount,
     todayHours,
+    attentionCount,
+    blockedCount,
   ] = await Promise.all([
     prisma.appointment.findMany({
       where: { date: today, status: { in: ACTIVE } },
@@ -60,8 +68,12 @@ export default async function DashboardPage() {
     prisma.appointment.count({ where: { status: "COMPLETED" } }),
     prisma.customer.count(),
     prisma.workingHours.findUnique({
-      where: { dayOfWeek: new Date().getDay() },
+      where: { dayOfWeek: dayOfWeek(today) },
     }),
+    prisma.appointment.count({
+      where: { date: { lt: today }, status: { in: ["PENDING", "CONFIRMED"] } },
+    }),
+    prisma.notificationLog.count({ where: { channel: "BLOCKED_BOOKING", status: "BLOCKED" } }),
   ]);
 
   const todayRevenue = todayRev._sum.priceKes ?? 0;
@@ -81,10 +93,38 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <header className="mb-6">
-        <p className="eyebrow">{prettyDate(today)}</p>
-        <h1 className="mt-1 font-display text-3xl font-bold text-charcoal">Dashboard</h1>
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow">{prettyDate(today)}</p>
+          <h1 className="mt-1 font-display text-3xl font-bold text-charcoal">Dashboard</h1>
+        </div>
+        <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
+          + Add booking
+        </Link>
       </header>
+
+      {(attentionCount > 0 || blockedCount > 0) && (
+        <div className="mb-6 space-y-2">
+          {attentionCount > 0 && (
+            <Link
+              href="/admin/appointments?filter=attention"
+              className="block rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+            >
+              <strong>{attentionCount}</strong> past booking{attentionCount === 1 ? " is" : "s are"} still
+              pending or confirmed. Mark them completed so your revenue figures are right →
+            </Link>
+          )}
+          {blockedCount > 0 && (
+            <Link
+              href="/admin/appointments?filter=blocked"
+              className="block rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200 hover:bg-red-100"
+            >
+              <strong>{blockedCount}</strong> website booking attempt{blockedCount === 1 ? " was" : "s were"} held
+              by the spam filter. Check them →
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -147,7 +187,7 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <Link
-                    href="/admin/appointments"
+                    href="/admin/appointments?filter=PENDING"
                     className="btn-outline !px-3 !py-1.5 text-xs"
                   >
                     Review
@@ -180,9 +220,13 @@ export default async function DashboardPage() {
               <tbody>
                 {upcoming.map((a) => (
                   <tr key={a.id} className="border-t border-black/5">
-                    <td className="py-2.5 pr-4 text-charcoal-muted">{a.date}</td>
+                    <td className="py-2.5 pr-4 text-charcoal-muted">{prettyDate(a.date)}</td>
                     <td className="py-2.5 pr-4 font-medium">{minutesToLabel(a.startMin)}</td>
-                    <td className="py-2.5 pr-4">{a.customer.name}</td>
+                    <td className="py-2.5 pr-4">
+                      <Link href={`/admin/customers/${a.customerId}`} className="hover:text-royal-600">
+                        {a.customer.name}
+                      </Link>
+                    </td>
                     <td className="py-2.5 pr-4">{a.service.name}</td>
                     <td className="py-2.5 pr-4"><TypeBadge type={a.serviceType} /></td>
                     <td className="py-2.5 pr-4"><StatusBadge status={a.status} /></td>
