@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { paystackEnabled, paystackMode } from "@/lib/paystack";
+import { providerInfo } from "@/lib/payments";
 import { formatPhone } from "@/lib/phone";
 import { formatKes, prettyDate, salonMidnight, addDaysStr, todayStr } from "@/lib/time";
 
@@ -38,10 +38,9 @@ export default async function PaymentsPage({ searchParams }: { searchParams: { s
       <header className="mb-6">
         <h1 className="font-display text-3xl font-bold text-charcoal">Payments</h1>
         <p className="mt-1 text-sm text-charcoal-muted">
-          Every online payment (M-Pesa prompt or card) through Paystack, with references for
-          matching against your Paystack dashboard.
-          {!paystackEnabled() && " Paystack is not switched on yet (see PAYMENTS_SETUP.md)."}
-          {paystackEnabled() && paystackMode() === "test" && " Running in test mode (no real money)."}
+          Every online payment, with references for matching against your payment dashboard.
+          {!providerInfo() && " Online payments are not switched on yet (see PAYMENTS_SETUP.md)."}
+          {providerInfo()?.mode === "test" && ` ${providerInfo()!.name} is in test mode (no real money).`}
         </p>
       </header>
 

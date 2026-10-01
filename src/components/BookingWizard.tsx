@@ -68,6 +68,8 @@ export default function BookingWizard({
   blockedDates,
   mpesaNumber,
   stkEnabled = false,
+  cardEnabled = false,
+  providerName = "",
 }: {
   services: Service[];
   initialServiceId?: string;
@@ -78,6 +80,8 @@ export default function BookingWizard({
   blockedDates: string[];
   mpesaNumber: string;
   stkEnabled?: boolean;
+  cardEnabled?: boolean;
+  providerName?: string;
 }) {
   const [step, setStep] = useState(0);
   const [serviceId, setServiceId] = useState<string | undefined>(initialServiceId);
@@ -712,7 +716,7 @@ export default function BookingWizard({
                         active={payNow}
                         onClick={() => setPayNow(true)}
                         title={`Pay ${formatKes(amountDue)} now`}
-                        text="M-Pesa or card"
+                        text={cardEnabled ? "M-Pesa or card" : "M-Pesa prompt to your phone"}
                       />
                       <PayOption
                         active={!payNow}
@@ -720,7 +724,9 @@ export default function BookingWizard({
                         title="Pay later"
                         text="Arranged on WhatsApp"
                       />
-                      <p className="pt-2 text-xs text-charcoal-muted">Secured by Paystack.</p>
+                      {providerName && (
+                        <p className="pt-2 text-xs text-charcoal-muted">Secured by {providerName}.</p>
+                      )}
                     </div>
                   ) : (
                     <div className="text-sm">
@@ -810,6 +816,7 @@ export default function BookingWizard({
               {stkEnabled && appointmentId && appointmentId !== "skipped" && (
                 <div className="mt-6">
                   <MpesaPayPanel
+                    cardEnabled={cardEnabled}
                     appointmentId={appointmentId}
                     defaultPhone={customer.phone}
                     amount={amountDue}
