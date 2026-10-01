@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import ServiceCard, { ServiceCardData } from "./ServiceCard";
+import type { ServiceCardData } from "./ServiceCard";
 import MonthCalendar from "./MonthCalendar";
 import MpesaPayPanel from "./MpesaPayPanel";
 import { SlotGridSkeleton } from "./Skeleton";
@@ -39,7 +39,7 @@ interface AvailabilityResponse {
   durationMin: number;
 }
 
-const STEPS = ["Style", "Where", "Date & time", "Your details", "Confirm", "Done"];
+const STEPS = ["Style", "Where", "Time", "Details", "Confirm", "Done"];
 
 // Time slots are grouped by part of the day.
 const SLOT_GROUPS: { label: string; from: number; to: number }[] = [
@@ -85,6 +85,7 @@ export default function BookingWizard({
 }) {
   const [step, setStep] = useState(0);
   const [serviceId, setServiceId] = useState<string | undefined>(initialServiceId);
+  const [activeCat, setActiveCat] = useState<string | null>(null);
   const [serviceType, setServiceType] = useState<"INCALL" | "OUTCALL">("INCALL");
   const [date, setDate] = useState<string>(() => {
     // Start on the first upcoming day the salon is actually open.
@@ -330,6 +331,10 @@ export default function BookingWizard({
       .filter((c) => !CATEGORY_ORDER.includes(c))
       .sort(),
   ];
+  const shownCat =
+    activeCat && categories.includes(activeCat)
+      ? activeCat
+      : services.find((s) => s.id === serviceId)?.category || categories[0];
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -340,42 +345,73 @@ export default function BookingWizard({
       <div className="min-w-0">
         {/* ── Step 0: Service ─────────────────────────────── */}
         {step === 0 && (
-          <Section title="Choose a style">
-            <div className="space-y-10">
-              {categories.map(
-                (cat) => (
-                  <div key={cat}>
-                    <h3 className="mb-4 font-display text-lg font-semibold text-charcoal">
-                      {CATEGORY_LABEL[cat] || cat}
-                    </h3>
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      {services
-                        .filter((s) => s.category === cat)
-                        .map((s) => (
-                          <ServiceCard
-                            key={s.id}
-                            service={s}
-                            selected={serviceId === s.id}
-                            footer={
-                              <button
-                                className={
-                                  serviceId === s.id ? "btn-primary w-full" : "btn-outline w-full"
-                                }
-                                onClick={() => {
-                                  setServiceId(s.id);
-                                  setStep(1);
-                                }}
-                              >
-                                {serviceId === s.id ? "Selected" : "Choose"}
-                              </button>
-                            }
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
+          <Section title="Choose a style" subtitle="Prices include wash, blow dry and styling.">
+            {categories.length > 1 && (
+              <div role="tablist" className="mb-6 inline-flex rounded-full border border-gray-200 bg-white p-1">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    role="tab"
+                    aria-selected={shownCat === c}
+                    onClick={() => setActiveCat(c)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                      shownCat === c ? "bg-charcoal text-white" : "text-charcoal-soft hover:text-charcoal"
+                    }`}
+                  >
+                    {CATEGORY_LABEL[c] || c}
+                  </button>
+                ))}
+              </div>
+            )}
+            <ul className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+              {services
+                .filter((s) => s.category === shownCat)
+                .map((s) => {
+                  const picked = serviceId === s.id;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        onClick={() => {
+                          setServiceId(s.id);
+                          setStep(1);
+                        }}
+                        className={`group flex w-full items-center gap-4 px-4 py-4 text-left transition sm:gap-5 sm:px-5 ${
+                          picked ? "bg-royal-50/60" : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <ServiceThumb service={s} size={68} />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-baseline justify-between gap-3">
+                            <span className="font-display text-base font-semibold leading-snug text-charcoal sm:text-lg">
+                              {s.name}
+                            </span>
+                            <span className="shrink-0 font-semibold tabular-nums text-charcoal">
+                              {formatKes(s.priceKes)}
+                            </span>
+                          </span>
+                          {s.description && (
+                            <span className="mt-0.5 line-clamp-1 block text-sm text-charcoal-muted">{s.description}</span>
+                          )}
+                          <span className="mt-1.5 flex items-center justify-between gap-3 text-xs text-charcoal-muted">
+                            <span>
+                              {durationLabel(s.durationMin)} · Home visit {formatKes(s.outCallPriceKes)}
+                            </span>
+                            <span
+                              className={`hidden rounded-full px-3 py-1 text-xs font-semibold transition sm:inline-block ${
+                                picked
+                                  ? "bg-royal-600 text-white"
+                                  : "border border-gray-300 text-charcoal group-hover:border-charcoal"
+                              }`}
+                            >
+                              {picked ? "Selected" : "Select"}
+                            </span>
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
           </Section>
         )}
 
@@ -510,7 +546,10 @@ export default function BookingWizard({
                   {!loadingAvail && avail && avail.open && !avail.dayFull && bookable.size > 0 && (
                     <div className="space-y-5">
                       {SLOT_GROUPS.map((g) => {
-                        const slots = avail.grid.filter((s) => s.startMin >= g.from && s.startMin < g.to);
+                        // Only free times are shown: a clean list reads better than crossed-out ones.
+                        const slots = avail.grid.filter(
+                          (s) => s.startMin >= g.from && s.startMin < g.to && bookable.has(s.startMin)
+                        );
                         if (slots.length === 0) return null;
                         return (
                           <div key={g.label}>
@@ -534,11 +573,11 @@ export default function BookingWizard({
                                         setSlotNotice(`${slot.label} is taken.`);
                                       }
                                     }}
-                                    className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 transition-all duration-200 ${
+                                    className={`rounded-full px-2 py-2.5 text-sm font-medium tabular-nums ring-1 transition-all duration-200 ${
                                       selected
-                                        ? "scale-[1.04] bg-royal-600 text-white shadow-soft ring-royal-600"
+                                        ? "bg-royal-600 text-white ring-royal-600"
                                         : canBook
-                                          ? "bg-white text-charcoal ring-gray-300 hover:-translate-y-0.5 hover:ring-royal-500 hover:text-royal-700"
+                                          ? "bg-white text-charcoal ring-gray-200 hover:ring-charcoal"
                                           : taken
                                             ? "cursor-pointer bg-gray-50 text-gray-400 line-through ring-gray-100"
                                             : "cursor-not-allowed bg-gray-50 text-gray-300 ring-gray-100"
@@ -899,21 +938,47 @@ export default function BookingWizard({
 /* ── Small presentational helpers ───────────────────────────── */
 
 function Stepper({ step }: { step: number }) {
-  const shown = Math.min(step, STEPS.length - 1);
+  const names = STEPS.slice(0, -1); // "Done" is not a step to show
+  const current = Math.min(step, names.length - 1);
+  if (step >= names.length) return null;
   return (
-    <div>
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-charcoal">
-          Step {shown + 1} of {STEPS.length}: {STEPS[shown]}
-        </span>
+    <nav aria-label="Booking progress">
+      {/* Phones: compact label with segments */}
+      <p className="text-sm text-charcoal-muted sm:hidden">
+        Step {current + 1} of {names.length} · <span className="font-medium text-charcoal">{names[current]}</span>
+      </p>
+      <div className="mt-2 flex gap-1.5 sm:hidden">
+        {names.map((n, i) => (
+          <span key={n} className={`h-1 flex-1 rounded-full ${i <= current ? "bg-royal-600" : "bg-gray-200"}`} />
+        ))}
       </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-        <div
-          className="h-full rounded-full bg-royal-600 transition-all duration-300"
-          style={{ width: `${((shown + 1) / STEPS.length) * 100}%` }}
-        />
-      </div>
-    </div>
+      {/* Larger screens: named steps */}
+      <ol className="hidden items-center gap-3 sm:flex">
+        {names.map((n, i) => (
+          <li key={n} className="flex flex-1 items-center gap-3 last:flex-none">
+            <span className="flex items-center gap-2.5">
+              <span
+                className={`grid h-7 w-7 place-items-center rounded-full text-xs font-semibold tabular-nums transition ${
+                  i < current
+                    ? "bg-royal-600 text-white"
+                    : i === current
+                      ? "bg-charcoal text-white"
+                      : "border border-gray-300 text-charcoal-muted"
+                }`}
+              >
+                {i + 1}
+              </span>
+              <span className={`whitespace-nowrap text-sm ${i === current ? "font-semibold text-charcoal" : "text-charcoal-muted"}`}>
+                {n}
+              </span>
+            </span>
+            {i < names.length - 1 && (
+              <span className={`h-px flex-1 ${i < current ? "bg-royal-600" : "bg-gray-200"}`} />
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 
@@ -928,8 +993,8 @@ function Section({
 }) {
   return (
     <div className="animate-fade-up">
-      <h2 className="font-display text-2xl font-bold text-charcoal">{title}</h2>
-      {subtitle && <p className="mt-1 text-charcoal-muted">{subtitle}</p>}
+      <h2 className="font-display text-2xl font-semibold tracking-tight text-charcoal sm:text-3xl">{title}</h2>
+      {subtitle && <p className="mt-1.5 text-charcoal-muted">{subtitle}</p>}
       <div className="mt-6">{children}</div>
     </div>
   );
@@ -959,7 +1024,7 @@ function TypeCard({
       }`}
     >
       <span className="flex items-start justify-between gap-3">
-        <span className="font-display text-lg font-bold text-charcoal">{title}</span>
+        <span className="font-display text-lg font-semibold text-charcoal">{title}</span>
         <span
           className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${
             active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_3px_white]" : "border-gray-300"
@@ -967,7 +1032,7 @@ function TypeCard({
         />
       </span>
       <span className="mt-1 block text-sm text-charcoal-muted">{desc}</span>
-      <span className="mt-auto pt-6 font-display text-2xl font-bold text-charcoal">{price}</span>
+      <span className="mt-auto pt-6 text-xl font-semibold tabular-nums text-charcoal">{price}</span>
     </button>
   );
 }
@@ -1098,7 +1163,7 @@ function BookingSummary({
   return (
     <aside className="hidden lg:block">
       <div className="card sticky top-24 p-5">
-        <h3 className="font-display text-base font-bold text-charcoal">Your booking</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-charcoal-muted">Your booking</h3>
         {service && (
           <div className="mt-3 flex items-center gap-3">
             <ServiceThumb service={service} size={52} />
@@ -1123,7 +1188,7 @@ function BookingSummary({
         </dl>
         <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
           <span className="text-sm font-medium text-charcoal">Total</span>
-          <span className="font-display text-lg font-bold text-charcoal">
+          <span className="text-lg font-semibold tabular-nums text-charcoal">
             {price != null ? formatKes(price) : "—"}
           </span>
         </div>
