@@ -3,16 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction, revokeAllSessions } from "@/lib/admin-actions";
-import Icon, { IconName } from "./Icon";
 import LogoMark from "./LogoMark";
 
-const LINKS: { href: string; label: string; icon: IconName }[] = [
-  { href: "/admin", label: "Dashboard", icon: "chart" },
-  { href: "/admin/appointments", label: "Appointments", icon: "calendar" },
-  { href: "/admin/customers", label: "Customers", icon: "users" },
-  { href: "/admin/payments", label: "Payments", icon: "phone" },
-  { href: "/admin/services", label: "Services", icon: "scissors" },
-  { href: "/admin/availability", label: "Availability", icon: "settings" },
+const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
+  {
+    title: "Daily",
+    links: [
+      { href: "/admin", label: "Dashboard" },
+      { href: "/admin/appointments", label: "Bookings" },
+      { href: "/admin/customers", label: "Clients" },
+      { href: "/admin/payments", label: "Money" },
+    ],
+  },
+  {
+    title: "Setup",
+    links: [
+      { href: "/admin/services", label: "Services & prices" },
+      { href: "/admin/availability", label: "Hours & settings" },
+    ],
+  },
 ];
 
 export default function AdminSidebar({ name }: { name: string }) {
@@ -21,63 +30,63 @@ export default function AdminSidebar({ name }: { name: string }) {
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
   return (
-    <aside className="sticky top-0 z-30 flex shrink-0 flex-col bg-royal-gradient text-white md:h-screen md:w-64">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 md:py-4">
+    <aside className="sticky top-0 z-30 flex shrink-0 flex-col border-b border-gray-200 bg-white md:h-screen md:w-60 md:border-b-0 md:border-r">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 md:px-5 md:py-5">
         <div className="flex items-center gap-2.5">
-          <LogoMark size={38} badge className="shrink-0" />
+          <LogoMark size={32} className="shrink-0" />
           <div className="leading-tight">
-            <p className="font-display text-base font-semibold">Magdalene Medza</p>
-            <p className="text-[11px] text-lavender-200">Owner · {name}</p>
+            <p className="text-sm font-semibold text-charcoal">Magdalene Medza</p>
+            <p className="text-xs text-charcoal-muted">{name}</p>
           </div>
         </div>
-        {/* Sign out is always reachable, including on phones */}
         <form action={logoutAction} className="md:hidden">
-          <button
-            aria-label="Sign out"
-            className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <Icon name="logout" size={18} />
-          </button>
+          <button className="text-sm font-medium text-charcoal-muted hover:text-charcoal">Sign out</button>
         </form>
       </div>
 
-      {/* Nav: horizontal scroll on phones, vertical on desktop */}
-      <nav className="flex gap-1.5 overflow-x-auto px-3 pb-3 md:flex-col md:overflow-visible md:px-3">
-        {LINKS.map((l) => {
-          const active = isActive(l.href);
-          return (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition md:gap-3 md:py-2.5 ${
-                active ? "bg-white/20 text-white" : "text-lavender-100 hover:bg-white/10"
-              }`}
-            >
-              <Icon name={l.icon} size={18} />
-              {l.label}
-            </Link>
-          );
-        })}
+      {/* Phones: one scrolling row. Desktop: grouped column. */}
+      <nav className="flex gap-1 overflow-x-auto px-3 pb-2 md:flex-col md:gap-6 md:overflow-visible md:px-3 md:pb-0 md:pt-2">
+        {GROUPS.map((g) => (
+          <div key={g.title} className="flex gap-1 md:flex-col md:gap-0.5">
+            <p className="hidden px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-charcoal-muted md:block">
+              {g.title}
+            </p>
+            {g.links.map((l) => {
+              const active = isActive(l.href);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition ${
+                    active
+                      ? "bg-royal-50 font-semibold text-royal-800"
+                      : "font-medium text-charcoal-soft hover:bg-gray-50 hover:text-charcoal"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      {/* Desktop only footer actions */}
-      <div className="mt-auto hidden flex-col gap-1 px-3 pb-4 md:flex">
+      <div className="mt-auto hidden flex-col gap-0.5 border-t border-gray-200 px-3 py-4 md:flex">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-lavender-100 hover:bg-white/10"
+          className="rounded-lg px-3 py-2 text-sm text-charcoal-soft hover:bg-gray-50 hover:text-charcoal"
         >
-          <Icon name="external" size={16} /> View live site
+          View website
         </Link>
         <form action={logoutAction}>
-          <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-lavender-100 hover:bg-white/10">
-            <Icon name="logout" size={16} /> Sign out
+          <button className="w-full rounded-lg px-3 py-2 text-left text-sm text-charcoal-soft hover:bg-gray-50 hover:text-charcoal">
+            Sign out
           </button>
         </form>
         <form action={revokeAllSessions}>
-          <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-lavender-200/80 hover:bg-white/10">
-            <Icon name="shield" size={14} /> Sign out of all devices
+          <button className="w-full rounded-lg px-3 py-2 text-left text-xs text-charcoal-muted hover:bg-gray-50">
+            Sign out everywhere
           </button>
         </form>
       </div>

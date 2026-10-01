@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/admin/ui";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import AppointmentCard, { ApptData } from "@/components/AppointmentCard";
@@ -164,32 +165,36 @@ export default async function AppointmentsPage({
     <div>
       <Header />
 
-      {(attentionCount > 0 || blockedCount > 0) && (
-        <div className="mb-5 space-y-2">
+      {(attentionCount > 0 && filter !== "attention") || blockedCount > 0 ? (
+        <div className="mb-6 divide-y divide-amber-200 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 text-sm">
           {attentionCount > 0 && filter !== "attention" && (
             <Link
               href="/admin/appointments?filter=attention"
-              className="block rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
             >
-              <strong>{attentionCount}</strong> past booking{attentionCount === 1 ? " was" : "s were"} never
-              marked completed or cancelled. Review them →
+              <span>
+                {attentionCount} past booking{attentionCount === 1 ? " needs" : "s need"} marking done or cancelled
+              </span>
+              <span className="font-medium">Review</span>
             </Link>
           )}
           {blockedCount > 0 && (
             <Link
               href="/admin/appointments?filter=blocked"
-              className="block rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200 hover:bg-red-100"
+              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
             >
-              <strong>{blockedCount}</strong> website booking attempt{blockedCount === 1 ? " was" : "s were"}{" "}
-              held by the spam filter. Check if any are real clients →
+              <span>
+                {blockedCount} website booking{blockedCount === 1 ? " was" : "s were"} held by the spam filter
+              </span>
+              <span className="font-medium">Check</span>
             </Link>
           )}
         </div>
-      )}
+      ) : null}
 
       <Filters active={filter} q={q} />
 
-      <p className="mb-3 text-xs text-charcoal-muted">
+      <p className="mb-3 text-sm text-charcoal-muted">
         {total} booking{total === 1 ? "" : "s"}
         {q ? ` matching “${q}”` : ""}
         {pages > 1 ? ` · page ${page} of ${pages}` : ""}
@@ -220,14 +225,14 @@ export default async function AppointmentsPage({
         <nav className="mt-6 flex items-center justify-between">
           {page > 1 ? (
             <Link href={pageHref(page - 1)} className="btn-outline !px-4 !py-2 text-sm">
-              ← Newer / previous
+              Newer
             </Link>
           ) : (
             <span />
           )}
           {page < pages && (
             <Link href={pageHref(page + 1)} className="btn-outline !px-4 !py-2 text-sm">
-              More →
+              Older
             </Link>
           )}
         </nav>
@@ -238,28 +243,26 @@ export default async function AppointmentsPage({
 
 function Header() {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="font-display text-3xl font-bold text-charcoal">Appointments</h1>
-        <p className="mt-1 text-sm text-charcoal-muted">
-          Confirm, complete, cancel and track payments. Every booking ever made is kept here.
-        </p>
-      </div>
-      <div className="flex gap-2">
-        <a href="/api/admin/export?type=appointments" className="btn-ghost !px-3 !py-2 text-sm">
-          Export CSV
-        </a>
-        <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
-          + Add booking
-        </Link>
-      </div>
-    </header>
+    <PageHeader
+      title="Bookings"
+      subtitle="Every booking ever made."
+      actions={
+        <>
+          <a href="/api/admin/export?type=appointments" className="btn-outline !px-4 !py-2 text-sm">
+            Export CSV
+          </a>
+          <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
+            Add booking
+          </Link>
+        </>
+      }
+    />
   );
 }
 
 function Filters({ active, q }: { active: string; q: string }) {
   return (
-    <div className="mb-4 space-y-3">
+    <div className="mb-4 space-y-4">
       <form action="/admin/appointments" className="flex gap-2">
         <input type="hidden" name="filter" value={active === "blocked" || active === "upcoming" ? "all" : active} />
         <input
@@ -270,21 +273,21 @@ function Filters({ active, q }: { active: string; q: string }) {
         />
         <button className="btn-outline !px-4">Search</button>
       </form>
-      <div className="flex flex-wrap gap-2">
+      <nav className="flex gap-5 overflow-x-auto border-b border-gray-200 text-sm">
         {FILTERS.map((f) => (
           <Link
             key={f.key}
             href={`/admin/appointments?filter=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={`badge ring-1 transition ${
+            className={`-mb-px shrink-0 border-b-2 pb-2.5 font-medium transition ${
               active === f.key
-                ? "bg-royal-600 text-white ring-royal-600"
-                : "bg-white text-charcoal-muted ring-black/10 hover:ring-royal-300"
+                ? "border-royal-600 text-charcoal"
+                : "border-transparent text-charcoal-muted hover:text-charcoal"
             }`}
           >
             {f.label}
           </Link>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }

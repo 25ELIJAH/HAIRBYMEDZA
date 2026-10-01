@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/admin/ui";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CustomerForm, ImportCustomersForm, MergeDuplicatesButton } from "@/components/CustomerTools";
@@ -81,18 +82,15 @@ export default async function CustomersPage({
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-charcoal">Customers</h1>
-          <p className="mt-1 text-sm text-charcoal-muted">
-            {total} {total === 1 ? "client" : "clients"} in your database
-            {q ? ` matching “${q}”` : ""}. Every client who has ever booked is listed here.
-          </p>
-        </div>
-        <a href="/api/admin/export?type=customers" className="btn-ghost !px-3 !py-2 text-sm">
-          Export CSV
-        </a>
-      </header>
+      <PageHeader
+        title="Clients"
+        subtitle={`${total} ${total === 1 ? "client" : "clients"}${q ? ` matching “${q}”` : ""}`}
+        actions={
+          <a href="/api/admin/export?type=customers" className="btn-outline !px-4 !py-2 text-sm">
+            Export CSV
+          </a>
+        }
+      />
 
       <form action="/admin/customers" className="mb-3 flex gap-2">
         <input name="q" defaultValue={q} placeholder="Search name, phone, email or notes…" className="input flex-1" />
@@ -128,7 +126,7 @@ export default async function CustomersPage({
             </thead>
             <tbody>
               {shown.map((c) => (
-                <tr key={c.id} className="border-b border-black/5 align-top last:border-0 hover:bg-lavender-50/60">
+                <tr key={c.id} className="border-b border-black/5 align-top last:border-0 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <Link href={`/admin/customers/${c.id}`} className="flex items-center gap-2.5">
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-royal-100 text-xs font-semibold text-royal-700">
@@ -170,15 +168,15 @@ export default async function CustomersPage({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="card p-5">
-          <h2 className="mb-4 font-display text-lg font-semibold">Add a client</h2>
+          <h2 className="mb-4 text-base font-semibold text-charcoal">Add a client</h2>
           <CustomerForm />
         </section>
         <section className="card p-5">
-          <h2 className="mb-4 font-display text-lg font-semibold">Import past clients</h2>
+          <h2 className="mb-4 text-base font-semibold text-charcoal">Import past clients</h2>
           <ImportCustomersForm />
         </section>
         <section className="card p-5 lg:col-span-2">
-          <h2 className="mb-1 font-display text-lg font-semibold">Tidy up duplicates</h2>
+          <h2 className="mb-1 text-base font-semibold text-charcoal">Tidy up duplicates</h2>
           <p className="mb-3 text-sm text-charcoal-muted">
             Older bookings saved the same client more than once when their number was typed
             differently (0712… vs +254712…). This merges them into one record with the full history.

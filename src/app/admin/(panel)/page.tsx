@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getSettings } from "@/lib/booking";
 import { StatusBadge, TypeBadge } from "@/components/StatusBadge";
+import { EmptyState, PageHeader, Panel, Stat, StatGrid } from "@/components/admin/ui";
+import { paymentMethod } from "@/lib/payment-labels";
 import {
-  addDaysStr,
-  dayOfWeek,
   formatKes,
   minutesToLabel,
   prettyDate,
   salonMidnight,
+  salonTimeStr,
+  salonDateStr,
   todayStr,
 } from "@/lib/time";
 
@@ -18,146 +19,116 @@ const ACTIVE = ["PENDING", "CONFIRMED", "COMPLETED"];
 
 export default async function DashboardPage() {
   const today = todayStr();
-  const settings = await getSettings();
-
-  // Revenue is recognised when a booking is marked completed, so the windows
-  // below count by completedAt, not the scheduled date.
-  // Day boundaries are computed in salon time (the server runs in UTC).
-  const startOfToday = salonMidnight(today);
-  const startOfWeek = salonMidnight(addDaysStr(today, -6));
-  const startOfMonth = salonMidnight(addDaysStr(today, -29));
-  const completedRevenue = (gte: Date) =>
-    prisma.appointment.aggregate({
-      _sum: { priceKes: true },
-      where: { status: "COMPLETED", completedAt: { gte } },
+  const monthStart = `${today.slice(0, 8)}01`;
+  // Money figures count payments actually received (online and cash), by the
+  // day they were paid, in salon time.
+  const receivedSince = (from: string) =>
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: { status: "SUCCESS", paidAt: { gte: salonMidnight(from) } },
     });
 
-  const [
-    todays,
-    todayRev,
-    weekRev,
-    monthRev,
-    pending,
-    upcoming,
-    completedCount,
-    customerCount,
-    todayHours,
-    attentionCount,
-    blockedCount,
-  ] = await Promise.all([
-    prisma.appointment.findMany({
-      where: { date: today, status: { in: ACTIVE } },
-      include: { customer: true, service: true },
-      orderBy: { startMin: "asc" },
-    }),
-    completedRevenue(startOfToday),
-    completedRevenue(startOfWeek),
-    completedRevenue(startOfMonth),
-    prisma.appointment.findMany({
-      where: { status: "PENDING", date: { gte: today } },
-      include: { customer: true, service: true },
-      orderBy: [{ date: "asc" }, { startMin: "asc" }],
-      take: 6,
-    }),
-    prisma.appointment.findMany({
-      where: { date: { gte: today }, status: { in: ["PENDING", "CONFIRMED"] } },
-      include: { customer: true, service: true },
-      orderBy: [{ date: "asc" }, { startMin: "asc" }],
-      take: 8,
-    }),
-    prisma.appointment.count({ where: { status: "COMPLETED" } }),
-    prisma.customer.count(),
-    prisma.workingHours.findUnique({
-      where: { dayOfWeek: dayOfWeek(today) },
-    }),
-    prisma.appointment.count({
-      where: { date: { lt: today }, status: { in: ["PENDING", "CONFIRMED"] } },
-    }),
-    prisma.notificationLog.count({ where: { channel: "BLOCKED_BOOKING", status: "BLOCKED" } }),
-  ]);
-
-  const todayRevenue = todayRev._sum.priceKes ?? 0;
-  const weekRevenue = weekRev._sum.priceKes ?? 0;
-  const monthRevenue = monthRev._sum.priceKes ?? 0;
-
-  // Occupancy for today = booked service minutes / available minutes.
-  let occupancy = 0;
-  if (todayHours?.isOpen) {
-    let avail = todayHours.endMin - todayHours.startMin;
-    if (todayHours.lunchStartMin != null && todayHours.lunchEndMin != null) {
-      avail -= todayHours.lunchEndMin - todayHours.lunchStartMin;
-    }
-    const booked = todays.reduce((s, a) => s + (a.endMin - a.startMin), 0);
-    occupancy = avail > 0 ? Math.min(100, Math.round((booked / avail) * 100)) : 0;
-  }
+  const [todays, todayMoney, monthMoney, pendingCount, upcoming, recentPayments, attentionCount, blockedCount] =
+    await Promise.all([
+      prisma.appointment.findMany({
+        where: { date: today, status: { in: ACTIVE } },
+        include: { customer: true, service: true },
+        orderBy: { startMin: "asc" },
+      }),
+      receivedSince(today),
+      receivedSince(monthStart),
+      prisma.appointment.count({ where: { status: "PENDING", date: { gte: today } } }),
+      prisma.appointment.findMany({
+        where: { date: { gt: today }, status: { in: ["PENDING", "CONFIRMED"] } },
+        include: { customer: true, service: true },
+        orderBy: [{ date: "asc" }, { startMin: "asc" }],
+        take: 6,
+      }),
+      prisma.payment.findMany({
+        where: { status: "SUCCESS" },
+        include: { appointment: { include: { customer: true } } },
+        orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
+        take: 6,
+      }),
+      prisma.appointment.count({
+        where: { date: { lt: today }, status: { in: ["PENDING", "CONFIRMED"] } },
+      }),
+      prisma.notificationLog.count({ where: { channel: "BLOCKED_BOOKING", status: "BLOCKED" } }),
+    ]);
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="eyebrow">{prettyDate(today)}</p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-charcoal">Dashboard</h1>
-        </div>
-        <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
-          + Add booking
-        </Link>
-      </header>
+      <PageHeader
+        title="Dashboard"
+        subtitle={prettyDate(today)}
+        actions={
+          <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
+            Add booking
+          </Link>
+        }
+      />
 
       {(attentionCount > 0 || blockedCount > 0) && (
-        <div className="mb-6 space-y-2">
+        <div className="mb-6 divide-y divide-amber-200 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 text-sm">
           {attentionCount > 0 && (
             <Link
               href="/admin/appointments?filter=attention"
-              className="block rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
             >
-              <strong>{attentionCount}</strong> past booking{attentionCount === 1 ? " is" : "s are"} still
-              pending or confirmed. Mark them completed so your revenue figures are right →
+              <span>
+                {attentionCount} past booking{attentionCount === 1 ? " needs" : "s need"} marking done or cancelled
+              </span>
+              <span className="font-medium">Review</span>
             </Link>
           )}
           {blockedCount > 0 && (
             <Link
               href="/admin/appointments?filter=blocked"
-              className="block rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200 hover:bg-red-100"
+              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
             >
-              <strong>{blockedCount}</strong> website booking attempt{blockedCount === 1 ? " was" : "s were"} held
-              by the spam filter. Check them →
+              <span>
+                {blockedCount} website booking{blockedCount === 1 ? " was" : "s were"} held by the spam filter
+              </span>
+              <span className="font-medium">Check</span>
             </Link>
           )}
         </div>
       )}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Today's appointments" value={String(todays.length)} accent />
-        <Stat label="Today's revenue" value={formatKes(todayRevenue)} />
-        <Stat label="This week" value={formatKes(weekRevenue)} />
-        <Stat label="This month" value={formatKes(monthRevenue)} />
-        <Stat label="Pending requests" value={String(pending.length)} />
-        <Stat label="Completed (all time)" value={String(completedCount)} />
-        <Stat label="Customers" value={String(customerCount)} />
-        <Stat label="Today's occupancy" value={`${occupancy}%`} />
-      </div>
+      <StatGrid>
+        <Stat label="Bookings today" value={String(todays.length)} href="/admin/appointments" />
+        <Stat label="To confirm" value={String(pendingCount)} href="/admin/appointments?filter=PENDING" />
+        <Stat label="Received today" value={formatKes(todayMoney._sum.amount ?? 0)} href="/admin/payments" />
+        <Stat label="Received this month" value={formatKes(monthMoney._sum.amount ?? 0)} href="/admin/payments" />
+      </StatGrid>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {/* Today's schedule */}
-        <section className="card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Today's schedule</h2>
-            <Link href="/admin/appointments" className="text-sm font-medium text-royal-600 hover:underline">
-              View all →
+      <div className="mt-8 grid gap-6 lg:grid-cols-5">
+        <Panel
+          title="Today"
+          flush
+          className="lg:col-span-3"
+          action={
+            <Link href="/admin/appointments" className="text-sm font-medium text-royal-700 hover:underline">
+              All bookings
             </Link>
-          </div>
+          }
+        >
           {todays.length === 0 ? (
-            <Empty text="No appointments today. Enjoy the quiet day." />
+            <EmptyState text="No bookings today." />
           ) : (
-            <ul className="divide-y divide-black/5">
+            <ul className="divide-y divide-gray-100">
               {todays.map((a) => (
-                <li key={a.id} className="flex items-center gap-3 py-3">
-                  <div className="w-16 shrink-0 text-sm font-semibold text-royal-600">
+                <li key={a.id} className="flex items-center gap-4 px-5 py-3.5">
+                  <span className="w-16 shrink-0 text-sm font-medium tabular-nums text-charcoal">
                     {minutesToLabel(a.startMin)}
-                  </div>
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-charcoal">{a.customer.name}</p>
+                    <Link
+                      href={`/admin/customers/${a.customerId}`}
+                      className="block truncate text-sm font-medium text-charcoal hover:text-royal-700"
+                    >
+                      {a.customer.name}
+                    </Link>
                     <p className="truncate text-xs text-charcoal-muted">{a.service.name}</p>
                   </div>
                   <TypeBadge type={a.serviceType} />
@@ -166,94 +137,73 @@ export default async function DashboardPage() {
               ))}
             </ul>
           )}
-        </section>
+        </Panel>
 
-        {/* Pending requests */}
-        <section className="card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Pending requests</h2>
-            <span className="badge bg-amber-100 text-amber-700">{pending.length} to review</span>
-          </div>
-          {pending.length === 0 ? (
-            <Empty text="Nothing pending. You are all caught up." />
+        <Panel
+          title="Latest payments"
+          flush
+          className="lg:col-span-2"
+          action={
+            <Link href="/admin/payments" className="text-sm font-medium text-royal-700 hover:underline">
+              History
+            </Link>
+          }
+        >
+          {recentPayments.length === 0 ? (
+            <EmptyState text="No payments yet." />
           ) : (
-            <ul className="divide-y divide-black/5">
-              {pending.map((a) => (
-                <li key={a.id} className="flex items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-charcoal">{a.customer.name}</p>
-                    <p className="truncate text-xs text-charcoal-muted">
-                      {a.service.name} · {prettyDate(a.date)} · {minutesToLabel(a.startMin)}
-                    </p>
-                  </div>
-                  <Link
-                    href="/admin/appointments?filter=PENDING"
-                    className="btn-outline !px-3 !py-1.5 text-xs"
-                  >
-                    Review
-                  </Link>
-                </li>
-              ))}
+            <ul className="divide-y divide-gray-100">
+              {recentPayments.map((p) => {
+                const at = p.paidAt ?? p.createdAt;
+                const d = salonDateStr(at);
+                return (
+                  <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-charcoal">{p.appointment.customer.name}</p>
+                      <p className="truncate text-xs text-charcoal-muted">
+                        {d === today ? "Today" : prettyDate(d)} {salonTimeStr(at)} · {paymentMethod(p)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-charcoal">
+                      {formatKes(p.amount)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
-        </section>
+        </Panel>
       </div>
 
-      {/* Upcoming */}
-      <section className="mt-6 card p-5">
-        <h2 className="mb-4 font-display text-lg font-semibold">Upcoming bookings</h2>
+      <Panel title="Coming up" flush className="mt-6">
         {upcoming.length === 0 ? (
-          <Empty text="No upcoming bookings yet." />
+          <EmptyState text="Nothing booked after today yet." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-charcoal-muted">
-                  <th className="py-2 pr-4">Date</th>
-                  <th className="py-2 pr-4">Time</th>
-                  <th className="py-2 pr-4">Client</th>
-                  <th className="py-2 pr-4">Service</th>
-                  <th className="py-2 pr-4">Type</th>
-                  <th className="py-2 pr-4">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcoming.map((a) => (
-                  <tr key={a.id} className="border-t border-black/5">
-                    <td className="py-2.5 pr-4 text-charcoal-muted">{prettyDate(a.date)}</td>
-                    <td className="py-2.5 pr-4 font-medium">{minutesToLabel(a.startMin)}</td>
-                    <td className="py-2.5 pr-4">
-                      <Link href={`/admin/customers/${a.customerId}`} className="hover:text-royal-600">
-                        {a.customer.name}
-                      </Link>
-                    </td>
-                    <td className="py-2.5 pr-4">{a.service.name}</td>
-                    <td className="py-2.5 pr-4"><TypeBadge type={a.serviceType} /></td>
-                    <td className="py-2.5 pr-4"><StatusBadge status={a.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className="divide-y divide-gray-100">
+            {upcoming.map((a) => (
+              <li key={a.id} className="flex items-center gap-4 px-5 py-3.5 text-sm">
+                <span className="w-28 shrink-0 text-charcoal-muted sm:w-52">
+                  {prettyDate(a.date)}
+                  <span className="block tabular-nums text-charcoal">{minutesToLabel(a.startMin)}</span>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/admin/customers/${a.customerId}`}
+                    className="block truncate font-medium text-charcoal hover:text-royal-700"
+                  >
+                    {a.customer.name}
+                  </Link>
+                  <p className="truncate text-xs text-charcoal-muted">{a.service.name}</p>
+                </div>
+                <span className="hidden sm:inline">
+                  <TypeBadge type={a.serviceType} />
+                </span>
+                <StatusBadge status={a.status} />
+              </li>
+            ))}
+          </ul>
         )}
-      </section>
+      </Panel>
     </div>
   );
-}
-
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className={`card p-4 ${accent ? "bg-royal-gradient text-white" : ""}`}>
-      <p className={`text-xs uppercase tracking-wide ${accent ? "text-lavender-100" : "text-charcoal-muted"}`}>
-        {label}
-      </p>
-      <p className={`mt-1 font-display text-2xl font-bold ${accent ? "text-white" : "text-charcoal"}`}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function Empty({ text }: { text: string }) {
-  return <p className="py-6 text-center text-sm text-charcoal-muted">{text}</p>;
 }

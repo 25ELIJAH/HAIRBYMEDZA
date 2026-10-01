@@ -28,7 +28,7 @@ export default function BlockedAttempts({ attempts }: { attempts: BlockedAttempt
   }
   return (
     <div className="space-y-3">
-      <p className="rounded-xl bg-lavender-50 px-4 py-3 text-sm text-charcoal-soft">
+      <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm text-charcoal-soft">
         These booking attempts tripped the spam filter. If you recognise a real client, tap{" "}
         <strong>Restore</strong> to turn it into a normal booking.
       </p>

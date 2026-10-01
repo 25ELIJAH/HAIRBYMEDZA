@@ -13,7 +13,7 @@ const PAYMENT: Record<string, string> = {
 };
 
 const TYPE: Record<string, string> = {
-  INCALL: "bg-lavender-100 text-royal-700",
+  INCALL: "bg-royal-50 text-royal-700",
   OUTCALL: "bg-gold/20 text-gold-dark",
 };
 

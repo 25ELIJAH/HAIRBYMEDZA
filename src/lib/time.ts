@@ -86,10 +86,21 @@ function salonParts(d: Date) {
   };
 }
 
+/** Date "YYYY-MM-DD" of an instant, in the salon timezone. */
+export function salonDateStr(d: Date): string {
+  const p = salonParts(d);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+/** Wall-clock time "HH:MM" of an instant, in the salon timezone. */
+export function salonTimeStr(d: Date): string {
+  const p = salonParts(d);
+  return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+}
+
 /** Today's date "YYYY-MM-DD" in the salon timezone. */
 export function todayStr(): string {
-  const p = salonParts(new Date());
-  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+  return salonDateStr(new Date());
 }
 
 /** Minutes past midnight right now, in the salon timezone. */

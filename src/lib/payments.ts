@@ -319,6 +319,7 @@ export async function syncWithIntasend(reference: string, invoiceId: string): Pr
 
 /** Checks a payment with whichever provider handled it. */
 export async function syncPayment(p: { reference: string; provider: string; providerTxnId: string | null }) {
+  if (p.provider === "MANUAL") return; // recorded by hand, nothing to check
   if (p.provider === "INTASEND") {
     if (p.providerTxnId) await syncWithIntasend(p.reference, p.providerTxnId);
     return;

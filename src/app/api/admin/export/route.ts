@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getVerifiedAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPhone } from "@/lib/phone";
-import { minutesToHHMM, todayStr } from "@/lib/time";
+import { minutesToHHMM, salonDateStr, salonTimeStr, todayStr } from "@/lib/time";
+import { paymentMethod } from "@/lib/payment-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,31 @@ export async function GET(req: NextRequest) {
         a.source,
         a.createdAt.toISOString(),
       ]),
+    ]);
+  } else if (type === "payments") {
+    const payments = await prisma.payment.findMany({
+      where: { status: "SUCCESS" },
+      include: { appointment: { include: { customer: true, service: true } } },
+      orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
+    });
+    body = csv([
+      ["Date", "Time", "Amount (KES)", "Client", "Phone", "Service", "Booking date", "Method", "Receipt", "Reference", "Provider"],
+      ...payments.map((p) => {
+        const at = p.paidAt ?? p.createdAt;
+        return [
+          salonDateStr(at),
+          salonTimeStr(at),
+          p.amount,
+          p.appointment.customer.name,
+          formatPhone(p.appointment.customer.phone),
+          p.appointment.service.name,
+          p.appointment.date,
+          paymentMethod(p),
+          p.receiptNumber,
+          p.reference,
+          p.provider,
+        ];
+      }),
     ]);
   } else {
     return NextResponse.json({ error: "Unknown export" }, { status: 400 });
