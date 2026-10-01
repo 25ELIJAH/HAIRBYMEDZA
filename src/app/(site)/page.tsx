@@ -19,12 +19,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   Package: "Signature Packages",
 };
 
-const PERKS: { icon: "sparkle" | "clock" | "home"; title: string; text: string }[] = [
-  { icon: "sparkle", title: "Gentle hands", text: "Patient with little ones, neat parting and no rushing." },
-  { icon: "clock", title: "On time, every time", text: "Your slot is held for you. No long waits at the studio." },
-  { icon: "home", title: "Studio or your home", text: "Come to me, or I bring everything to your door." },
-];
-
 const STEPS = [
   ["Choose your style", "Browse the styles and pick the one you love."],
   ["Studio or your place", "Come to my studio, or ask me to come to you."],
@@ -39,7 +33,6 @@ export default async function HomePage() {
     prisma.workingHours.findMany({ orderBy: { dayOfWeek: "asc" } }),
   ]);
 
-  const studio = settings.location.split(",")[0];
 
   // Show the known groups first, then any other categories the admin created,
   // so a newly added service always appears no matter its category name.
@@ -80,16 +73,8 @@ export default async function HomePage() {
 
         <div className="container-px flex min-h-[80vh] items-center py-16 sm:py-24">
           <div className="max-w-xl">
-            <p className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-gray-300 bg-white/90 px-3 py-1 text-xs font-medium text-charcoal">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-royal-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-royal-600" />
-              </span>
-              Now booking · {studio || "Nairobi"}
-            </p>
             <h1
-              className="mt-5 animate-fade-up font-display text-4xl font-bold leading-tight text-charcoal sm:text-6xl"
-              style={{ animationDelay: "80ms" }}
+              className="animate-fade-up font-display text-4xl font-bold leading-tight text-charcoal sm:text-6xl"
             >
               Neat, gentle braiding for kids and teens.
             </h1>
@@ -132,23 +117,6 @@ export default async function HomePage() {
               </li>
             </ul>
           </div>
-        </div>
-      </section>
-
-      {/* ── Why clients choose me ───────────────────────────── */}
-      <section className="py-14">
-        <div className="container-px grid gap-5 sm:grid-cols-3">
-          {PERKS.map((p, i) => (
-            <Reveal key={p.title} delay={i * 90}>
-              <div className="h-full rounded-2xl border border-gray-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-royal-200 hover:shadow-soft">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-royal-50 text-royal-600">
-                  <Icon name={p.icon} size={20} />
-                </span>
-                <h3 className="mt-4 font-display text-base font-semibold text-charcoal">{p.title}</h3>
-                <p className="mt-1 text-sm text-charcoal-muted">{p.text}</p>
-              </div>
-            </Reveal>
-          ))}
         </div>
       </section>
 
