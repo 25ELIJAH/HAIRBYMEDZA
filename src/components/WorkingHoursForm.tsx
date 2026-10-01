@@ -44,7 +44,7 @@ export default function WorkingHoursForm({ days }: { days: DayHours[] }) {
           return (
             <div
               key={dow}
-              className="rounded-xl bg-lavender-50/60 p-3 sm:grid sm:grid-cols-[110px_60px_1fr_1fr_1fr_1fr] sm:items-center sm:gap-3 sm:p-2"
+              className="rounded-xl bg-gray-50 p-3 sm:grid sm:grid-cols-[110px_60px_1fr_1fr_1fr_1fr] sm:items-center sm:gap-3 sm:p-2"
             >
               <div className="flex items-center justify-between sm:contents">
                 <span className="font-medium text-charcoal">{DAY_NAMES[dow]}</span>

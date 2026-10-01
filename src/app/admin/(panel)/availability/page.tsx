@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/admin/ui";
 import { addBlockedDate, removeBlockedDate } from "@/lib/admin-actions";
 import { getSettings } from "@/lib/booking";
 import SettingsForm from "@/components/SettingsForm";
@@ -28,22 +29,17 @@ export default async function AvailabilityPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="font-display text-3xl font-bold text-charcoal">Availability</h1>
-        <p className="mt-1 text-sm text-charcoal-muted">
-          Working hours, lunch breaks, blocked days and booking rules.
-        </p>
-      </header>
+      <PageHeader title="Hours & settings" subtitle="Working hours, days off, payments and business details." />
 
       {/* Working hours */}
       <section className="card p-5">
-        <h2 className="mb-4 font-display text-lg font-semibold">Working hours</h2>
+        <h2 className="mb-4 text-base font-semibold text-charcoal">Working hours</h2>
         <WorkingHoursForm days={days} />
       </section>
 
       {/* Blocked dates */}
       <section className="card p-5">
-        <h2 className="mb-4 font-display text-lg font-semibold">Holidays & blocked dates</h2>
+        <h2 className="mb-4 text-base font-semibold text-charcoal">Holidays & blocked dates</h2>
         <form action={addBlockedDate} className="flex flex-wrap items-end gap-3">
           <label className="block">
             <span className="label">Date</span>
@@ -70,7 +66,7 @@ export default async function AvailabilityPage() {
               <li key={b.id} className="flex items-center justify-between gap-3 py-2.5">
                 <div>
                   <span className="font-medium text-charcoal">{prettyDate(b.date)}</span>
-                  <span className="ml-2 badge bg-lavender-100 text-royal-700">{b.type}</span>
+                  <span className="ml-2 badge bg-royal-50 text-royal-700">{b.type}</span>
                   <span className="ml-2 text-sm text-charcoal-muted">{b.reason}</span>
                 </div>
                 <form action={removeBlockedDate.bind(null, b.id)}>
@@ -84,7 +80,7 @@ export default async function AvailabilityPage() {
 
       {/* Online payments status (provider keys live in environment variables) */}
       <section className="card p-5">
-        <h2 className="mb-2 font-display text-lg font-semibold">Online payments</h2>
+        <h2 className="mb-2 text-base font-semibold text-charcoal">Online payments</h2>
         {provider ? (
           <div className="space-y-1 text-sm">
             <p className="font-medium text-charcoal">
@@ -111,7 +107,7 @@ export default async function AvailabilityPage() {
 
       {/* Booking rules & contact */}
       <section className="card p-5">
-        <h2 className="mb-4 font-display text-lg font-semibold">Booking rules & business info</h2>
+        <h2 className="mb-4 text-base font-semibold text-charcoal">Booking rules & business info</h2>
         <SettingsForm
           settings={{
             slotIntervalMin: settings.slotIntervalMin,

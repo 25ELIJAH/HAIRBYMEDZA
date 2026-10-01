@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "crypto";
+
 // Admin actions for client records and bookings the owner manages by hand:
 // adding walk-in / phone / past bookings, restoring blocked website attempts,
 // editing and importing clients, merging duplicates, and M-Pesa requests.
@@ -13,6 +15,7 @@ import { overlaps } from "./availability";
 import { startMpesaPayment } from "./payments";
 import { customerPhoneKey, formatPhone, normalizeKePhone } from "./phone";
 import { bookingSchema } from "./validation";
+import { salonMidnight } from "./time";
 
 type ActionState = { ok?: boolean; error?: string; message?: string } | null;
 
@@ -20,6 +23,7 @@ function refreshAdmin() {
   revalidatePath("/admin");
   revalidatePath("/admin/appointments");
   revalidatePath("/admin/customers");
+  revalidatePath("/admin/payments");
 }
 
 const hhmm = (v: string) => {
@@ -87,7 +91,7 @@ async function createAdminBooking(
       phone: v.phone,
       email: v.email || null,
     });
-    return tx.appointment.create({
+    const created = await tx.appointment.create({
       data: {
         customerId: customer.id,
         serviceId: service.id,
@@ -109,6 +113,25 @@ async function createAdminBooking(
         source,
       },
     });
+    if (v.amountPaid > 0) {
+      // Past bookings count as paid on their own date, not today.
+      const start = new Date(salonMidnight(v.date).getTime() + startMin * 60_000);
+      await tx.payment.create({
+        data: {
+          appointmentId: created.id,
+          provider: "MANUAL",
+          channel: "CASH",
+          reference: `CASH-${randomUUID().slice(0, 13)}`,
+          amount: v.amountPaid,
+          purpose: v.amountPaid >= price ? "BALANCE" : "DEPOSIT",
+          status: "SUCCESS",
+          resultDesc: "Recorded by admin",
+          paidAt: start < new Date() ? start : new Date(),
+          initiatedBy: "ADMIN",
+        },
+      });
+    }
+    return created;
   });
   return { ok: true, id: appt.id };
 }
@@ -397,17 +420,87 @@ export async function recordManualPayment(
   const appt = await prisma.appointment.findUnique({ where: { id: appointmentId } });
   if (!appt) return { error: "Booking not found." };
   const amountPaid = appt.amountPaid + amt;
-  await prisma.appointment.update({
-    where: { id: appointmentId },
-    data: {
-      amountPaid,
-      paymentStatus: amountPaid >= appt.priceKes ? "PAID" : "PARTIAL",
-      mpesaMessage: [appt.mpesaMessage, `${ref || "Manual"}: KES ${amt}`]
-        .filter(Boolean)
-        .join(" · ")
-        .slice(0, 400),
-    },
-  });
+  // Logged as a Payment too, so it shows in Money received and its history.
+  await prisma.$transaction([
+    prisma.payment.create({
+      data: {
+        appointmentId,
+        provider: "MANUAL",
+        channel: "CASH",
+        reference: `CASH-${randomUUID().slice(0, 13)}`,
+        amount: amt,
+        purpose: amountPaid >= appt.priceKes ? "BALANCE" : "DEPOSIT",
+        status: "SUCCESS",
+        receiptNumber: ref || null,
+        resultDesc: "Recorded by admin",
+        paidAt: new Date(),
+        initiatedBy: "ADMIN",
+      },
+    }),
+    prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        amountPaid,
+        paymentStatus: amountPaid >= appt.priceKes ? "PAID" : "PARTIAL",
+        mpesaMessage: [appt.mpesaMessage, `${ref || "Manual"}: KES ${amt}`]
+          .filter(Boolean)
+          .join(" · ")
+          .slice(0, 400),
+      },
+    }),
+  ]);
   refreshAdmin();
   return { ok: true, message: `Recorded KES ${amt.toLocaleString("en-KE")}.` };
+}
+
+/**
+ * Adds money recorded on bookings before every payment was logged (older
+ * cash / manual entries) to the payment history, dated on the booking day.
+ * Safe to run more than once: it only adds what is still missing.
+ */
+export async function backfillPaymentHistory(_prev: ActionState): Promise<ActionState> {
+  try {
+    await requireAdmin();
+  } catch {
+    return { error: "Your session expired. Please sign in again." };
+  }
+  const appts = await prisma.appointment.findMany({
+    where: { amountPaid: { gt: 0 } },
+    select: {
+      id: true,
+      date: true,
+      startMin: true,
+      priceKes: true,
+      amountPaid: true,
+      payments: { where: { status: "SUCCESS" }, select: { amount: true } },
+    },
+  });
+  const now = new Date();
+  const rows = appts
+    .map((a) => ({ a, missing: a.amountPaid - a.payments.reduce((s, p) => s + p.amount, 0) }))
+    .filter((x) => x.missing > 0)
+    .map(({ a, missing }) => {
+      const start = new Date(salonMidnight(a.date).getTime() + a.startMin * 60_000);
+      return {
+        appointmentId: a.id,
+        provider: "MANUAL",
+        channel: "CASH",
+        reference: `CASH-${randomUUID().slice(0, 13)}`,
+        amount: missing,
+        purpose: a.amountPaid >= a.priceKes ? "BALANCE" : "DEPOSIT",
+        status: "SUCCESS",
+        resultDesc: "Added from booking records",
+        paidAt: start < now ? start : now,
+        initiatedBy: "ADMIN",
+      };
+    });
+  if (rows.length) await prisma.payment.createMany({ data: rows });
+  refreshAdmin();
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  return {
+    ok: true,
+    message: rows.length
+      ? `Added ${rows.length} earlier payment${rows.length === 1 ? "" : "s"} (KES ${total.toLocaleString("en-KE")}).`
+      : "Everything is already in the history.",
+  };
 }

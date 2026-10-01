@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/admin/ui";
 import { deleteService, saveService, toggleService } from "@/lib/admin-actions";
 import ImageUploadField from "@/components/ImageUploadField";
 import { durationLabel, formatKes } from "@/lib/time";
@@ -74,15 +75,10 @@ export default async function ServicesPage() {
 
   return (
     <div>
-      <header className="mb-6">
-        <h1 className="font-display text-3xl font-bold text-charcoal">Services</h1>
-        <p className="mt-1 text-sm text-charcoal-muted">
-          Durations drive the smart calendar. They control how much time each booking blocks.
-        </p>
-      </header>
+      <PageHeader title="Services & prices" subtitle="Each service's duration sets how long a booking blocks." />
 
       <details className="card mb-6 p-5">
-        <summary className="cursor-pointer font-display text-lg font-semibold text-royal-700">
+        <summary className="cursor-pointer text-base font-semibold text-charcoal text-royal-700">
           + Add a new service
         </summary>
         <div className="mt-5">
@@ -100,7 +96,7 @@ export default async function ServicesPage() {
                   <img src={s.imageUrl} alt={s.name} className="h-14 w-14 rounded-xl object-cover" />
                 )}
                 <div>
-                  <h3 className="font-display text-lg font-semibold text-charcoal">
+                  <h3 className="text-base font-semibold text-charcoal text-charcoal">
                     {s.name}{" "}
                     {!s.active && <span className="badge bg-gray-100 text-gray-500">Inactive</span>}
                   </h3>

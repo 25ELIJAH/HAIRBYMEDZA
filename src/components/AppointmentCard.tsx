@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import Icon from "./Icon";
 import { StatusBadge, PaymentBadge, TypeBadge } from "./StatusBadge";
 import {
   addAppointmentNote,
@@ -11,6 +10,7 @@ import {
 } from "@/lib/admin-actions";
 import { recordManualPayment, requestMpesaPayment } from "@/lib/client-actions";
 import { formatPhone } from "@/lib/phone";
+import { paymentMethod } from "@/lib/payment-labels";
 import { formatKes, minutesToLabel, prettyDate } from "@/lib/time";
 
 export interface PaymentData {
@@ -99,7 +99,7 @@ export default function AppointmentCard({
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={`/admin/customers/${appt.customerId}`}
-              className="font-display text-lg font-semibold text-charcoal hover:text-royal-600"
+              className="text-base font-semibold text-charcoal text-charcoal hover:text-royal-600"
             >
               {appt.customerName}
             </Link>
@@ -122,7 +122,7 @@ export default function AppointmentCard({
           </p>
         </div>
         <div className="text-right">
-          <div className="font-display text-lg font-bold text-royal-600">
+          <div className="text-base font-semibold tabular-nums text-charcoal">
             {formatKes(appt.priceKes)}
           </div>
           {appt.amountPaid > 0 && (
@@ -182,9 +182,9 @@ export default function AppointmentCard({
           )}
 
           {appt.serviceType === "OUTCALL" && (
-            <div className="rounded-xl bg-lavender-50 p-3">
+            <div className="rounded-xl bg-gray-50 p-3">
               <p className="mb-1 inline-flex items-center gap-1.5 font-semibold text-royal-700">
-                <Icon name="pin" size={16} /> Home visit location
+                Home visit location
               </p>
               <p className="text-charcoal-soft">
                 {[appt.estate, appt.houseNumber].filter(Boolean).join(", ") || "Not given"}
@@ -199,7 +199,7 @@ export default function AppointmentCard({
             </div>
           )}
 
-          {/* Online payment history (Paystack) + actions */}
+          {/* Payment history + actions */}
           <div className="rounded-xl bg-white p-3 ring-1 ring-black/5">
             <p className="mb-2 font-semibold text-royal-700">
               Payments · balance {formatKes(balance)}
@@ -213,7 +213,7 @@ export default function AppointmentCard({
                     </span>
                     <span className="font-medium">{formatKes(p.amount)}</span>
                     <span className="text-charcoal-muted">
-                      {p.channel === "MPESA" && p.phone ? `M-Pesa prompt to ${formatPhone(p.phone)}` : "Card / online checkout"} ·{" "}
+                      {p.channel === "MPESA" && p.phone ? `M-Pesa ${formatPhone(p.phone)}` : paymentMethod(p)} ·{" "}
                       {new Date(p.createdAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}
                     </span>
                     {p.receiptNumber && (
@@ -239,7 +239,7 @@ export default function AppointmentCard({
                   </>
                 ) : (
                   <p className="text-xs text-charcoal-muted">
-                    Online payments (Paystack) are not switched on yet (see PAYMENTS_SETUP.md).
+                    Online payments are not switched on yet.
                   </p>
                 )}
               </div>

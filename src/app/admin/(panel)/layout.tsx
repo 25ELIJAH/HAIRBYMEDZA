@@ -14,10 +14,14 @@ export default async function AdminLayout({
   if (!session) redirect("/admin/login");
 
   return (
-    <div className="min-h-screen bg-lavender-50 md:flex">
+    // The admin uses one plain typeface (Inter) for headings and text alike.
+    <div
+      className="min-h-screen bg-gray-50 font-sans text-charcoal antialiased md:flex"
+      style={{ "--font-display": "var(--font-body)" } as React.CSSProperties}
+    >
       <AdminSidebar name={session.name} />
-      <main className="flex-1 overflow-x-hidden">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</div>
+      <main className="min-w-0 flex-1">
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">{children}</div>
       </main>
     </div>
   );

@@ -37,7 +37,7 @@ export default function ManualBookingForm({
 
   return (
     <form ref={formRef} action={action} className="card grid gap-4 p-5 sm:grid-cols-2">
-      <h2 className="font-display text-lg font-semibold sm:col-span-2">Client</h2>
+      <h2 className="text-base font-semibold text-charcoal sm:col-span-2">Client</h2>
       <label className="block">
         <span className="label">Full name *</span>
         <input name="name" required defaultValue={prefill?.name} className="input" />
@@ -51,7 +51,7 @@ export default function ManualBookingForm({
         <input name="email" type="email" defaultValue={prefill?.email} className="input" />
       </label>
 
-      <h2 className="mt-2 font-display text-lg font-semibold sm:col-span-2">Booking</h2>
+      <h2 className="mt-2 text-base font-semibold text-charcoal sm:col-span-2">Booking</h2>
       <label className="block sm:col-span-2">
         <span className="label">Service *</span>
         <select name="serviceId" required className="input">

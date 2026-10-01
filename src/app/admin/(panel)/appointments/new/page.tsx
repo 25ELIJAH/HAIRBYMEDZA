@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/admin/ui";
 import { prisma } from "@/lib/prisma";
 import ManualBookingForm from "@/components/ManualBookingForm";
 import { todayStr } from "@/lib/time";
@@ -22,13 +23,10 @@ export default async function NewBookingPage({
       <Link href="/admin/appointments" className="text-sm text-royal-600 hover:underline">
         ← Appointments
       </Link>
-      <header className="mb-6 mt-2">
-        <h1 className="font-display text-3xl font-bold text-charcoal">Add a booking</h1>
-        <p className="mt-1 text-sm text-charcoal-muted">
-          For walk-ins, WhatsApp or phone bookings, or to re-enter clients you served before the
-          website. Returning clients are matched by phone number automatically.
-        </p>
-      </header>
+      <PageHeader
+        title="Add a booking"
+        subtitle="Walk-ins, phone or WhatsApp bookings, and past clients. Returning clients are matched by phone."
+      />
       <ManualBookingForm
         services={services.map((s) => ({
           id: s.id,

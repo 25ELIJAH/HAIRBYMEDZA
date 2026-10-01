@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/admin/ui";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CustomerForm } from "@/components/CustomerTools";
@@ -31,24 +32,20 @@ export default async function CustomerPage({ params }: { params: { id: string } 
       <Link href="/admin/customers" className="text-sm text-royal-600 hover:underline">
         ← Customers
       </Link>
-      <header className="mb-6 mt-2 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-charcoal">{c.name}</h1>
-          <p className="mt-1 text-sm text-charcoal-muted">
-            {formatPhone(c.phone)}
-            {c.email ? ` · ${c.email}` : ""} · client since{" "}
-            {c.createdAt.toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi", month: "long", year: "numeric" })}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="btn-outline !px-4 !py-2 text-sm">
-            WhatsApp
-          </a>
-          <Link href={`/admin/appointments/new?customer=${c.id}`} className="btn-primary !px-4 !py-2 text-sm">
-            + New booking
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        title={c.name}
+        subtitle={`${formatPhone(c.phone)}${c.email ? ` · ${c.email}` : ""} · client since ${c.createdAt.toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi", month: "long", year: "numeric" })}`}
+        actions={
+          <>
+            <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="btn-outline !px-4 !py-2 text-sm">
+              WhatsApp
+            </a>
+            <Link href={`/admin/appointments/new?customer=${c.id}`} className="btn-primary !px-4 !py-2 text-sm">
+              New booking
+            </Link>
+          </>
+        }
+      />
 
       <div className="mb-6 grid grid-cols-3 gap-4">
         <Stat label="Bookings" value={String(honored.length)} />
@@ -58,7 +55,7 @@ export default async function CustomerPage({ params }: { params: { id: string } 
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <section className="card p-5">
-          <h2 className="mb-4 font-display text-lg font-semibold">Booking history</h2>
+          <h2 className="mb-4 text-base font-semibold text-charcoal">Booking history</h2>
           {c.appointments.length === 0 ? (
             <p className="py-6 text-center text-sm text-charcoal-muted">No bookings yet.</p>
           ) : (
@@ -90,7 +87,7 @@ export default async function CustomerPage({ params }: { params: { id: string } 
           </Link>
         </section>
         <section className="card h-fit p-5">
-          <h2 className="mb-4 font-display text-lg font-semibold">Client details</h2>
+          <h2 className="mb-4 text-base font-semibold text-charcoal">Client details</h2>
           <CustomerForm customer={{ id: c.id, name: c.name, phone: c.phone, email: c.email, notes: c.notes }} />
         </section>
       </div>
@@ -102,7 +99,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="card p-4">
       <p className="text-xs uppercase tracking-wide text-charcoal-muted">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold text-charcoal">{value}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-charcoal">{value}</p>
     </div>
   );
 }
