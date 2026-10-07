@@ -57,7 +57,8 @@ export async function middleware(req: NextRequest) {
   // address, and every /admin page answers "page not found" to anyone who
   // is not signed in, so the site gives no hint that an admin area exists.
   const loginPath = adminLoginPath();
-  const isLoginPage = pathname === loginPath;
+  // Any capitalisation works (phones often lowercase what is typed).
+  const isLoginPage = pathname.replace(/\/+$/, "").toLowerCase() === loginPath.toLowerCase();
   const notFound = () => {
     const url = req.nextUrl.clone();
     url.pathname = "/__not-found";

@@ -20,12 +20,12 @@ export default async function NewBookingPage({
 
   return (
     <div className="max-w-3xl">
-      <Link href="/admin/appointments" className="text-sm text-royal-600 hover:underline">
-        ← Appointments
+      <Link href="/admin/appointments" className="text-sm font-medium text-charcoal-muted hover:text-charcoal">
+        Bookings
       </Link>
       <PageHeader
         title="Add a booking"
-        subtitle="Walk-ins, phone or WhatsApp bookings, and past clients. Returning clients are matched by phone."
+        subtitle="Walk-ins, phone bookings and past clients."
       />
       <ManualBookingForm
         services={services.map((s) => ({

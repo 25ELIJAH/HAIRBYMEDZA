@@ -28,24 +28,25 @@ export default async function AvailabilityPage() {
   }));
 
   return (
-    <div className="space-y-8">
-      <PageHeader title="Hours & settings" subtitle="Working hours, days off, payments and business details." />
+    <div className="space-y-3">
+      <PageHeader title="Hours & settings" />
 
       {/* Working hours */}
-      <section className="card p-5">
-        <h2 className="mb-4 text-base font-semibold text-charcoal">Working hours</h2>
+      <Setting title="Working hours" summary={`Open ${days.filter((d) => d.isOpen).length} days a week`}>
         <WorkingHoursForm days={days} />
-      </section>
+      </Setting>
 
       {/* Blocked dates */}
-      <section className="card p-5">
-        <h2 className="mb-4 text-base font-semibold text-charcoal">Holidays & blocked dates</h2>
-        <form action={addBlockedDate} className="flex flex-wrap items-end gap-3">
-          <label className="block">
+      <Setting
+        title="Days off"
+        summary={blocked.length ? `${blocked.length} day${blocked.length === 1 ? "" : "s"} blocked` : "None blocked"}
+      >
+        <form action={addBlockedDate} className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
+          <label className="col-span-2 block sm:col-span-1">
             <span className="label">Date</span>
             <input type="date" name="date" required className="input" />
           </label>
-          <label className="block">
+          <label className="col-span-2 block sm:col-span-1">
             <span className="label">Reason</span>
             <input name="reason" className="input" placeholder="e.g. Public Holiday" />
           </label>
@@ -61,13 +62,15 @@ export default async function AvailabilityPage() {
         </form>
 
         {blocked.length > 0 && (
-          <ul className="mt-5 divide-y divide-black/5">
+          <ul className="mt-5 divide-y divide-gray-100 border-t border-gray-100">
             {blocked.map((b) => (
-              <li key={b.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div>
-                  <span className="font-medium text-charcoal">{prettyDate(b.date)}</span>
-                  <span className="ml-2 badge bg-royal-50 text-royal-700">{b.type}</span>
-                  <span className="ml-2 text-sm text-charcoal-muted">{b.reason}</span>
+              <li key={b.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-charcoal">{prettyDate(b.date)}</p>
+                  <p className="truncate text-xs text-charcoal-muted">
+                    {b.type[0] + b.type.slice(1).toLowerCase()}
+                    {b.reason ? ` · ${b.reason}` : ""}
+                  </p>
                 </div>
                 <form action={removeBlockedDate.bind(null, b.id)}>
                   <button className="text-sm font-medium text-red-600 hover:underline">Remove</button>
@@ -76,38 +79,39 @@ export default async function AvailabilityPage() {
             ))}
           </ul>
         )}
-      </section>
+      </Setting>
 
       {/* Online payments status (provider keys live in environment variables) */}
-      <section className="card p-5">
-        <h2 className="mb-2 text-base font-semibold text-charcoal">Online payments</h2>
+      <Setting
+        title="Online payments"
+        summary={provider ? `${provider.name} · ${provider.mode === "live" ? "live" : "test mode"}` : "Off"}
+      >
         {provider ? (
           <div className="space-y-1 text-sm">
             <p className="font-medium text-charcoal">
-              ● {provider.name} switched on ({provider.mode === "live" ? "live payments" : "test mode, no real money"})
+              {provider.name} is on ({provider.mode === "live" ? "live payments" : "test mode, no real money"})
             </p>
             <p className="text-charcoal-muted">
               Clients pay the full price when they book with an M-Pesa prompt
               {provider.name === "Paystack" ? " or card" : ""}. You can also request payment from any
               appointment.
             </p>
-            <p className="text-xs text-charcoal-muted">
+            <p className="break-all text-xs text-charcoal-muted">
               Webhook URL to set in {provider.name}: {siteUrl() || "(set NEXT_PUBLIC_SITE_URL)"}
               {provider.name === "IntaSend" ? "/api/payments/intasend/webhook" : "/api/payments/paystack/webhook"}
             </p>
           </div>
         ) : (
           <p className="text-sm text-charcoal-muted">
-            ○ Not switched on yet. Clients are asked to send money to M-Pesa{" "}
+            Not switched on yet. Clients are asked to send money to M-Pesa{" "}
             {settings.mpesaNumber || "number"}. Add IntaSend (or Paystack) keys to the hosting
             environment variables to switch on M-Pesa prompts (see <code>PAYMENTS_SETUP.md</code>).
           </p>
         )}
-      </section>
+      </Setting>
 
       {/* Booking rules & contact */}
-      <section className="card p-5">
-        <h2 className="mb-4 text-base font-semibold text-charcoal">Booking rules & business info</h2>
+      <Setting title="Business details & booking rules" summary={settings.salonName}>
         <SettingsForm
           settings={{
             slotIntervalMin: settings.slotIntervalMin,
@@ -121,7 +125,23 @@ export default async function AvailabilityPage() {
             depositPercent: settings.depositPercent,
           }}
         />
-      </section>
+      </Setting>
     </div>
+  );
+}
+
+function Setting({ title, summary, children }: { title: string; summary?: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-xl border border-gray-200 bg-white">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 sm:px-5">
+        <span className="min-w-0">
+          <span className="block text-[15px] font-semibold text-charcoal">{title}</span>
+          {summary && <span className="block truncate text-[13px] text-charcoal-muted">{summary}</span>}
+        </span>
+        <span className="shrink-0 text-sm font-medium text-royal-700 group-open:hidden">Edit</span>
+        <span className="hidden shrink-0 text-sm font-medium text-charcoal-muted group-open:inline">Close</span>
+      </summary>
+      <div className="border-t border-gray-100 p-4 sm:p-5">{children}</div>
+    </details>
   );
 }

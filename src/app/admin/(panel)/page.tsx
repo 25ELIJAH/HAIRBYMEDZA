@@ -10,6 +10,7 @@ import {
   salonMidnight,
   salonTimeStr,
   salonDateStr,
+  shortDate,
   todayStr,
 } from "@/lib/time";
 
@@ -62,7 +63,7 @@ export default async function DashboardPage() {
         title="Dashboard"
         subtitle={prettyDate(today)}
         actions={
-          <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
+          <Link href="/admin/appointments/new" className="btn-primary !px-3.5 !py-2 text-sm">
             Add booking
           </Link>
         }
@@ -73,10 +74,10 @@ export default async function DashboardPage() {
           {attentionCount > 0 && (
             <Link
               href="/admin/appointments?filter=attention"
-              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-amber-900 hover:bg-amber-50 sm:px-5"
             >
               <span>
-                {attentionCount} past booking{attentionCount === 1 ? " needs" : "s need"} marking done or cancelled
+                {attentionCount} past booking{attentionCount === 1 ? "" : "s"} to close
               </span>
               <span className="font-medium">Review</span>
             </Link>
@@ -84,10 +85,10 @@ export default async function DashboardPage() {
           {blockedCount > 0 && (
             <Link
               href="/admin/appointments?filter=blocked"
-              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-amber-900 hover:bg-amber-50 sm:px-5"
             >
               <span>
-                {blockedCount} website booking{blockedCount === 1 ? " was" : "s were"} held by the spam filter
+                {blockedCount} held by spam filter
               </span>
               <span className="font-medium">Check</span>
             </Link>
@@ -131,7 +132,9 @@ export default async function DashboardPage() {
                     </Link>
                     <p className="truncate text-xs text-charcoal-muted">{a.service.name}</p>
                   </div>
-                  <TypeBadge type={a.serviceType} />
+                  <span className="hidden sm:inline">
+                    <TypeBadge type={a.serviceType} />
+                  </span>
                   <StatusBadge status={a.status} />
                 </li>
               ))}
@@ -161,7 +164,7 @@ export default async function DashboardPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-charcoal">{p.appointment.customer.name}</p>
                       <p className="truncate text-xs text-charcoal-muted">
-                        {d === today ? "Today" : prettyDate(d)} {salonTimeStr(at)} · {paymentMethod(p)}
+                        {d === today ? "Today" : shortDate(d)}, {salonTimeStr(at)} · {paymentMethod(p)}
                       </p>
                     </div>
                     <span className="shrink-0 text-sm font-semibold tabular-nums text-charcoal">
@@ -182,8 +185,8 @@ export default async function DashboardPage() {
           <ul className="divide-y divide-gray-100">
             {upcoming.map((a) => (
               <li key={a.id} className="flex items-center gap-4 px-5 py-3.5 text-sm">
-                <span className="w-28 shrink-0 text-charcoal-muted sm:w-52">
-                  {prettyDate(a.date)}
+                <span className="w-24 shrink-0 text-charcoal-muted sm:w-40">
+                  {shortDate(a.date)}
                   <span className="block tabular-nums text-charcoal">{minutesToLabel(a.startMin)}</span>
                 </span>
                 <div className="min-w-0 flex-1">

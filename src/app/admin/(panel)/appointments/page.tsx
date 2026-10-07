@@ -170,10 +170,10 @@ export default async function AppointmentsPage({
           {attentionCount > 0 && filter !== "attention" && (
             <Link
               href="/admin/appointments?filter=attention"
-              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-amber-900 hover:bg-amber-50 sm:px-5"
             >
               <span>
-                {attentionCount} past booking{attentionCount === 1 ? " needs" : "s need"} marking done or cancelled
+                {attentionCount} past booking{attentionCount === 1 ? "" : "s"} to close
               </span>
               <span className="font-medium">Review</span>
             </Link>
@@ -181,10 +181,10 @@ export default async function AppointmentsPage({
           {blockedCount > 0 && (
             <Link
               href="/admin/appointments?filter=blocked"
-              className="flex items-center justify-between gap-3 px-5 py-3 text-amber-900 hover:bg-amber-50"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-amber-900 hover:bg-amber-50 sm:px-5"
             >
               <span>
-                {blockedCount} website booking{blockedCount === 1 ? " was" : "s were"} held by the spam filter
+                {blockedCount} held by spam filter
               </span>
               <span className="font-medium">Check</span>
             </Link>
@@ -214,7 +214,7 @@ export default async function AppointmentsPage({
           )}
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {data.map((a) => (
             <AppointmentCard key={a.id} appt={a} stkEnabled={stkOn} />
           ))}
@@ -245,13 +245,12 @@ function Header() {
   return (
     <PageHeader
       title="Bookings"
-      subtitle="Every booking ever made."
       actions={
         <>
-          <a href="/api/admin/export?type=appointments" className="btn-outline !px-4 !py-2 text-sm">
+          <a href="/api/admin/export?type=appointments" className="btn-outline hidden !px-4 !py-2 text-sm sm:inline-flex">
             Export CSV
           </a>
-          <Link href="/admin/appointments/new" className="btn-primary !px-4 !py-2 text-sm">
+          <Link href="/admin/appointments/new" className="btn-primary !px-3.5 !py-2 text-sm">
             Add booking
           </Link>
         </>
@@ -268,10 +267,11 @@ function Filters({ active, q }: { active: string; q: string }) {
         <input
           name="q"
           defaultValue={q}
-          placeholder="Search by client name, phone or email…"
-          className="input flex-1"
+          placeholder="Search name or phone"
+          type="search"
+          className="input min-w-0 flex-1"
         />
-        <button className="btn-outline !px-4">Search</button>
+        <button className="btn-outline shrink-0 !px-4">Search</button>
       </form>
       <nav className="flex gap-5 overflow-x-auto border-b border-gray-200 text-sm">
         {FILTERS.map((f) => (

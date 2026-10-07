@@ -98,6 +98,15 @@ export function salonTimeStr(d: Date): string {
   return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
 }
 
+/** Short date for lists, e.g. "Thu 1 Oct". */
+export function shortDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const wd = dt.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
+  const mon = dt.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
+  return `${wd} ${d} ${mon}`;
+}
+
 /** Today's date "YYYY-MM-DD" in the salon timezone. */
 export function todayStr(): string {
   return salonDateStr(new Date());

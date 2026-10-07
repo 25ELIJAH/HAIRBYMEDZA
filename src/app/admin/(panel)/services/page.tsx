@@ -75,63 +75,59 @@ export default async function ServicesPage() {
 
   return (
     <div>
-      <PageHeader title="Services & prices" subtitle="Each service's duration sets how long a booking blocks." />
+      <PageHeader title="Services & prices" subtitle={`${services.length} styles`} />
 
-      <details className="card mb-6 p-5">
-        <summary className="cursor-pointer text-base font-semibold text-charcoal text-royal-700">
-          + Add a new service
+      <details className="group mb-4 rounded-xl border border-gray-200 bg-white">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-semibold text-charcoal sm:px-5">
+          Add a service
+          <span className="font-medium text-royal-700 group-open:hidden">New</span>
+          <span className="hidden font-medium text-charcoal-muted group-open:inline">Close</span>
         </summary>
-        <div className="mt-5">
+        <div className="border-t border-gray-100 p-4 sm:p-5">
           <ServiceForm />
         </div>
       </details>
 
-      <div className="grid gap-4">
+      <ul className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
         {services.map((s) => (
-          <div key={s.id} className={`card p-5 ${s.active ? "" : "opacity-70"}`}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {s.imageUrl && (
+          <li key={s.id}>
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 sm:px-5">
+                {s.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.imageUrl} alt={s.name} className="h-14 w-14 rounded-xl object-cover" />
+                  <img src={s.imageUrl} alt="" className={`h-12 w-12 shrink-0 rounded-lg object-cover ${s.active ? "" : "opacity-50"}`} />
+                ) : (
+                  <span className="h-12 w-12 shrink-0 rounded-lg bg-gray-100" />
                 )}
-                <div>
-                  <h3 className="text-base font-semibold text-charcoal text-charcoal">
-                    {s.name}{" "}
-                    {!s.active && <span className="badge bg-gray-100 text-gray-500">Inactive</span>}
-                  </h3>
-                  <p className="text-sm text-charcoal-muted">
-                    In {formatKes(s.priceKes)} · Out {formatKes(s.outCallPriceKes)} ·{" "}
-                    {durationLabel(s.durationMin)}
-                    {s.bufferMin ? ` · +${s.bufferMin}m buffer` : ""}
-                  </p>
+                <span className="min-w-0 flex-1">
+                  <span className={`block truncate text-[15px] font-medium ${s.active ? "text-charcoal" : "text-charcoal-muted"}`}>
+                    {s.name}
+                    {!s.active && <span className="ml-2 text-xs font-normal">Hidden</span>}
+                  </span>
+                  <span className="block truncate text-[13px] tabular-nums text-charcoal-muted">
+                    {formatKes(s.priceKes)} · {durationLabel(s.durationMin)}<span className="hidden sm:inline"> · Home {formatKes(s.outCallPriceKes)}</span>
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-medium text-royal-700 group-open:hidden">Edit</span>
+                <span className="hidden shrink-0 text-sm font-medium text-charcoal-muted group-open:inline">Close</span>
+              </summary>
+              <div className="border-t border-gray-100 bg-gray-50/50 p-4 sm:p-5">
+                <ServiceForm service={s} />
+                <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+                  <form action={toggleService.bind(null, s.id, !s.active)}>
+                    <button className="btn-outline !px-3 !py-2 text-xs">
+                      {s.active ? "Hide from website" : "Show on website"}
+                    </button>
+                  </form>
+                  <form action={deleteService.bind(null, s.id)}>
+                    <button className="btn !px-3 !py-2 text-xs text-red-600 hover:bg-red-50">Delete service</button>
+                  </form>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <form action={toggleService.bind(null, s.id, !s.active)}>
-                  <button className="btn-outline !px-3 !py-1.5 text-xs">
-                    {s.active ? "Deactivate" : "Activate"}
-                  </button>
-                </form>
-                <form action={deleteService.bind(null, s.id)}>
-                  <button className="btn !px-3 !py-1.5 text-xs text-red-600 hover:bg-red-50">
-                    Delete
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            <details className="mt-3">
-              <summary className="cursor-pointer text-sm font-medium text-royal-600">
-                Edit details ▾
-              </summary>
-              <div className="mt-4 border-t border-black/5 pt-4">
-                <ServiceForm service={s} />
-              </div>
             </details>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
