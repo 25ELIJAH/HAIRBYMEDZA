@@ -39,6 +39,7 @@ Project → **Settings → Environment Variables** (Production + Preview):
 | `DATABASE_URL` | pooled Postgres URL |
 | `DIRECT_URL` | direct Postgres URL |
 | `AUTH_SECRET` | run `openssl rand -base64 48` |
+| `ADMIN_LOGIN_PATH` | the owner's private sign-in address, e.g. `/medza-desk-4821` (letters, numbers, `-`; bookmark it). Without it the address is `/owner-desk` |
 | `ADMIN_EMAIL` | your admin email |
 | `ADMIN_PASSWORD` | a strong passphrase |
 | `SALON_NAME`, `SALON_LOCATION`, `WHATSAPP_NUMBER`, `OWNER_EMAIL` | your details |

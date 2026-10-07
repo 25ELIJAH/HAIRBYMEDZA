@@ -110,11 +110,6 @@ export default function SiteFooter({
                 Prices
               </Link>
             </li>
-            <li>
-              <Link href="/admin" className="text-charcoal-muted hover:text-royal-700">
-                Owner sign in
-              </Link>
-            </li>
           </ul>
         </div>
       </div>

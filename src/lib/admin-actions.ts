@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { adminLoginPath } from "./admin-path";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { PUBLIC_TAG } from "./public-data";
 import { redirect } from "next/navigation";
@@ -106,12 +107,12 @@ export async function revokeAllSessions() {
     data: { tokenVersion: { increment: 1 } },
   });
   clearSessionCookie();
-  redirect("/admin/login");
+  redirect(adminLoginPath());
 }
 
 export async function logoutAction() {
   clearSessionCookie();
-  redirect("/admin/login");
+  redirect(adminLoginPath());
 }
 
 // ── Appointments ────────────────────────────────────────────────

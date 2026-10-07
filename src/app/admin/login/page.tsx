@@ -20,13 +20,10 @@ export default function AdminLoginPage() {
     <div className="grid min-h-screen place-items-center bg-cream-soft px-5">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex justify-center">
-          <Logo href="/" />
+          <Logo href={null} />
         </div>
         <div className="card p-7">
-          <h1 className="font-display text-2xl font-bold text-charcoal">Admin sign in</h1>
-          <p className="mt-1 text-sm text-charcoal-muted">
-            Manage bookings, services and your schedule.
-          </p>
+          <h1 className="text-xl font-semibold text-charcoal">Sign in</h1>
 
           <form action={formAction} className="mt-6 space-y-4">
             <label className="block">
@@ -37,7 +34,7 @@ export default function AdminLoginPage() {
                 required
                 autoComplete="username"
                 className="input"
-                placeholder="admin@magdalenemedz.co.ke"
+                
               />
             </label>
             <label className="block">
@@ -61,9 +58,6 @@ export default function AdminLoginPage() {
             <SubmitButton />
           </form>
         </div>
-        <p className="mt-4 text-center text-xs text-lavender-200">
-          Protected area · Magdalene Medza
-        </p>
       </div>
     </div>
   );
