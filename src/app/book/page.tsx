@@ -22,11 +22,11 @@ export default async function BookPage({
   const openDays = hours.filter((h) => h.isOpen).map((h) => h.dayOfWeek);
 
   return (
-    <div className="min-h-screen bg-cream-soft">
+    <div className="min-h-screen bg-gradient-to-b from-violet-50/80 via-cream-soft to-cream-soft">
       <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
         <div className="container-px flex h-16 items-center justify-between">
           <Logo />
-          <Link href="/" className="text-sm text-charcoal-muted transition hover:text-royal-700">
+          <Link href="/" className="text-sm text-charcoal-muted transition hover:text-violet-700">
             Back to site
           </Link>
         </div>

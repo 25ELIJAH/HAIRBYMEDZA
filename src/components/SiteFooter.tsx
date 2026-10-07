@@ -45,38 +45,39 @@ export default function SiteFooter({
   const rows = hourRows(hours);
 
   return (
-    <footer id="contact" className="mt-4 border-t border-gray-200 bg-white text-charcoal">
+    <footer id="contact" className="relative bg-white text-charcoal">
+      <div aria-hidden className="h-1 w-full bg-gradient-to-r from-royal-600 via-violet-500 to-fuchsia-400" />
       <div className="container-px grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_0.8fr]">
         <div>
           <Logo href={null} />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-charcoal-muted">
             Braiding for kids and teens in Nairobi. Studio appointments and home visits.
           </p>
-          <Link href="/book" className="btn-primary mt-6 !px-5 !py-2.5">
+          <Link href="/book" className="btn-brand mt-6 !px-5 !py-2.5">
             Book now
           </Link>
         </div>
 
         <div className="text-sm">
-          <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-charcoal-muted">Contact</h4>
+          <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-violet-700">Contact</h4>
           <ul className="space-y-2.5">
             {phone && (
               <li>
-                <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-royal-700">
+                <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-violet-700">
                   {phone}
                 </a>
               </li>
             )}
             {waNumber && (
               <li>
-                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="hover:text-royal-700">
+                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="hover:text-violet-700">
                   WhatsApp
                 </a>
               </li>
             )}
             {email && (
               <li>
-                <a href={`mailto:${email}`} className="break-all hover:text-royal-700">
+                <a href={`mailto:${email}`} className="break-all hover:text-violet-700">
                   {email}
                 </a>
               </li>
@@ -86,7 +87,7 @@ export default function SiteFooter({
         </div>
 
         <div className="text-sm">
-          <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-charcoal-muted">Opening hours</h4>
+          <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-violet-700">Opening hours</h4>
           <dl className="max-w-xs space-y-2.5">
             {rows.map((r) => (
               <div key={r.days} className="flex justify-between gap-4">
@@ -98,15 +99,15 @@ export default function SiteFooter({
         </div>
 
         <div className="text-sm">
-          <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-charcoal-muted">Links</h4>
+          <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-violet-700">Links</h4>
           <ul className="space-y-2.5">
             <li>
-              <Link href="/book" className="hover:text-royal-700">
+              <Link href="/book" className="hover:text-violet-700">
                 Book
               </Link>
             </li>
             <li>
-              <Link href="/#services" className="hover:text-royal-700">
+              <Link href="/#services" className="hover:text-violet-700">
                 Prices
               </Link>
             </li>
@@ -119,7 +120,7 @@ export default function SiteFooter({
           <p>© {new Date().getFullYear()} Magdalene Medza. All rights reserved.</p>
           <p>
             Made by{" "}
-            <a href={devHref} target="_blank" rel="noreferrer" className="font-medium text-charcoal-soft hover:text-royal-700">
+            <a href={devHref} target="_blank" rel="noreferrer" className="font-medium text-charcoal-soft hover:text-violet-700">
               EliDevs
             </a>
           </p>

@@ -7,14 +7,14 @@ export default function SiteHeader() {
       <div className="container-px flex h-16 items-center justify-between">
         <Logo />
         <nav className="hidden items-center gap-8 text-sm text-charcoal-soft md:flex">
-          <Link href="/#services" className="hover:text-royal-700">
+          <Link href="/#services" className="hover:text-violet-700">
             Services
           </Link>
-          <Link href="/#contact" className="hover:text-royal-700">
+          <Link href="/#contact" className="hover:text-violet-700">
             Contact
           </Link>
         </nav>
-        <Link href="/book" className="btn-primary !px-4 !py-2.5">
+        <Link href="/book" className="btn-brand !px-4 !py-2.5">
           Book now
         </Link>
       </div>

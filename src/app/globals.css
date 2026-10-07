@@ -33,8 +33,8 @@ h1, h2, h3, h4 {
 }
 
 ::selection {
-  background: rgb(var(--r-100));
-  color: rgb(var(--r-900));
+  background: #ede9fe; /* violet-100 */
+  color: #3b0764;
 }
 
 /* Reusable component classes */
@@ -48,6 +48,10 @@ h1, h2, h3, h4 {
   }
   .btn-primary {
     @apply btn bg-royal-600 text-white hover:bg-royal-700;
+  }
+  /* Website call-to-action: blue into violet. */
+  .btn-brand {
+    @apply btn bg-gradient-to-r from-royal-600 to-violet-600 text-white shadow-[0_8px_20px_-8px_rgba(109,40,217,0.55)] transition-all hover:from-royal-700 hover:to-violet-700 hover:shadow-[0_10px_24px_-8px_rgba(109,40,217,0.65)];
   }
   /* Kept for older markup: same as the primary button. */
   .btn-gold {

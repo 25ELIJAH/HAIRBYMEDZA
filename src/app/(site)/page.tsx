@@ -39,30 +39,37 @@ export default async function HomePage() {
 
       {/* ── Hero: words left, full photo right ─────────────── */}
       <section className="relative overflow-hidden bg-white">
+        {/* Soft violet wash behind the photo, and a glow for phones */}
         <div
           aria-hidden
-          className="absolute inset-y-0 right-0 -z-0 hidden w-[38%] bg-royal-50 lg:block"
+          className="absolute inset-y-0 right-0 -z-0 hidden w-[40%] bg-gradient-to-br from-violet-100 via-violet-50 to-royal-50 lg:block"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-200/60 blur-3xl lg:hidden"
         />
         <div className="container-px relative grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:py-20">
           <div className="max-w-xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-royal-700">
+            <p className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.18em] text-violet-700">
+              <span className="h-px w-8 bg-violet-400" />
               Hair braiding · Nairobi
             </p>
             <h1 className="mt-4 font-display text-4xl font-bold leading-[1.1] text-charcoal sm:text-6xl">
-              Braiding for kids and teens.
+              Braiding for kids and{" "}
+              <span className="bg-gradient-to-r from-royal-600 to-violet-600 bg-clip-text text-transparent">teens.</span>
             </h1>
             <p className="mt-5 text-lg text-charcoal-soft">
               Studio or home visits{fromPrice != null ? ` · from ${formatKes(fromPrice)}` : ""}.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/book" className="btn-primary !px-6 !py-3.5 text-base">
+              <Link href="/book" className="btn-brand !px-6 !py-3.5 text-base">
                 Book now
               </Link>
-              <Link href="/#services" className="btn-outline !px-6 !py-3.5 text-base">
+              <Link href="/#services" className="btn-outline !px-6 !py-3.5 text-base hover:!border-violet-300 hover:!text-violet-700">
                 Prices
               </Link>
             </div>
-            <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-gray-200 pt-6 text-sm">
+            <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-violet-100 pt-6 text-sm">
               <div>
                 <dt className="text-charcoal-muted">Book</dt>
                 <dd className="mt-1 font-semibold text-charcoal">Online</dd>
@@ -78,7 +85,11 @@ export default async function HomePage() {
             </dl>
           </div>
 
-          <div className="mx-auto w-full max-w-sm sm:max-w-md lg:max-w-none">
+          <div className="relative mx-auto w-full max-w-sm sm:max-w-md lg:max-w-none">
+            <div
+              aria-hidden
+              className="absolute -bottom-3 -left-3 hidden h-full w-full rounded-2xl border border-violet-300/70 sm:block"
+            />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="https://images.unsplash.com/photo-1572955304332-bf714bd49add?auto=format&fit=crop&crop=faces&w=900&h=1125&q=75"
@@ -86,21 +97,27 @@ export default async function HomePage() {
               width={900}
               height={1125}
               fetchPriority="high"
-              className="aspect-[4/3] w-full rounded-2xl object-cover object-[center_30%] sm:aspect-[4/5] shadow-[0_24px_60px_-20px_rgba(15,23,42,0.35)]"
+              className="relative aspect-[4/3] w-full rounded-2xl object-cover object-[center_30%] shadow-[0_24px_60px_-20px_rgba(76,29,149,0.35)] sm:aspect-[4/5]"
             />
           </div>
         </div>
       </section>
 
       {/* ── Services ─────────────────────────────────────────── */}
-      <section id="services" className="bg-cream-soft py-16">
+      <section id="services" className="bg-gradient-to-b from-violet-50/70 via-cream-soft to-cream-soft py-16 sm:py-20">
         <div className="container-px">
-          <h2 className="font-display text-3xl font-bold text-charcoal">Prices</h2>
+          <p className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.18em] text-violet-700">
+            <span className="h-px w-8 bg-violet-400" />
+            Price list
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold text-charcoal">Prices</h2>
           <p className="mt-2 text-charcoal-muted">Wash, blow dry and styling included.</p>
 
           {categories.map((cat) => (
             <div key={cat} className="mt-10">
-              <h3 className="mb-4 font-display text-lg font-semibold text-charcoal">{labelFor(cat)}</h3>
+              <h3 className="mb-5 inline-flex items-center rounded-full bg-violet-100 px-3.5 py-1 text-sm font-semibold text-violet-800">
+                {labelFor(cat)}
+              </h3>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {services
                   .filter((s) => s.category === cat)
@@ -109,7 +126,10 @@ export default async function HomePage() {
                       key={s.id}
                       service={s}
                       footer={
-                        <Link href={`/book?service=${s.id}`} className="btn-outline w-full">
+                        <Link
+                          href={`/book?service=${s.id}`}
+                          className="btn-outline w-full hover:!border-violet-400 hover:!bg-violet-50 hover:!text-violet-800"
+                        >
                           Book
                         </Link>
                       }
