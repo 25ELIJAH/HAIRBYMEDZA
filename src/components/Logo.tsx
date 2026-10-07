@@ -15,7 +15,7 @@ export default function Logo({
     <span className="inline-flex items-center gap-3">
       <LogoMark size={36} badge className="shrink-0 rounded-full" />
       <span className="leading-none">
-        <span className={`block font-display text-base font-bold ${textColor}`}>
+        <span className={`block font-display text-[17px] font-medium ${textColor}`}>
           Magdalene Medza
         </span>
         <span className={`mt-0.5 block text-xs ${subColor}`}>Hair braiding, Nairobi</span>

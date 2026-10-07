@@ -38,38 +38,35 @@ export default async function HomePage() {
       <SiteHeader />
 
       {/* ── Hero: words left, full photo right ─────────────── */}
-      <section className="relative overflow-hidden bg-white">
-        {/* Soft violet wash behind the photo, and a glow for phones */}
-        <div
-          aria-hidden
-          className="absolute inset-y-0 right-0 -z-0 hidden w-[40%] bg-gradient-to-br from-violet-100 via-violet-50 to-royal-50 lg:block"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-200/60 blur-3xl lg:hidden"
-        />
+      <section className="relative isolate overflow-hidden bg-gradient-to-b from-violet-100 via-violet-50 to-white">
+        {/* Smooth purple backdrop: soft glows that melt into each other */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -right-32 -top-40 h-[34rem] w-[34rem] rounded-full bg-violet-300/45 blur-[110px]" />
+          <div className="absolute -left-40 top-1/3 h-[28rem] w-[28rem] rounded-full bg-fuchsia-200/45 blur-[110px]" />
+          <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-royal-200/40 blur-[90px]" />
+        </div>
         <div className="container-px relative grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:py-20">
           <div className="max-w-xl">
-            <p className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.18em] text-violet-700">
+            <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-violet-700">
               <span className="h-px w-8 bg-violet-400" />
               Hair braiding · Nairobi
             </p>
-            <h1 className="mt-4 font-display text-4xl font-bold leading-[1.1] text-charcoal sm:text-6xl">
+            <h1 className="mt-4 font-display text-[2.15rem] font-medium leading-[1.12] text-charcoal sm:text-5xl">
               Braiding for kids and{" "}
               <span className="bg-gradient-to-r from-royal-600 to-violet-600 bg-clip-text text-transparent">teens.</span>
             </h1>
-            <p className="mt-5 text-lg text-charcoal-soft">
+            <p className="mt-4 text-[15px] text-charcoal-soft sm:text-base">
               Studio or home visits{fromPrice != null ? ` · from ${formatKes(fromPrice)}` : ""}.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/book" className="btn-brand !px-6 !py-3.5 text-base">
+              <Link href="/book" className="btn-brand !px-6 !py-3 text-[15px]">
                 Book now
               </Link>
-              <Link href="/#services" className="btn-outline !px-6 !py-3.5 text-base hover:!border-violet-300 hover:!text-violet-700">
+              <Link href="/#services" className="btn-outline !px-6 !py-3 text-[15px] hover:!border-violet-300 hover:!text-violet-700">
                 Prices
               </Link>
             </div>
-            <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-violet-100 pt-6 text-sm">
+            <dl className="mt-9 grid max-w-md grid-cols-3 gap-4 border-t border-violet-200/70 pt-5 text-[13px]">
               <div>
                 <dt className="text-charcoal-muted">Book</dt>
                 <dd className="mt-1 font-semibold text-charcoal">Online</dd>
@@ -88,7 +85,7 @@ export default async function HomePage() {
           <div className="relative mx-auto w-full max-w-sm sm:max-w-md lg:max-w-none">
             <div
               aria-hidden
-              className="absolute -bottom-3 -left-3 hidden h-full w-full rounded-2xl border border-violet-300/70 sm:block"
+              className="absolute -bottom-3 -left-3 hidden h-full w-full rounded-2xl border border-violet-300/80 sm:block"
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -104,14 +101,14 @@ export default async function HomePage() {
       </section>
 
       {/* ── Services ─────────────────────────────────────────── */}
-      <section id="services" className="bg-gradient-to-b from-violet-50/70 via-cream-soft to-cream-soft py-16 sm:py-20">
+      <section id="services" className="bg-gradient-to-b from-white via-violet-50/60 to-violet-50 py-16 sm:py-20">
         <div className="container-px">
-          <p className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.18em] text-violet-700">
+          <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-violet-700">
             <span className="h-px w-8 bg-violet-400" />
             Price list
           </p>
-          <h2 className="mt-3 font-display text-3xl font-bold text-charcoal">Prices</h2>
-          <p className="mt-2 text-charcoal-muted">Wash, blow dry and styling included.</p>
+          <h2 className="mt-3 font-display text-[1.75rem] font-medium text-charcoal sm:text-[2rem]">Prices</h2>
+          <p className="mt-1.5 text-[15px] text-charcoal-muted">Wash, blow dry and styling included.</p>
 
           {categories.map((cat) => (
             <div key={cat} className="mt-10">

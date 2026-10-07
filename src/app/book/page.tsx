@@ -22,8 +22,12 @@ export default async function BookPage({
   const openDays = hours.filter((h) => h.isOpen).map((h) => h.dayOfWeek);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-violet-50/80 via-cream-soft to-cream-soft">
-      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
+    <div className="relative isolate min-h-screen overflow-hidden bg-gradient-to-b from-violet-100 via-violet-50 to-white">
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -right-40 -top-40 h-[30rem] w-[30rem] rounded-full bg-violet-300/35 blur-[110px]" />
+        <div className="absolute -left-40 top-1/2 h-[26rem] w-[26rem] rounded-full bg-fuchsia-200/35 blur-[110px]" />
+      </div>
+      <header className="sticky top-0 z-30 border-b border-violet-100/80 bg-white/75 backdrop-blur-md">
         <div className="container-px flex h-16 items-center justify-between">
           <Logo />
           <Link href="/" className="text-sm text-charcoal-muted transition hover:text-violet-700">

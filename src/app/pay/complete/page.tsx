@@ -54,7 +54,7 @@ export default async function PaymentCompletePage({
       </header>
       <main className="container-px py-12">
         <div className="card mx-auto max-w-lg p-6 sm:p-8">
-          <h1 className="font-display text-2xl font-bold text-charcoal">{title}</h1>
+          <h1 className="font-display text-2xl font-medium text-charcoal">{title}</h1>
           <p className="mt-2 text-charcoal-muted">{text}</p>
 
           {payment && (
