@@ -45,8 +45,7 @@ export default function SiteFooter({
   const rows = hourRows(hours);
 
   return (
-    <footer id="contact" className="relative bg-white text-charcoal">
-      <div aria-hidden className="h-1 w-full bg-gradient-to-r from-royal-600 via-violet-500 to-fuchsia-400" />
+    <footer id="contact" className="relative border-t border-violet-100 bg-gradient-to-b from-violet-50 to-white text-charcoal">
       <div className="container-px grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_0.8fr]">
         <div>
           <Logo href={null} />
@@ -115,7 +114,7 @@ export default function SiteFooter({
         </div>
       </div>
 
-      <div className="border-t border-gray-200">
+      <div className="border-t border-violet-100">
         <div className="container-px flex flex-col items-center justify-between gap-2 pb-24 pt-5 text-xs text-charcoal-muted sm:flex-row sm:pb-5">
           <p>© {new Date().getFullYear()} Magdalene Medza. All rights reserved.</p>
           <p>

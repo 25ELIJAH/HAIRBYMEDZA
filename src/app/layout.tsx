@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { DM_Sans, Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 
-// Clean, modern pairing: Manrope for headings, Inter for body text.
-const manrope = Manrope({
+// Website: Fraunces (a soft, elegant serif) for headings and DM Sans for
+// text. The admin uses Inter throughout (see admin layouts).
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600"],
   variable: "--font-display",
+  display: "swap",
+});
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-body",
   display: "swap",
 });
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-body",
+  variable: "--font-admin",
   display: "swap",
 });
 
@@ -61,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${inter.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${dmSans.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );

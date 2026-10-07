@@ -149,7 +149,7 @@ export default function MpesaPayPanel({
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left">
       <div className="border-b border-gray-200 px-5 py-3">
         <p className="text-sm text-charcoal-muted">Payment</p>
-        <p className="font-display text-base font-bold text-charcoal">{formatKes(amount)}</p>
+        <p className="text-base font-semibold tabular-nums text-charcoal">{formatKes(amount)}</p>
       </div>
       <div className="space-y-3 p-5">
         <label className="block">

@@ -3,7 +3,7 @@ import Logo from "./Logo";
 
 export default function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-violet-100/80 bg-white/75 backdrop-blur-md">
       <div className="container-px flex h-16 items-center justify-between">
         <Logo />
         <nav className="hidden items-center gap-8 text-sm text-charcoal-soft md:flex">

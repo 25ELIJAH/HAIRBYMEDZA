@@ -382,7 +382,7 @@ export default function BookingWizard({
                         <ServiceThumb service={s} size={68} />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-baseline justify-between gap-3">
-                            <span className="font-display text-base font-semibold leading-snug text-charcoal sm:text-lg">
+                            <span className="font-display text-[15px] font-medium leading-snug text-charcoal sm:text-base">
                               {s.name}
                             </span>
                             <span className="shrink-0 font-semibold tabular-nums text-charcoal">
@@ -439,7 +439,7 @@ export default function BookingWizard({
 
             {serviceType === "OUTCALL" && (
               <div className="mt-6 animate-fade-up rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-                <h4 className="font-display text-lg font-semibold text-charcoal">Your address</h4>
+                <h4 className="font-display text-base font-medium text-charcoal">Your address</h4>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Field label="Area *">
                     <input
@@ -508,7 +508,7 @@ export default function BookingWizard({
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-display text-base font-semibold text-charcoal">{prettyDate(date)}</p>
+                  <p className="font-display text-base font-medium text-charcoal">{prettyDate(date)}</p>
                   {!loadingAvail && avail?.open && bookable.size > 0 && (
                     <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
                       {bookable.size} {bookable.size === 1 ? "time" : "times"} free
@@ -704,7 +704,7 @@ export default function BookingWizard({
                 <div className="flex items-center gap-4 border-b border-gray-200 p-5">
                   <ServiceThumb service={service} />
                   <div className="min-w-0">
-                    <p className="font-display text-lg font-bold text-charcoal">{service.name}</p>
+                    <p className="font-display text-base font-medium text-charcoal sm:text-[17px]">{service.name}</p>
                     <p className="text-sm text-charcoal-muted">{durationLabel(service.durationMin)}</p>
                   </div>
                 </div>
@@ -735,11 +735,11 @@ export default function BookingWizard({
 
               {/* Payment */}
               <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
-                <h4 className="font-display text-base font-bold text-charcoal">Payment</h4>
+                <h4 className="font-display text-base font-medium text-charcoal">Payment</h4>
                 <dl className="mt-3 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-charcoal-muted">Total to pay</dt>
-                    <dd className="font-display text-lg font-bold text-charcoal">{formatKes(amountDue)}</dd>
+                    <dd className="text-lg font-semibold tabular-nums text-charcoal">{formatKes(amountDue)}</dd>
                   </div>
                 </dl>
                 {serviceType === "OUTCALL" && (
@@ -774,7 +774,7 @@ export default function BookingWizard({
                       </p>
                       <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-cream-soft px-4 py-3">
                         <div>
-                          <p className="font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
+                          <p className="text-lg font-semibold tabular-nums tracking-wide text-charcoal">{payNumber}</p>
                           <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
                         </div>
                         <button
@@ -843,7 +843,7 @@ export default function BookingWizard({
         {step === 5 && service && startMin != null && (
           <div className="mx-auto max-w-lg animate-fade-up">
             <div className="card p-6 sm:p-8">
-              <h2 className="font-display text-2xl font-bold text-charcoal">
+              <h2 className="font-display text-2xl font-medium text-charcoal">
                 Thank you, {customer.name.split(" ")[0]}
               </h2>
               <p className="mt-2 text-charcoal-muted">
@@ -871,7 +871,7 @@ export default function BookingWizard({
                   <p className="text-charcoal">
                     Send <strong>{formatKes(amountDue)}</strong> by M-Pesa to
                   </p>
-                  <p className="mt-1 font-display text-xl font-bold tracking-wide text-charcoal">{payNumber}</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums tracking-wide text-charcoal">{payNumber}</p>
                   <p className="text-xs text-charcoal-muted">Magdalene Medza</p>
                 </div>
               )}
@@ -993,8 +993,8 @@ function Section({
 }) {
   return (
     <div className="animate-fade-up">
-      <h2 className="font-display text-2xl font-semibold tracking-tight text-charcoal sm:text-3xl">{title}</h2>
-      {subtitle && <p className="mt-1.5 text-charcoal-muted">{subtitle}</p>}
+      <h2 className="font-display text-[1.6rem] font-medium text-charcoal sm:text-[1.85rem]">{title}</h2>
+      {subtitle && <p className="mt-1 text-[15px] text-charcoal-muted">{subtitle}</p>}
       <div className="mt-6">{children}</div>
     </div>
   );
@@ -1024,7 +1024,7 @@ function TypeCard({
       }`}
     >
       <span className="flex items-start justify-between gap-3">
-        <span className="font-display text-lg font-semibold text-charcoal">{title}</span>
+        <span className="font-display text-[17px] font-medium text-charcoal">{title}</span>
         <span
           className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${
             active ? "border-violet-600 bg-violet-600 shadow-[inset_0_0_0_3px_white]" : "border-gray-300"
