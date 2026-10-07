@@ -13,12 +13,12 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-6">
+    <header className="mb-5 flex items-center justify-between gap-3 sm:mb-8 sm:items-end sm:border-b sm:border-gray-200 sm:pb-6">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-charcoal">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-charcoal-muted">{subtitle}</p>}
+        <h1 className="truncate text-xl font-semibold tracking-tight text-charcoal sm:text-2xl">{title}</h1>
+        {subtitle && <p className="mt-0.5 text-[13px] text-charcoal-muted sm:mt-1 sm:text-sm">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </header>
   );
 }
@@ -45,16 +45,16 @@ export function Stat({
   const body = (
     <>
       <p className="text-xs font-medium text-charcoal-muted">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-charcoal">{value}</p>
+      <p className="mt-1.5 text-lg font-semibold tabular-nums tracking-tight text-charcoal sm:mt-2 sm:text-2xl">{value}</p>
       {hint && <p className="mt-1 text-xs text-charcoal-muted">{hint}</p>}
     </>
   );
   return href ? (
-    <Link href={href} className="block bg-white p-5 transition hover:bg-gray-50">
+    <Link href={href} className="block bg-white p-4 transition hover:bg-gray-50 sm:p-5">
       {body}
     </Link>
   ) : (
-    <div className="bg-white p-5">{body}</div>
+    <div className="bg-white p-4 sm:p-5">{body}</div>
   );
 }
 
@@ -75,12 +75,12 @@ export function Panel({
   return (
     <section className={`rounded-xl border border-gray-200 bg-white ${className}`}>
       {title && (
-        <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-5 py-3.5">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 sm:px-5 sm:py-3.5">
           <h2 className="text-sm font-semibold text-charcoal">{title}</h2>
           {action}
         </div>
       )}
-      <div className={flush ? "" : "p-5"}>{children}</div>
+      <div className={flush ? "" : "p-4 sm:p-5"}>{children}</div>
     </section>
   );
 }

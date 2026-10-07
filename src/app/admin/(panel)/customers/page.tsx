@@ -86,36 +86,69 @@ export default async function CustomersPage({
         title="Clients"
         subtitle={`${total} ${total === 1 ? "client" : "clients"}${q ? ` matching “${q}”` : ""}`}
         actions={
-          <a href="/api/admin/export?type=customers" className="btn-outline !px-4 !py-2 text-sm">
+          <a href="/api/admin/export?type=customers" className="btn-outline hidden !px-4 !py-2 text-sm sm:inline-flex">
             Export CSV
           </a>
         }
       />
 
-      <form action="/admin/customers" className="mb-3 flex gap-2">
-        <input name="q" defaultValue={q} placeholder="Search name, phone, email or notes…" className="input flex-1" />
-        <button className="btn-outline !px-4">Search</button>
+      <form action="/admin/customers" className="mb-4 flex gap-2">
+        {sort === "visits" && <input type="hidden" name="sort" value="visits" />}
+        <input name="q" type="search" defaultValue={q} placeholder="Search name or phone" className="input min-w-0 flex-1" />
+        <button className="btn-outline shrink-0 !px-4">Search</button>
       </form>
-      <div className="mb-4 flex gap-2 text-xs">
-        <Link href={qs({ sort: undefined, page: undefined })} className={`badge ring-1 ${sort === "recent" ? "bg-royal-600 text-white ring-royal-600" : "bg-white ring-black/10"}`}>
-          Most recent
-        </Link>
-        <Link href={qs({ sort: "visits", page: undefined })} className={`badge ring-1 ${sort === "visits" ? "bg-royal-600 text-white ring-royal-600" : "bg-white ring-black/10"}`}>
-          Most visits
-        </Link>
-      </div>
+      <nav className="mb-4 flex gap-5 border-b border-gray-200 text-sm">
+        {[
+          { key: "recent", label: "Most recent", href: qs({ sort: undefined, page: undefined }) },
+          { key: "visits", label: "Most visits", href: qs({ sort: "visits", page: undefined }) },
+        ].map((t) => (
+          <Link
+            key={t.key}
+            href={t.href}
+            className={`-mb-px border-b-2 pb-2.5 font-medium ${
+              sort === t.key ? "border-royal-600 text-charcoal" : "border-transparent text-charcoal-muted hover:text-charcoal"
+            }`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
 
       {shown.length === 0 ? (
-        <div className="card p-10 text-center text-charcoal-muted">
+        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-charcoal-muted">
           {q
             ? "No clients match that search."
             : "No customers yet. They appear here automatically after the first booking, or add past clients below."}
         </div>
       ) : (
-        <div className="card overflow-x-auto">
+        <>
+        {/* Phones: simple list */}
+        <ul className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white md:hidden">
+          {shown.map((c) => (
+            <li key={c.id}>
+              <Link href={`/admin/customers/${c.id}`} className="flex items-center gap-3 px-4 py-3.5 active:bg-gray-50">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-royal-50 text-sm font-semibold text-royal-700">
+                  {c.name[0]?.toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-medium text-charcoal">{c.name}</span>
+                  <span className="block truncate text-[13px] text-charcoal-muted">
+                    {formatPhone(c.phone)}
+                    {c.nextVisit ? ` · next ${prettyDate(c.nextVisit)}` : ""}
+                  </span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block text-sm font-semibold tabular-nums text-charcoal">{c.visits}</span>
+                  <span className="block text-[11px] text-charcoal-muted">{c.visits === 1 ? "visit" : "visits"}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto rounded-xl border border-gray-200 bg-white md:block">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/5 text-left text-xs uppercase tracking-wide text-charcoal-muted">
+              <tr className="border-b border-gray-200 text-left text-xs font-medium text-charcoal-muted">
                 <th className="px-4 py-3">Client</th>
                 <th className="px-4 py-3">Contact</th>
                 <th className="px-4 py-3 text-center">Visits</th>
@@ -129,7 +162,7 @@ export default async function CustomersPage({
                 <tr key={c.id} className="border-b border-black/5 align-top last:border-0 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <Link href={`/admin/customers/${c.id}`} className="flex items-center gap-2.5">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-royal-100 text-xs font-semibold text-royal-700">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-royal-50 text-xs font-semibold text-royal-700">
                         {c.name[0]?.toUpperCase()}
                       </span>
                       <div>
@@ -144,7 +177,7 @@ export default async function CustomersPage({
                     </a>
                     {c.email && <p className="text-xs">{c.email}</p>}
                   </td>
-                  <td className="px-4 py-3 text-center font-semibold text-royal-600">{c.visits}</td>
+                  <td className="px-4 py-3 text-center font-semibold tabular-nums text-charcoal">{c.visits}</td>
                   <td className="px-4 py-3 text-charcoal-soft">{c.favourite}</td>
                   <td className="px-4 py-3 text-right font-medium">{formatKes(c.paid)}</td>
                   <td className="px-4 py-3 text-xs text-charcoal-muted">
@@ -156,33 +189,51 @@ export default async function CustomersPage({
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {pages > 1 && (
         <nav className="mt-4 flex items-center justify-between text-sm">
-          {page > 1 ? <Link href={qs({ page: String(page - 1) })} className="btn-outline !px-4 !py-2">← Previous</Link> : <span />}
+          {page > 1 ? <Link href={qs({ page: String(page - 1) })} className="btn-outline !px-4 !py-2">Previous</Link> : <span />}
           <span className="text-charcoal-muted">Page {page} of {pages}</span>
-          {page < pages ? <Link href={qs({ page: String(page + 1) })} className="btn-outline !px-4 !py-2">Next →</Link> : <span />}
+          {page < pages ? <Link href={qs({ page: String(page + 1) })} className="btn-outline !px-4 !py-2">Next</Link> : <span />}
         </nav>
       )}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <section className="card p-5">
-          <h2 className="mb-4 text-base font-semibold text-charcoal">Add a client</h2>
-          <CustomerForm />
-        </section>
-        <section className="card p-5">
-          <h2 className="mb-4 text-base font-semibold text-charcoal">Import past clients</h2>
-          <ImportCustomersForm />
-        </section>
-        <section className="card p-5 lg:col-span-2">
-          <h2 className="mb-1 text-base font-semibold text-charcoal">Tidy up duplicates</h2>
-          <p className="mb-3 text-sm text-charcoal-muted">
-            Older bookings saved the same client more than once when their number was typed
-            differently (0712… vs +254712…). This merges them into one record with the full history.
-          </p>
-          <MergeDuplicatesButton />
-        </section>
+      <div className="mt-8 space-y-3">
+        <details className="group rounded-xl border border-gray-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-semibold text-charcoal sm:px-5">
+            Add a client
+            <span className="text-charcoal-muted group-open:hidden">Open</span>
+            <span className="hidden text-charcoal-muted group-open:inline">Close</span>
+          </summary>
+          <div className="border-t border-gray-100 p-4 sm:p-5">
+            <CustomerForm />
+          </div>
+        </details>
+        <details className="group rounded-xl border border-gray-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-semibold text-charcoal sm:px-5">
+            Import past clients
+            <span className="text-charcoal-muted group-open:hidden">Open</span>
+            <span className="hidden text-charcoal-muted group-open:inline">Close</span>
+          </summary>
+          <div className="border-t border-gray-100 p-4 sm:p-5">
+            <ImportCustomersForm />
+          </div>
+        </details>
+        <details className="group rounded-xl border border-gray-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-semibold text-charcoal sm:px-5">
+            Merge duplicate clients
+            <span className="text-charcoal-muted group-open:hidden">Open</span>
+            <span className="hidden text-charcoal-muted group-open:inline">Close</span>
+          </summary>
+          <div className="border-t border-gray-100 p-4 sm:p-5">
+            <p className="mb-3 text-sm text-charcoal-muted">
+              Joins clients saved twice with differently typed numbers (0712… and +254712…).
+            </p>
+            <MergeDuplicatesButton />
+          </div>
+        </details>
       </div>
     </div>
   );

@@ -111,7 +111,7 @@ export default async function MoneyPage({
               : `Online payments through ${info.name}, plus cash you record.`
         }
         actions={
-          <a href="/api/admin/export?type=payments" className="btn-outline !px-4 !py-2 text-sm">
+          <a href="/api/admin/export?type=payments" className="btn-outline hidden !px-4 !py-2 text-sm sm:inline-flex">
             Export CSV
           </a>
         }

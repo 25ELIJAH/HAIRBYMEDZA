@@ -21,7 +21,7 @@ export default async function AdminLayout({
     >
       <AdminSidebar name={session.name} />
       <main className="min-w-0 flex-1">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">{children}</div>
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-5 sm:px-8 sm:pt-10 md:pb-12">{children}</div>
       </main>
     </div>
   );
