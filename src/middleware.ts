@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { adminLoginPath } from "./lib/admin-path";
 
 const secret = new TextEncoder().encode(
   process.env.AUTH_SECRET || "dev-only-insecure-secret"
@@ -52,23 +53,38 @@ export async function middleware(req: NextRequest) {
   const csp = buildCsp(nonce);
 
   // ── Auth gates ────────────────────────────────────────────────
-  const needsAdmin =
-    (pathname.startsWith("/admin") && pathname !== "/admin/login") ||
-    pathname.startsWith("/api/admin");
+  // The admin is hidden: the sign-in page lives only at the owner's private
+  // address, and every /admin page answers "page not found" to anyone who
+  // is not signed in, so the site gives no hint that an admin area exists.
+  const loginPath = adminLoginPath();
+  const isLoginPage = pathname === loginPath;
+  const notFound = () => {
+    const url = req.nextUrl.clone();
+    url.pathname = "/__not-found";
+    url.search = "";
+    const res = NextResponse.rewrite(url, { status: 404 });
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return res;
+  };
 
-  if (needsAdmin) {
-    const ok = await isValidAdmin(req.cookies.get("medz_admin")?.value);
-    if (!ok) {
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Not authorised" }, { status: 401 });
-      }
-      const url = req.nextUrl.clone();
-      url.pathname = "/admin/login";
-      url.searchParams.set("from", pathname);
-      const redirect = NextResponse.redirect(url);
-      redirect.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
-      return redirect;
+  if (pathname === "/admin/login") return notFound();
+
+  const needsAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+  const signedIn =
+    needsAdmin || isLoginPage ? await isValidAdmin(req.cookies.get("medz_admin")?.value) : false;
+
+  if (needsAdmin && !signedIn) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    return notFound();
+  }
+  // Already signed in: the private address goes straight to the dashboard.
+  if (isLoginPage && signedIn && req.method === "GET") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/admin";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
 
   // ── CSP (with nonce in production) ────────────────────────────
@@ -76,10 +92,13 @@ export async function middleware(req: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   if (isProd) requestHeaders.set("Content-Security-Policy", csp);
 
-  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  // The private address shows the sign-in page without changing the URL.
+  const res = isLoginPage
+    ? NextResponse.rewrite(new URL("/admin/login", req.url), { request: { headers: requestHeaders } })
+    : NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("Content-Security-Policy", csp);
   // Keep the admin area and APIs out of search indexes.
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api")) {
+  if (isLoginPage || pathname.startsWith("/admin") || pathname.startsWith("/api")) {
     res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   }
   return res;

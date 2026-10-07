@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import AdminSidebar from "@/components/AdminSidebar";
 import { getVerifiedAdmin } from "@/lib/auth";
 
@@ -11,7 +11,7 @@ export default async function AdminLayout({
 }) {
   // Verified against the database: exists, admin role, not locked, not revoked.
   const session = await getVerifiedAdmin();
-  if (!session) redirect("/admin/login");
+  if (!session) notFound();
 
   return (
     // The admin uses one plain typeface (Inter) for headings and text alike.
