@@ -355,7 +355,7 @@ export default function BookingWizard({
                     aria-selected={shownCat === c}
                     onClick={() => setActiveCat(c)}
                     className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                      shownCat === c ? "bg-charcoal text-white" : "text-charcoal-soft hover:text-charcoal"
+                      shownCat === c ? "bg-violet-700 text-white" : "text-charcoal-soft hover:text-charcoal"
                     }`}
                   >
                     {CATEGORY_LABEL[c] || c}
@@ -376,7 +376,7 @@ export default function BookingWizard({
                           setStep(1);
                         }}
                         className={`group flex w-full items-center gap-4 px-4 py-4 text-left transition sm:gap-5 sm:px-5 ${
-                          picked ? "bg-royal-50/60" : "hover:bg-gray-50"
+                          picked ? "bg-violet-50" : "hover:bg-gray-50"
                         }`}
                       >
                         <ServiceThumb service={s} size={68} />
@@ -399,7 +399,7 @@ export default function BookingWizard({
                             <span
                               className={`hidden rounded-full px-3 py-1 text-xs font-semibold transition sm:inline-block ${
                                 picked
-                                  ? "bg-royal-600 text-white"
+                                  ? "bg-violet-600 text-white"
                                   : "border border-gray-300 text-charcoal group-hover:border-charcoal"
                               }`}
                             >
@@ -510,7 +510,7 @@ export default function BookingWizard({
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-display text-base font-semibold text-charcoal">{prettyDate(date)}</p>
                   {!loadingAvail && avail?.open && bookable.size > 0 && (
-                    <span className="rounded-full bg-royal-50 px-2.5 py-0.5 text-xs font-medium text-royal-700">
+                    <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
                       {bookable.size} {bookable.size === 1 ? "time" : "times"} free
                     </span>
                   )}
@@ -575,7 +575,7 @@ export default function BookingWizard({
                                     }}
                                     className={`rounded-full px-2 py-2.5 text-sm font-medium tabular-nums ring-1 transition-all duration-200 ${
                                       selected
-                                        ? "bg-royal-600 text-white ring-royal-600"
+                                        ? "bg-violet-600 text-white ring-violet-600 shadow-[0_6px_16px_-6px_rgba(109,40,217,0.6)]"
                                         : canBook
                                           ? "bg-white text-charcoal ring-gray-200 hover:ring-charcoal"
                                           : taken
@@ -602,7 +602,7 @@ export default function BookingWizard({
                 </div>
 
                 {startMin != null && (
-                  <div className="mt-5 flex animate-fade-up items-center gap-3 rounded-xl bg-royal-50 px-4 py-3 text-sm text-charcoal">
+                  <div className="mt-5 flex animate-fade-up items-center gap-3 rounded-xl bg-violet-50 px-4 py-3 text-sm text-charcoal">
                     <span>
                       <strong>{shortDate(date)}</strong>, {minutesToLabel(startMin)} to{" "}
                       {minutesToLabel(startMin + service.durationMin)}
@@ -824,7 +824,7 @@ export default function BookingWizard({
                   <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{error}</p>
                 )}
 
-                <button onClick={submit} disabled={submitting} className="btn-primary mt-5 w-full !py-3.5 text-base">
+                <button onClick={submit} disabled={submitting} className="btn-brand mt-5 w-full !py-3.5 text-base">
                   {submitting
                     ? "Booking…"
                     : stkEnabled && payNow
@@ -949,7 +949,7 @@ function Stepper({ step }: { step: number }) {
       </p>
       <div className="mt-2 flex gap-1.5 sm:hidden">
         {names.map((n, i) => (
-          <span key={n} className={`h-1 flex-1 rounded-full ${i <= current ? "bg-royal-600" : "bg-gray-200"}`} />
+          <span key={n} className={`h-1 flex-1 rounded-full ${i <= current ? "bg-gradient-to-r from-royal-600 to-violet-600" : "bg-gray-200"}`} />
         ))}
       </div>
       {/* Larger screens: named steps */}
@@ -962,7 +962,7 @@ function Stepper({ step }: { step: number }) {
                   i < current
                     ? "bg-royal-600 text-white"
                     : i === current
-                      ? "bg-charcoal text-white"
+                      ? "bg-violet-600 text-white ring-4 ring-violet-100"
                       : "border border-gray-300 text-charcoal-muted"
                 }`}
               >
@@ -973,7 +973,7 @@ function Stepper({ step }: { step: number }) {
               </span>
             </span>
             {i < names.length - 1 && (
-              <span className={`h-px flex-1 ${i < current ? "bg-royal-600" : "bg-gray-200"}`} />
+              <span className={`h-px flex-1 ${i < current ? "bg-gradient-to-r from-royal-600 to-violet-500" : "bg-gray-200"}`} />
             )}
           </li>
         ))}
@@ -1019,7 +1019,7 @@ function TypeCard({
       aria-pressed={active}
       className={`flex h-full flex-col rounded-2xl border bg-white p-6 text-left transition-all duration-300 ${
         active
-          ? "border-royal-600 shadow-soft ring-1 ring-royal-600"
+          ? "border-violet-500 bg-violet-50/40 shadow-soft ring-1 ring-violet-500"
           : "border-gray-200 hover:-translate-y-0.5 hover:border-royal-200 hover:shadow-soft"
       }`}
     >
@@ -1027,7 +1027,7 @@ function TypeCard({
         <span className="font-display text-lg font-semibold text-charcoal">{title}</span>
         <span
           className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${
-            active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_3px_white]" : "border-gray-300"
+            active ? "border-violet-600 bg-violet-600 shadow-[inset_0_0_0_3px_white]" : "border-gray-300"
           }`}
         />
       </span>
@@ -1105,12 +1105,12 @@ function PayOption({
       onClick={onClick}
       aria-pressed={active}
       className={`flex w-full items-start gap-3 rounded-xl p-3 text-left ring-1 transition-colors ${
-        active ? "bg-royal-50 ring-royal-500" : "ring-gray-200 hover:ring-gray-300"
+        active ? "bg-violet-50 ring-violet-500" : "ring-gray-200 hover:ring-gray-300"
       }`}
     >
       <span
         className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${
-          active ? "border-royal-600 bg-royal-600 shadow-[inset_0_0_0_2px_white]" : "border-gray-300"
+          active ? "border-violet-600 bg-violet-600 shadow-[inset_0_0_0_2px_white]" : "border-gray-300"
         }`}
       />
       <span>
@@ -1141,7 +1141,7 @@ function NavRow({
       ) : (
         <span />
       )}
-      <button onClick={onNext} disabled={nextDisabled} className="btn-primary">
+      <button onClick={onNext} disabled={nextDisabled} className="btn-brand">
         {nextLabel}
       </button>
     </div>
@@ -1162,8 +1162,9 @@ function BookingSummary({
   const price = service ? priceFor(service, serviceType) : null;
   return (
     <aside className="hidden lg:block">
-      <div className="card sticky top-24 p-5">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-charcoal-muted">Your booking</h3>
+      <div className="card sticky top-24 overflow-hidden p-5">
+        <div aria-hidden className="-mx-5 -mt-5 mb-4 h-1 bg-gradient-to-r from-royal-600 to-violet-500" />
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-700">Your booking</h3>
         {service && (
           <div className="mt-3 flex items-center gap-3">
             <ServiceThumb service={service} size={52} />

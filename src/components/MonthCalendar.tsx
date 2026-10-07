@@ -99,15 +99,15 @@ export default function MonthCalendar({
               onClick={() => onChange(date)}
               className={`relative grid aspect-square place-items-center rounded-lg text-sm transition-colors ${
                 selected
-                  ? "bg-royal-600 font-semibold text-white"
+                  ? "bg-violet-600 font-semibold text-white"
                   : disabled
                     ? "text-gray-300"
-                    : "text-charcoal hover:bg-royal-50 hover:text-royal-700"
+                    : "text-charcoal hover:bg-violet-50 hover:text-violet-700"
               }`}
             >
               {day}
               {isToday && !selected && (
-                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-royal-600" />
+                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-violet-500" />
               )}
             </button>
           );

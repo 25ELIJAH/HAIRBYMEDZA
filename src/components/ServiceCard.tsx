@@ -30,7 +30,7 @@ export default function ServiceCard({
       className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
         selected
           ? "border-royal-600 ring-1 ring-royal-600"
-          : "border-gray-200 hover:-translate-y-1 hover:border-royal-200 hover:shadow-soft"
+          : "border-gray-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_40px_-20px_rgba(109,40,217,0.35)]"
       }`}
     >
       {/* Every card has the same photo frame. The whole photo is always visible
