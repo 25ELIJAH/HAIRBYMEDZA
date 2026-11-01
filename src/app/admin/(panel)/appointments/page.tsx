@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PageHeader } from "@/components/admin/ui";
+import LogoMark from "@/components/LogoMark";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import AppointmentCard, { ApptData } from "@/components/AppointmentCard";
@@ -7,21 +7,11 @@ import BlockedAttempts, { BlockedAttempt } from "@/components/BlockedAttempts";
 import { paymentsEnabled } from "@/lib/payments";
 import { phoneVariants } from "@/lib/phone";
 import { todayStr } from "@/lib/time";
+import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
-
-const FILTERS = [
-  { key: "upcoming", label: "Upcoming" },
-  { key: "attention", label: "Needs attention" },
-  { key: "PENDING", label: "Pending" },
-  { key: "CONFIRMED", label: "Confirmed" },
-  { key: "COMPLETED", label: "Completed" },
-  { key: "CANCELLED", label: "Cancelled" },
-  { key: "past", label: "Past" },
-  { key: "all", label: "All bookings" },
-];
 
 export default async function AppointmentsPage({
   searchParams,
@@ -115,6 +105,21 @@ export default async function AppointmentsPage({
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const stkOn = paymentsEnabled();
 
+  // Style photos: uploaded ones are served as small cached files, never inlined.
+  const photoCache = new Map<string, string | null>();
+  const photoFor = (serviceId: string, url: string | null) => {
+    if (photoCache.has(serviceId)) return photoCache.get(serviceId)!;
+    let out: string | null = null;
+    if (url?.startsWith("data:")) {
+      const v = createHash("md5").update(url).digest("hex").slice(0, 10);
+      out = `/api/img/service/${serviceId}?v=${v}`;
+    } else if (url && (/^https:\/\//i.test(url) || url.startsWith("/"))) {
+      out = url;
+    }
+    photoCache.set(serviceId, out);
+    return out;
+  };
+
   const data: ApptData[] = appts.map((a) => ({
     id: a.id,
     date: a.date,
@@ -138,6 +143,7 @@ export default async function AppointmentsPage({
     customerPhone: a.customer.phone,
     customerEmail: a.customer.email,
     serviceName: a.service.name,
+    serviceImage: photoFor(a.serviceId, a.service.imageUrl),
     source: a.source,
     createdAt: a.createdAt.toISOString(),
     overdue: a.date < today && active.includes(a.status),
@@ -166,7 +172,7 @@ export default async function AppointmentsPage({
       <Header />
 
       {(attentionCount > 0 && filter !== "attention") || blockedCount > 0 ? (
-        <div className="mb-6 divide-y divide-amber-200 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 text-sm">
+        <div className="mb-5 divide-y divide-amber-200/70 overflow-hidden rounded-2xl border border-amber-200/80 bg-amber-50/70 text-sm">
           {attentionCount > 0 && filter !== "attention" && (
             <Link
               href="/admin/appointments?filter=attention"
@@ -194,19 +200,19 @@ export default async function AppointmentsPage({
 
       <Filters active={filter} q={q} />
 
-      <p className="mb-3 text-sm text-charcoal-muted">
+      <p className="mb-3 px-1 text-[13px] text-charcoal-muted">
         {total} booking{total === 1 ? "" : "s"}
         {q ? ` matching “${q}”` : ""}
         {pages > 1 ? ` · page ${page} of ${pages}` : ""}
       </p>
 
       {data.length === 0 ? (
-        <div className="card p-10 text-center text-charcoal-muted">
+        <div className="rounded-3xl border border-violet-100 bg-white p-10 text-center text-sm text-charcoal-muted">
           No bookings in this view.{" "}
           {filter === "upcoming" && (
             <>
               Older bookings are under{" "}
-              <Link href="/admin/appointments?filter=all" className="text-royal-600 underline">
+              <Link href="/admin/appointments?filter=all" className="font-medium text-violet-700 underline">
                 All bookings
               </Link>
               .
@@ -214,7 +220,7 @@ export default async function AppointmentsPage({
           )}
         </div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-4 xl:grid-cols-2">
           {data.map((a) => (
             <AppointmentCard key={a.id} appt={a} stkEnabled={stkOn} />
           ))}
@@ -224,14 +230,14 @@ export default async function AppointmentsPage({
       {pages > 1 && (
         <nav className="mt-6 flex items-center justify-between">
           {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="btn-outline !px-4 !py-2 text-sm">
+            <Link href={pageHref(page - 1)} className="rounded-full border border-violet-200 bg-white px-5 py-2 text-sm font-semibold text-violet-800">
               Newer
             </Link>
           ) : (
             <span />
           )}
           {page < pages && (
-            <Link href={pageHref(page + 1)} className="btn-outline !px-4 !py-2 text-sm">
+            <Link href={pageHref(page + 1)} className="rounded-full border border-violet-200 bg-white px-5 py-2 text-sm font-semibold text-violet-800">
               Older
             </Link>
           )}
@@ -243,51 +249,102 @@ export default async function AppointmentsPage({
 
 function Header() {
   return (
-    <PageHeader
-      title="Bookings"
-      actions={
-        <>
-          <a href="/api/admin/export?type=appointments" className="btn-outline hidden !px-4 !py-2 text-sm sm:inline-flex">
-            Export CSV
-          </a>
-          <Link href="/admin/appointments/new" className="btn-primary !px-3.5 !py-2 text-sm">
-            Add booking
-          </Link>
-        </>
-      }
-    />
+    <header className="mb-6 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <h1 className="font-brand text-[2.1rem] font-medium leading-none text-charcoal sm:text-[2.6rem]">Bookings</h1>
+      </div>
+      <div className="flex shrink-0 items-center gap-2.5">
+        <a
+          href="/api/admin/export?type=appointments"
+          className="hidden rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-charcoal-soft hover:border-violet-300 hover:text-violet-800 sm:inline-flex"
+        >
+          Export CSV
+        </a>
+        <Link
+          href="/admin/appointments/new"
+          aria-label="Add booking"
+          className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-2xl font-light leading-none text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.7)] transition hover:scale-105"
+        >
+          +
+        </Link>
+        <span className="rounded-full bg-gradient-to-br from-violet-300 to-fuchsia-200 p-[2px]">
+          <span className="block rounded-full bg-white p-[2px]">
+            <LogoMark size={40} badge />
+          </span>
+        </span>
+      </div>
+    </header>
   );
 }
 
+const MORE = [
+  { key: "attention", label: "Needs attention" },
+  { key: "PENDING", label: "Pending" },
+  { key: "CONFIRMED", label: "Confirmed" },
+  { key: "COMPLETED", label: "Completed" },
+  { key: "CANCELLED", label: "Cancelled" },
+  { key: "all", label: "All" },
+];
+
 function Filters({ active, q }: { active: string; q: string }) {
+  const href = (key: string) => `/admin/appointments?filter=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
   return (
-    <div className="mb-4 space-y-4">
+    <div className="mb-5 space-y-4">
+      {/* Upcoming | Past */}
+      <div className="grid grid-cols-2 rounded-2xl border border-violet-100 bg-white p-1.5 shadow-[0_8px_24px_-18px_rgba(76,29,149,0.4)]">
+        {[
+          { key: "upcoming", label: "Upcoming" },
+          { key: "past", label: "Past" },
+        ].map((t, i) => {
+          const on = active === t.key;
+          return (
+            <Link
+              key={t.key}
+              href={href(t.key)}
+              className={`relative flex flex-col items-center justify-center rounded-xl py-2.5 text-[15px] font-semibold transition ${
+                on ? "text-charcoal" : "text-charcoal-muted hover:text-charcoal"
+              } ${i === 0 ? "after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-violet-100" : ""}`}
+            >
+              {t.label}
+              <span
+                className={`mt-1 h-[3px] w-14 rounded-full transition ${
+                  on ? "bg-gradient-to-r from-violet-600 to-fuchsia-500" : "bg-transparent"
+                }`}
+              />
+            </Link>
+          );
+        })}
+      </div>
+
       <form action="/admin/appointments" className="flex gap-2">
         <input type="hidden" name="filter" value={active === "blocked" || active === "upcoming" ? "all" : active} />
         <input
           name="q"
+          type="search"
           defaultValue={q}
           placeholder="Search name or phone"
-          type="search"
-          className="input min-w-0 flex-1"
+          className="min-w-0 flex-1 rounded-full border border-violet-100 bg-white px-4 py-2.5 text-sm text-charcoal placeholder:text-gray-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
         />
-        <button className="btn-outline shrink-0 !px-4">Search</button>
+        <button className="shrink-0 rounded-full border border-violet-200 bg-white px-4 text-sm font-semibold text-violet-800 hover:bg-violet-50">
+          Search
+        </button>
       </form>
-      <nav className="flex gap-5 overflow-x-auto border-b border-gray-200 text-sm">
-        {FILTERS.map((f) => (
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+        {MORE.map((f) => (
           <Link
             key={f.key}
-            href={`/admin/appointments?filter=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={`-mb-px shrink-0 border-b-2 pb-2.5 font-medium transition ${
+            href={href(f.key)}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
               active === f.key
-                ? "border-royal-600 text-charcoal"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
+                ? "bg-violet-700 text-white"
+                : "border border-violet-100 bg-white text-charcoal-soft hover:border-violet-300 hover:text-violet-800"
             }`}
           >
             {f.label}
           </Link>
         ))}
-      </nav>
+      </div>
     </div>
   );
 }

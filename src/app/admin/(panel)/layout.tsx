@@ -16,7 +16,7 @@ export default async function AdminLayout({
   return (
     // The admin uses one plain typeface (Inter) for headings and text alike.
     <div
-      className="min-h-screen bg-gray-50 font-sans text-charcoal antialiased md:flex"
+      className="min-h-screen bg-[#f7f5fc] font-sans text-charcoal antialiased md:flex"
       style={{ "--font-display": "var(--font-admin)", "--font-body": "var(--font-admin)" } as React.CSSProperties}
     >
       <AdminSidebar name={session.name} />

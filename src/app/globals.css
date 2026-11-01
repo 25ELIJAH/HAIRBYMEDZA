@@ -7,6 +7,8 @@
    royal / lavender / gold scales resolve from them. */
 :root {
   color-scheme: light;
+  /* Website headings use the serif; the admin remaps this to Inter. */
+  --font-display: var(--font-brand);
   --r-50: 240 245 252;
   --r-100: 222 233 250;
   --r-200: 191 211 245;
