@@ -52,6 +52,8 @@ const config: Config = {
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "Segoe UI", "sans-serif"],
+        // The serif, everywhere (also inside the admin): booking cards, titles.
+        brand: ["var(--font-brand)", "Georgia", "serif"],
         sans: ["var(--font-body)", "system-ui", "Segoe UI", "sans-serif"],
       },
       letterSpacing: {

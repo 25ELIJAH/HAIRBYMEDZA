@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 // Website: Fraunces (a soft, elegant serif) for headings and DM Sans for
 // text. The admin uses Inter throughout (see admin layouts).
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-display",
+// The font files ship with the site (src/app/fonts, SIL Open Font License),
+// so builds never depend on downloading them from Google Fonts.
+const fraunces = localFont({
+  src: "./fonts/fraunces-latin-wght-normal.woff2",
+  weight: "100 900",
+  variable: "--font-brand",
   display: "swap",
 });
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const dmSans = localFont({
+  src: "./fonts/dm-sans-latin-wght-normal.woff2",
+  weight: "100 1000",
   variable: "--font-body",
   display: "swap",
 });
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const inter = localFont({
+  src: "./fonts/inter-latin-wght-normal.woff2",
+  weight: "100 900",
   variable: "--font-admin",
   display: "swap",
 });

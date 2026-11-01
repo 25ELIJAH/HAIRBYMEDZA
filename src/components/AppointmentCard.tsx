@@ -54,6 +54,7 @@ export interface ApptData {
   customerPhone: string;
   customerEmail: string | null;
   serviceName: string;
+  serviceImage?: string | null;
   source: string;
   createdAt: string;
   overdue: boolean;
@@ -82,142 +83,153 @@ export default function AppointmentCard({
       setPayMsg(r?.error ? { ok: false, text: r.error } : { ok: true, text: r?.message || "Done." });
     });
 
-  const statusDot: Record<string, string> = {
-    PENDING: "bg-amber-400",
-    CONFIRMED: "bg-royal-500",
-    COMPLETED: "bg-emerald-500",
-    CANCELLED: "bg-gray-300",
+  const STATUS: Record<string, { label: string; cls: string }> = {
+    PENDING: { label: "Pending", cls: "bg-amber-100 text-amber-800" },
+    CONFIRMED: { label: "Confirmed", cls: "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-sm" },
+    COMPLETED: { label: "Completed", cls: "bg-gray-200/80 text-gray-700" },
+    CANCELLED: { label: "Cancelled", cls: "bg-rose-100 text-rose-700" },
   };
-  const statusText: Record<string, string> = {
-    PENDING: "Pending",
-    CONFIRMED: "Confirmed",
-    COMPLETED: "Completed",
-    CANCELLED: "Cancelled",
+  const PAY: Record<string, { label: string; cls: string }> = {
+    PAID: { label: "Paid", cls: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" },
+    PARTIAL: { label: `Paid ${formatKes(appt.amountPaid)}`, cls: "bg-amber-50 text-amber-800 ring-1 ring-amber-200" },
+    REFUND: { label: "Refunded", cls: "bg-gray-100 text-gray-600 ring-1 ring-gray-200" },
+    UNPAID: { label: "Not paid", cls: "bg-white text-charcoal-muted ring-1 ring-gray-200" },
   };
-  const payText =
-    appt.paymentStatus === "PAID"
-      ? "Paid"
-      : appt.paymentStatus === "PARTIAL"
-        ? `Paid ${formatKes(appt.amountPaid)}`
-        : appt.paymentStatus === "REFUND"
-          ? "Refunded"
-          : "Not paid";
-  const dayLabel = shortDate(appt.date);
+  const st = STATUS[appt.status] || { label: appt.status, cls: "bg-gray-100 text-gray-700" };
+  const pay = PAY[appt.paymentStatus] || PAY.UNPAID;
+  const done = appt.status === "COMPLETED" || appt.status === "CANCELLED";
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border bg-white transition ${pending ? "opacity-60" : ""} ${
-        appt.overdue ? "border-amber-300" : "border-gray-200"
+      className={`min-w-0 rounded-3xl border p-4 transition sm:p-5 ${pending ? "opacity-60" : ""} ${
+        done
+          ? "border-violet-100/70 bg-[#f3f0fa]"
+          : appt.overdue
+            ? "border-amber-200 bg-white shadow-[0_12px_32px_-20px_rgba(76,29,149,0.35)]"
+            : "border-violet-100 bg-white shadow-[0_12px_32px_-20px_rgba(76,29,149,0.35)]"
       }`}
     >
-      <div className="flex gap-4 p-4 sm:p-5">
-        {/* When */}
-        <div className="w-[5.25rem] shrink-0 border-r border-gray-100 pr-3 sm:w-24 sm:pr-4">
-          <p className="whitespace-nowrap text-xs text-charcoal-muted">{dayLabel}</p>
-          <p className="mt-0.5 whitespace-nowrap text-sm font-semibold tabular-nums text-charcoal">{minutesToLabel(appt.startMin)}</p>
-          <p className="whitespace-nowrap text-xs tabular-nums text-charcoal-muted">{minutesToLabel(appt.endMin)}</p>
+      <div className="flex gap-4">
+        {/* Style photo */}
+        <div
+          className={`h-[104px] w-[88px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100 to-fuchsia-50 sm:h-[116px] sm:w-[100px] ${
+            done ? "opacity-60 grayscale" : ""
+          }`}
+        >
+          {appt.serviceImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={appt.serviceImage} alt="" loading="lazy" className="h-full w-full object-cover" />
+          ) : (
+            <span className="grid h-full w-full place-items-center font-brand text-2xl text-violet-300">
+              {appt.serviceName[0]}
+            </span>
+          )}
         </div>
 
-        {/* Who / what */}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <Link
-                href={`/admin/customers/${appt.customerId}`}
-                className="block truncate text-[15px] font-semibold text-charcoal hover:text-royal-700"
-              >
-                {appt.customerName}
-              </Link>
-              <p className="truncate text-sm text-charcoal-soft">{appt.serviceName}</p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-[15px] font-semibold tabular-nums text-charcoal">{formatKes(appt.priceKes)}</p>
-              <p
-                className={`text-xs font-medium ${
-                  appt.paymentStatus === "PAID"
-                    ? "text-emerald-700"
-                    : appt.paymentStatus === "PARTIAL"
-                      ? "text-amber-700"
-                      : "text-charcoal-muted"
-                }`}
-              >
-                {payText}
-              </p>
-            </div>
-          </div>
-
-          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-charcoal-muted">
-            <span className="inline-flex items-center gap-1.5 font-medium text-charcoal-soft">
-              <span className={`h-1.5 w-1.5 rounded-full ${statusDot[appt.status] || "bg-gray-300"}`} />
-              {statusText[appt.status] || appt.status}
+            <h3
+              className={`font-brand text-[19px] font-medium leading-snug sm:text-[21px] ${
+                done ? "text-charcoal-muted" : "text-charcoal"
+              }`}
+            >
+              {appt.serviceName}
+            </h3>
+            <span className="shrink-0 pt-0.5 text-sm font-semibold tabular-nums text-charcoal">
+              {formatKes(appt.priceKes)}
             </span>
-            <span>·</span>
-            <span>{appt.serviceType === "OUTCALL" ? "Home visit" : "Studio"}</span>
-            {appt.source !== "WEBSITE" && (
-              <>
-                <span>·</span>
-                <span>Added by you</span>
-              </>
-            )}
+          </div>
+          <p className="mt-1 text-[13.5px] font-medium tabular-nums text-charcoal">
+            {shortDate(appt.date)} • {minutesToLabel(appt.startMin)}
+            <span className="hidden font-normal text-charcoal-muted sm:inline"> to {minutesToLabel(appt.endMin)}</span>
+          </p>
+          <p className="mt-0.5 truncate text-[13px] text-charcoal-muted">
+            Client:{" "}
+            <Link href={`/admin/customers/${appt.customerId}`} className="font-medium text-charcoal-soft hover:text-violet-700">
+              {appt.customerName}
+            </Link>
           </p>
           <a
             href={`https://wa.me/${waNumber}`}
             target="_blank"
             rel="noreferrer"
-            className="mt-1 inline-block text-xs font-medium tabular-nums text-royal-700 hover:underline"
+            className="block truncate text-[13px] tabular-nums text-charcoal-muted hover:text-violet-700"
           >
             {formatPhone(appt.customerPhone)}
           </a>
-          {appt.overdue && (
-            <p className="mt-2 text-xs font-medium text-amber-700">Date has passed. Close it as completed or cancelled.</p>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${pay.cls}`}>{pay.label}</span>
+            <span className="text-xs text-charcoal-muted">
+              {appt.serviceType === "OUTCALL" ? "Home visit" : "Studio"}
+              {appt.source !== "WEBSITE" ? " · added by you" : ""}
+            </span>
+          </div>
         </div>
       </div>
 
+      {appt.overdue && (
+        <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          This date has passed. Close it as completed or cancelled.
+        </p>
+      )}
+
       {/* Actions */}
-      <div className="flex items-center gap-2 border-t border-gray-100 bg-gray-50/60 px-4 py-2.5 sm:px-5">
-        {appt.status === "PENDING" && !appt.overdue && (
-          <button
-            className="btn-primary flex-1 !px-3 !py-2 text-xs sm:flex-none"
-            onClick={() => act(() => updateAppointmentStatus(appt.id, "CONFIRMED"))}
+      <div className="mt-4 grid grid-cols-2 gap-2.5">
+        {done ? (
+          <Link
+            href={`/admin/appointments/new?customer=${appt.customerId}`}
+            className="col-span-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 py-2.5 text-center text-sm font-semibold text-white shadow-[0_8px_18px_-8px_rgba(124,58,237,0.6)] transition hover:from-violet-700 hover:to-fuchsia-600 sm:col-span-1"
           >
-            Confirm
-          </button>
+            Book again
+          </Link>
+        ) : (
+          <>
+            {appt.status === "PENDING" && !appt.overdue ? (
+              <button
+                className="rounded-xl border border-violet-300 bg-white py-2.5 text-sm font-semibold text-violet-800 transition hover:bg-violet-50"
+                onClick={() => act(() => updateAppointmentStatus(appt.id, "CONFIRMED"))}
+              >
+                Confirm
+              </button>
+            ) : (
+              <button
+                className={`rounded-xl py-2.5 text-sm font-semibold transition ${
+                  appt.overdue
+                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white hover:from-violet-700 hover:to-fuchsia-600"
+                    : "border border-violet-300 bg-white text-violet-800 hover:bg-violet-50"
+                }`}
+                onClick={() => act(() => updateAppointmentStatus(appt.id, "COMPLETED"))}
+              >
+                Mark completed
+              </button>
+            )}
+            <button
+              className="rounded-xl bg-rose-50 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+              onClick={() => {
+                if (confirm("Cancel this appointment? The client will be notified.")) {
+                  act(() => updateAppointmentStatus(appt.id, "CANCELLED"));
+                }
+              }}
+            >
+              Cancel
+            </button>
+          </>
         )}
-        {(appt.status === "CONFIRMED" || appt.status === "PENDING") && (
-          <button
-            className={`${appt.overdue ? "btn-primary" : "btn-outline"} flex-1 !px-3 !py-2 text-xs sm:flex-none`}
-            onClick={() => act(() => updateAppointmentStatus(appt.id, "COMPLETED"))}
-          >
-            Completed
-          </button>
-        )}
-        {appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
-          <button
-            className="btn flex-1 !px-3 !py-2 text-xs text-red-600 hover:bg-red-50 sm:flex-none"
-            onClick={() => {
-              if (confirm("Cancel this appointment? The client will be notified.")) {
-                act(() => updateAppointmentStatus(appt.id, "CANCELLED"));
-              }
-            }}
-          >
-            Cancel
-          </button>
-        )}
-        <button
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="btn ml-auto shrink-0 !px-3 !py-2 text-xs text-charcoal-soft hover:bg-gray-100"
-        >
-          {open ? "Less" : "More"}
-        </button>
       </div>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="mt-2 w-full py-1.5 text-center text-xs font-medium text-violet-700 hover:text-violet-900"
+      >
+        {open ? "Hide details" : "Payments, notes & details"}
+      </button>
 
       {open && (
-        <div className="space-y-4 border-t border-gray-100 p-4 text-sm sm:p-5">
+        <div className="mt-2 space-y-4 rounded-2xl bg-violet-50/50 p-4 text-sm ring-1 ring-violet-100">
           {/* Payment / M-Pesa */}
           {(appt.amountPaid > 0 || appt.mpesaNumber || appt.mpesaMessage) && (
-            <div className="rounded-lg bg-gray-50 p-3">
+            <div className="rounded-xl bg-white p-3">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-charcoal-muted">Payment details</p>
               <p className="text-charcoal-soft">
                 Paid: <strong>{formatKes(appt.amountPaid)}</strong> of {formatKes(appt.priceKes)}
@@ -230,7 +242,7 @@ export default function AppointmentCard({
           )}
 
           {appt.serviceType === "OUTCALL" && (
-            <div className="rounded-lg bg-gray-50 p-3">
+            <div className="rounded-xl bg-white p-3">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-charcoal-muted">Home visit location</p>
               <p className="text-charcoal-soft">
                 {[appt.estate, appt.houseNumber].filter(Boolean).join(", ") || "Not given"}
@@ -238,7 +250,7 @@ export default function AppointmentCard({
               </p>
               {appt.travelNotes && <p className="mt-1 text-charcoal-muted">{appt.travelNotes}</p>}
               {appt.mapsPin && (
-                <a href={appt.mapsPin} target="_blank" rel="noreferrer" className="text-royal-600 hover:underline">
+                <a href={appt.mapsPin} target="_blank" rel="noreferrer" className="text-violet-700 hover:underline">
                   Open map pin ↗
                 </a>
               )}
@@ -344,8 +356,8 @@ export default function AppointmentCard({
                   onClick={() => act(() => updatePaymentStatus(appt.id, p))}
                   className={`badge ring-1 transition ${
                     appt.paymentStatus === p
-                      ? "bg-royal-600 text-white ring-royal-600"
-                      : "bg-white text-charcoal-muted ring-black/10 hover:ring-royal-300"
+                      ? "bg-violet-700 text-white ring-violet-700"
+                      : "bg-white text-charcoal-muted ring-black/10 hover:ring-violet-300"
                   }`}
                 >
                   {p[0] + p.slice(1).toLowerCase()}
